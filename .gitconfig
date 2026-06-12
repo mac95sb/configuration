@@ -1,0 +1,47 @@
+[user]
+    name = Mac
+    email = contact@maclong.dev
+    signingkey = ~/.ssh/id_ed25519
+
+[init]
+    defaultBranch = main
+
+[pull]
+    rebase = true
+
+[push]
+    autoSetupRemote = true
+
+[fetch]
+    prune = true
+
+[core]
+    editor = vim
+    pager = less -FRX
+    excludesfile = ~/.gitignore_global
+
+[gpg]
+    format = ssh
+
+[tag]
+    gpgsign = true
+
+[commit]
+    gpgsign = true
+
+[branch]
+    sort = -committerdate
+
+[merge]
+    conflictstyle = zdiff3
+
+[rerere]
+    enabled = true
+
+[alias]
+    br = branch
+    cm = commit -m
+    co = checkout
+    lg = log --graph --oneline --decorate --all
+    st = status -sb
+ 

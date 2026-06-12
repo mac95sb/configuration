@@ -1,0 +1,12 @@
+*.log
+*.swo
+*.swp
+*~
+.#*
+.DS_Store
+.build/
+.claude/
+.codex/
+.env
+.swiftpm/
+Thumbs.db
