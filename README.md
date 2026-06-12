@@ -19,29 +19,6 @@ curl -fsSl https://raw.githubusercontent.com/mac95sb/configuration/refs/heads/ma
 |---------|--------|
 | `kp <port>` | Kill the process listening on a port |
 | `tdl [agent ...]` | Open a tmux coding layout: editor left, optional agent pane right, shell bottom |
-| `ghi user/repo [...]` | Install latest macOS arm64 release binaries from GitHub repos into `~/.local/bin` |
-| `nvim_deps` | Install non-Node external tools required by `nvim/init.lua` |
-| `dev_build` | Build the Void-based `local/dev-void:latest` machine image |
-| `dev_recreate` | Rebuild the image and recreate the `dev` machine from it |
-
----
-
-## Dev Machine
-
-The `dev` machine is built from `Containerfile`. It keeps Node and npm tooling off the host while providing:
-
-- Neovim language servers: Pyright, TypeScript, Vue, and basedpyright
-- Python/FastAPI tooling: uv, pipx, ruff, black, mypy, pytest, FastAPI, Uvicorn, Gunicorn
-- Vue/TypeScript/Vite tooling: TypeScript, Vite, vue-tsc, Vue language server
-- Azure deployment tooling: Azure CLI and Azure Static Web Apps CLI
-
-Build or refresh it with:
-
-```sh
-dev_recreate
-```
-
-When the `dev` machine is stopped, Neovim skips container-backed language servers. After starting it with `dev`, reopen the buffer or run `:LspEnableAvailable`.
 
 ---
 
@@ -72,7 +49,7 @@ When the `dev` machine is stopped, Neovim skips container-backed language server
 
 | Key | Action |
 |-----|--------|
-| `<leader>e` | File explorer (netrw) |
+| `<leader>e` | File explorer (mini.files) |
 | `<leader>ff` | Find file |
 | `<leader>fb` | List buffers |
 | `<leader>f/` | Grep search |
