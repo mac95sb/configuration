@@ -1,0 +1,13 @@
+{
+  "defaultThinkingLevel": "off",
+  "theme": "nvim-dark",
+  "packages": [
+    "extensions/lean-footer.ts",
+    "npm:context-mode",
+    "npm:pi-markdown-preview",
+    "npm:pi-simplify",
+    "npm:pi-subagents",
+    "npm:pi-web-access",
+    "npm:pi-claude-cli"
+  ]
+}
