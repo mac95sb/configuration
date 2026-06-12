@@ -10,12 +10,14 @@ setopt HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_EXPIRE_DUPS_FIRST SHARE_HISTORY
 
 # Custom Prompt
 _git_info() {
-  git rev-parse --is-inside-work-tree &>/dev/null || return
-  local branch=$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD)
+  local out
+  out=$(git status --porcelain=v1 -b 2>/dev/null) || return
+  local branch=${${out%%$'\n'*}#'## '}
+  branch=${branch%%...*}
   local s=""
-  git diff --quiet 2>/dev/null || s="*"
-  git diff --cached --quiet 2>/dev/null || s+="+"
-  echo " $branch$s"
+  [[ $out == *$'\n'?[!\ ?]* ]] && s="*"
+  [[ $out == *$'\n'[!\ ?]* ]] && s+="+"
+  print " $branch$s"
 }
 
 _build_prompt() {
@@ -65,15 +67,12 @@ tdl() {
   tmux split-window -v -p 18 -t "$editor_pane" -c "$PWD" >/dev/null
   agent_pane=$(tmux split-window -h -p 30 -t "$editor_pane" -c "$PWD" -P -F '#{pane_id}')
 
-  local agent pane="$agent_pane"
-  local i=1
-  for agent in "$@"; do
+  local pane="$agent_pane"
+  for agent in "${@:1:$(( $# > 0 ? $# - 1 : 0 ))}"; do
     tmux send-keys -t "$pane" -- "$agent" C-m
-    if (( i < $# )); then
-      pane=$(tmux split-window -v -t "$pane" -c "$PWD" -P -F '#{pane_id}')
-    fi
-    (( i++ ))
+    pane=$(tmux split-window -v -t "$pane" -c "$PWD" -P -F '#{pane_id}')
   done
+  (( $# )) && tmux send-keys -t "$pane" -- "${@[-1]}" C-m
 
   tmux select-pane -t "$editor_pane"
 
@@ -82,10 +81,36 @@ tdl() {
   fi
 }
 
+# Dev Container
+alias dev='container machine run'
+alias dev-stop='container machine stop'
+
+dev_build() {
+  emulate -L zsh
+  local image="${DEV_IMAGE:-local/dev-void:latest}"
+  container build -t "$image" -f "$HOME/.config/Containerfile" "$HOME/.config"
+}
+
+dev_recreate() {
+  emulate -L zsh
+  local image="${DEV_IMAGE:-local/dev-void:latest}"
+  dev_build
+  if container machine inspect dev >/dev/null 2>&1; then
+    print -u2 "dev_recreate: this will delete and recreate the dev machine."
+    printf "Continue? [y/N] "
+    local answer
+    read -r answer
+    [[ $answer == [Yy]* ]] || return 1
+    container machine delete dev
+  fi
+  container machine create --name dev --set-default "$image"
+}
+
 ghi() {
-  local repos=("$@")
-  [[ ${#repos} -eq 0 ]] && { print -u2 "usage: ghi user/repo [user/repo ...]"; return 1 }
-  for repo in $repos; do
+  [[ $# -eq 0 ]] && { print -u2 "usage: ghi user/repo [user/repo ...]"; return 1 }
+  local tmp=$(mktemp -d)
+  trap "rm -rf $tmp" EXIT
+  for repo in "$@"; do
     [[ $repo != */* ]] && { print -u2 "ghi: skipping '$repo' (not user/repo format)"; continue }
     local assets
     assets=$(curl -fsSL "https://api.github.com/repos/${repo}/releases/latest" \
@@ -110,12 +135,12 @@ for a in data.get('assets', []):
       continue
     fi
     print "→ ${url:t}"
-    local tmp=$(mktemp -d)
-    trap "rm -rf $tmp" EXIT
-    local dl="$tmp/dl"
-    [[ $url == *.pkg ]] && dl="$tmp/dl.pkg"
+    local rtmp="$tmp/${repo//\//_}"
+    mkdir -p "$rtmp"
+    local dl="$rtmp/dl"
+    [[ $url == *.pkg ]] && dl="$rtmp/dl.pkg"
     curl -fSL --progress-bar -o "$dl" "$url" || continue
-    local src="$tmp/out"
+    local src="$rtmp/out"
     mkdir -p "$src"
     case $url in
       *.tar.*|*.tgz|*.txz) tar xf "$dl" -C "$src" ;;
@@ -137,12 +162,34 @@ for a in data.get('assets', []):
       chmod +x ~/.local/bin/*(N)
       print "✓ merged ${repo:t} → ~/.local/"
     else
-      find "$src" -type f | xargs file | grep 'Mach-O.*executable' | cut -d: -f1 \
-        | while read -r f; do
-            cp "$f" ~/.local/bin/
-            chmod +x ~/.local/bin/${f:t}
-            print "✓ ~/.local/bin/${f:t}"
-          done
+      for f in "$src"/**/*(N.); do
+        file "$f" | grep -q 'Mach-O.*executable' || continue
+        cp "$f" ~/.local/bin/
+        chmod +x ~/.local/bin/${f:t}
+        print "✓ ~/.local/bin/${f:t}"
+      done
     fi
   done
+}
+
+nvim_deps() {
+  emulate -L zsh
+
+  if ! command -v lua-language-server >/dev/null 2>&1; then
+    ghi LuaLS/lua-language-server
+  fi
+
+  print "nvim_deps: Node-based language servers are provided by the dev machine image"
+
+  local required_missing=()
+  for cmd in sourcekit-lsp lua-language-server; do
+    command -v "$cmd" >/dev/null 2>&1 || required_missing+=("$cmd")
+  done
+
+  if (( ${#required_missing} )); then
+    print -u2 "nvim_deps: still missing: ${required_missing[*]}"
+    return 1
+  fi
+
+  print "✓ Neovim external dependencies installed"
 }
