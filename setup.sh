@@ -1,9 +1,5 @@
 #!/bin/sh
-
-# Backup current configuration directory
-if [ -d "$HOME/.config" ]; then
-	mv "$HOME/.config" "$HOME/.config.bak.$(date +%Y%m%d_%H%M%S)"
-fi
+set -eu
 
 # Install Xcode CLI Tools if missing
 if ! xcode-select -p >/dev/null 2>&1; then
@@ -25,9 +21,23 @@ printf "Press Enter once you've added the key to GitHub..."
 read res
 
 # Clone and link configuration files
-git clone git@github.com:mac95sb/configuration "$HOME/.config"
+CONFIG_TMP=$(mktemp -d "$HOME/.config.tmp.XXXXXX")
+trap '[ -n "${CONFIG_TMP:-}" ] && rm -rf "$CONFIG_TMP"' EXIT
+git clone git@github.com:mac95sb/configuration "$CONFIG_TMP"
+if [ -d "$HOME/.config" ]; then
+	mv "$HOME/.config" "$HOME/.config.bak.$(date +%Y%m%d_%H%M%S)"
+fi
+mv "$CONFIG_TMP" "$HOME/.config"
+CONFIG_TMP=
 for f in "$HOME"/.config/.[!.]*; do
-	ln -s "$f" "$HOME/$(basename "$f")"
+	[ -e "$f" ] || continue
+	[ "$(basename "$f")" = ".git" ] && continue
+	target="$HOME/$(basename "$f")"
+	if [ -e "$target" ] || [ -L "$target" ]; then
+		printf "Skipping %s; target already exists.\n" "$target"
+		continue
+	fi
+	ln -s "$f" "$target"
 done
 
 # Install Nerd Font (Liga SF Mono — required for nvim icons)
