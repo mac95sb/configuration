@@ -36,10 +36,12 @@ opt.completeopt = "menu,menuone,noselect"
 opt.splitright  = true
 opt.splitbelow  = true
 opt.termguicolors = true
+opt.clipboard = "unnamedplus"
 
 -- ––– Plugins –––
 vim.pack.add({
   "https://github.com/echasnovski/mini.nvim",
+  "https://github.com/nvim-treesitter/nvim-treesitter",
 })
 
 -- ––– Transparency –––
@@ -56,7 +58,6 @@ end
 
 vim.api.nvim_create_autocmd("ColorScheme", { pattern = "*", callback = apply_transparency })
 vim.cmd.colorscheme("default")
-apply_transparency()
 
 -- ––– Mini modules –––
 for _, mod in ipairs({ "icons", "git", "files", "extra" }) do
@@ -73,7 +74,7 @@ require("mini.diff").setup({
   mappings = {
     apply      = "gh",
     reset      = "gH",
-    textobject = "gh",
+    textobject = "ih",
     goto_first = "[H",
     goto_prev  = "[h",
     goto_next  = "]h",
@@ -106,9 +107,10 @@ clue.setup({
     clue.gen_clues.windows(),
     clue.gen_clues.z(),
     -- Leader subgroup descriptions (shown as category headers)
-    { mode = "n", keys = "<Leader>b", desc = "Buffer" },
-    { mode = "n", keys = "<Leader>t", desc = "Tab" },
-    { mode = "n", keys = "<Leader>f", desc = "Find" },
+    { mode = "n", keys = "<Leader>b",  desc = "Buffer" },
+    { mode = "n", keys = "<Leader>t",  desc = "Tab" },
+    { mode = "n", keys = "<Leader>f",  desc = "Find" },
+    { mode = "n", keys = "<Leader>ca", desc = "Code action" },
   },
   window = {
     delay  = 200,
@@ -154,10 +156,6 @@ map("n", "<leader>ff", "<Cmd>Pick files<CR>",     { desc = "Find: files" })
 map("n", "<leader>fb", "<Cmd>Pick buffers<CR>",   { desc = "Find: buffers" })
 map("n", "<leader>f/", "<Cmd>Pick grep_live<CR>", { desc = "Find: grep (live)" })
 map("n", "<leader>fh", "<Cmd>Pick help<CR>",      { desc = "Find: help" })
-
--- Commenting (gc/gcc built-in since Neovim 0.10)
-map("n", "gc", "gcc", { remap = true, desc = "Comment: toggle line" })
-map("x", "gc", "gc",  { remap = true, desc = "Comment: toggle selection" })
 
 -- Window navigation
 map("n", "<C-h>", "<C-w>h", { desc = "Window: left" })
@@ -215,4 +213,136 @@ autocmd("BufWritePre", {
 autocmd("VimResized", {
   group   = augroup("resize_splits", { clear = true }),
   command = "tabdo wincmd =",
+})
+
+-- ––– Treesitter –––
+local ts_languages = { "lua", "python", "swift", "typescript", "javascript", "vue" }
+local treesitter = require("nvim-treesitter")
+treesitter.setup()
+
+autocmd("FileType", {
+  group = augroup("treesitter_features", { clear = true }),
+  pattern = ts_languages,
+  callback = function()
+    if pcall(vim.treesitter.start) then
+      vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
+    end
+  end,
+})
+
+vim.api.nvim_create_user_command("TSInstallConfigured", function()
+  treesitter.install(ts_languages)
+end, {})
+
+-- ––– LSP –––
+local servers = {
+  sourcekit = {
+    cmd          = { "sourcekit-lsp" },
+    filetypes    = { "swift" },
+    root_markers = { "Package.swift", ".git" },
+  },
+  pyright = {
+    cmd          = { "container", "machine", "run", "-i", "--workdir", "/", "--", "pyright-langserver", "--stdio" },
+    container_cmd = "pyright-langserver",
+    filetypes    = { "python" },
+    root_markers = { "pyproject.toml", "setup.py", ".git" },
+    settings     = { python = { analysis = { autoSearchPaths = true, useLibraryCodeForTypes = true } } },
+  },
+  lua_ls = {
+    cmd          = { "lua-language-server" },
+    filetypes    = { "lua" },
+    root_markers = { ".luarc.json", ".git" },
+    settings     = { Lua = {
+      runtime   = { version = "LuaJIT" },
+      workspace = { library = vim.api.nvim_get_runtime_file("", true), checkThirdParty = false },
+    }},
+  },
+  ts_ls = {
+    cmd          = { "container", "machine", "run", "-i", "--workdir", "/", "--", "typescript-language-server", "--stdio" },
+    container_cmd = "typescript-language-server",
+    filetypes    = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
+    root_markers = { "tsconfig.json", "package.json", ".git" },
+  },
+  volar = {
+    cmd          = { "container", "machine", "run", "-i", "--workdir", "/", "--", "vue-language-server", "--stdio" },
+    container_cmd = "vue-language-server",
+    filetypes    = { "vue" },
+    root_markers = { "vite.config.ts", "package.json", ".git" },
+  },
+}
+
+local configured_servers = {}
+local function dev_machine_running()
+  local result = vim.system({ "container", "machine", "list" }, { text = true }):wait()
+  if result.code ~= 0 then
+    return false
+  end
+  for line in result.stdout:lower():gmatch("[^\r\n]+") do
+    if line:find("dev") and line:find("running") then
+      return true
+    end
+  end
+  return false
+end
+
+local function container_cmd_available(cmd)
+  if vim.fn.executable("container") == 0 or not dev_machine_running() then
+    return false
+  end
+  return vim.system({ "container", "machine", "run", "--workdir", "/", "--", "sh", "-lc", "command -v \"$1\" >/dev/null 2>&1", "sh", cmd }):wait().code == 0
+end
+
+local function lsp_cmd_available(cfg)
+  if cfg.container_cmd then
+    return container_cmd_available(cfg.container_cmd)
+  end
+  if vim.fn.executable(cfg.cmd[1]) == 0 then
+    return false
+  end
+  return true
+end
+
+local function enable_available_servers(filetype)
+  local enabled = {}
+  for name, cfg in pairs(servers) do
+    if (not filetype or vim.list_contains(cfg.filetypes, filetype)) and lsp_cmd_available(cfg) then
+      if not configured_servers[name] then
+        vim.lsp.config(name, cfg)
+        configured_servers[name] = true
+      end
+      table.insert(enabled, name)
+    end
+  end
+  if #enabled > 0 then
+    vim.lsp.enable(enabled)
+  end
+end
+
+enable_available_servers()
+
+autocmd({ "FileType", "BufEnter" }, {
+  group = augroup("enable_available_lsp", { clear = true }),
+  callback = function(ev)
+    enable_available_servers(vim.bo[ev.buf].filetype)
+  end,
+})
+
+vim.api.nvim_create_user_command("LspEnableAvailable", function()
+  enable_available_servers(vim.bo.filetype)
+end, {})
+
+autocmd("LspAttach", {
+  group    = augroup("lsp_keys", { clear = true }),
+  callback = function(ev)
+    local lmap = function(k, fn, d) map("n", k, fn, { buffer = ev.buf, desc = d }) end
+    lmap("gd",         vim.lsp.buf.definition,     "LSP: definition")
+    lmap("gD",         vim.lsp.buf.declaration,    "LSP: declaration")
+    lmap("gr",         vim.lsp.buf.references,     "LSP: references")
+    lmap("gi",         vim.lsp.buf.implementation, "LSP: implementation")
+    lmap("K",          vim.lsp.buf.hover,          "LSP: hover")
+    lmap("<leader>r",  vim.lsp.buf.rename,         "LSP: rename")
+    lmap("<leader>ca", vim.lsp.buf.code_action,    "LSP: code action")
+    lmap("[d",         vim.diagnostic.goto_prev,   "Diagnostic: prev")
+    lmap("]d",         vim.diagnostic.goto_next,   "Diagnostic: next")
+  end,
 })
