@@ -64,20 +64,22 @@ for a in data.get('assets', []):
     print "→ ${url:t}"
     local tmp=$(mktemp -d)
     trap "rm -rf $tmp" EXIT
-    curl -fSL --progress-bar -o "$tmp/dl" "$url" || continue
+    local dl="$tmp/dl"
+    [[ $url == *.pkg ]] && dl="$tmp/dl.pkg"
+    curl -fSL --progress-bar -o "$dl" "$url" || continue
     local src="$tmp/out"
     mkdir -p "$src"
     case $url in
-      *.tar.*|*.tgz|*.txz) tar xf "$tmp/dl" -C "$src" ;;
-      *.zip)               unzip -q "$tmp/dl" -d "$src" ;;
-      *.gz)                gunzip -c "$tmp/dl" > "$src/${${url:t}%.gz}" ;;
+      *.tar.*|*.tgz|*.txz) tar xf "$dl" -C "$src" ;;
+      *.zip)               unzip -q "$dl" -d "$src" ;;
+      *.gz)                gunzip -c "$dl" > "$src/${${url:t}%.gz}" ;;
       *.pkg)
         print "→ installing .pkg (requires sudo)"
-        sudo installer -pkg "$tmp/dl" -target /
+        sudo installer -pkg "$dl" -target / || continue
         print "✓ ${repo:t} installed via pkg"
         continue
         ;;
-      *) cp "$tmp/dl" "$src/${url:t}" ;;
+      *) cp "$dl" "$src/${url:t}" ;;
     esac
     # Descend through a single wrapper dir (e.g. nvim-macos-arm64/). Keep this
     # as an array: glob qualifiers do not reliably expand in the old [[ -d ... ]]
