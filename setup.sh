@@ -39,6 +39,11 @@ eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || true
 # Install packages
 brew bundle --file "$HOME/.config/Brewfile"
 
+# Enable Touch ID for sudo
+if ! grep -q '^auth.*pam_tid.so' /etc/pam.d/sudo_local 2>/dev/null; then
+	sudo sed 's/^#auth/auth/' /etc/pam.d/sudo_local.template | sudo tee /etc/pam.d/sudo_local > /dev/null
+fi
+
 # Install Neovim plugins and start container system in parallel
 printf 'a\n' | nvim --headless 2>/dev/null &
 container system start --enable-kernel-install &
