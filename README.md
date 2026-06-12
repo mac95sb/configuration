@@ -13,6 +13,16 @@ curl -fsSl https://raw.githubusercontent.com/mac95sb/configuration/refs/heads/ma
 
 ---
 
+## Shell Functions
+
+| Command | Action |
+|---------|--------|
+| `kp <port>` | Kill the process listening on a port |
+| `tdl [agent ...]` | Open a tmux coding layout: editor left, optional agent pane right, shell bottom |
+| `ghi user/repo [...]` | Install latest macOS arm64 release binaries from GitHub repos into `~/.local/bin` |
+
+---
+
 ## Keybindings
 
 ### Vim (`<leader>` = `Space`)

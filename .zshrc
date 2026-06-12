@@ -34,6 +34,54 @@ kp() {
   lsof -ti :"$1" | xargs kill -9
 }
 
+tdl() {
+  emulate -L zsh
+
+  if ! command -v tmux >/dev/null 2>&1; then
+    print -u2 "tdl: tmux is not installed"
+    return 1
+  fi
+
+  local editor="${EDITOR:-nvim}"
+  local window_name="${PWD:t}"
+  [[ -z $window_name ]] && window_name="tdl"
+
+  local target session
+  if [[ -n $TMUX ]]; then
+    target=$(tmux display-message -p '#{session_name}:#{window_index}')
+  else
+    session="tdl-${window_name//[^A-Za-z0-9_.-]/-}"
+    if tmux has-session -t "$session" 2>/dev/null; then
+      tmux attach-session -t "$session"
+      return
+    fi
+    target=$(tmux new-session -d -P -F '#{session_name}:#{window_index}' -s "$session" -n "$window_name" -c "$PWD")
+  fi
+
+  local editor_pane agent_pane
+  editor_pane=$(tmux display-message -p -t "$target" '#{pane_id}')
+  tmux send-keys -t "$editor_pane" -- "$editor" C-m
+
+  tmux split-window -v -p 18 -t "$editor_pane" -c "$PWD" >/dev/null
+  agent_pane=$(tmux split-window -h -p 30 -t "$editor_pane" -c "$PWD" -P -F '#{pane_id}')
+
+  local agent pane="$agent_pane"
+  local i=1
+  for agent in "$@"; do
+    tmux send-keys -t "$pane" -- "$agent" C-m
+    if (( i < $# )); then
+      pane=$(tmux split-window -v -t "$pane" -c "$PWD" -P -F '#{pane_id}')
+    fi
+    (( i++ ))
+  done
+
+  tmux select-pane -t "$editor_pane"
+
+  if [[ -z $TMUX ]]; then
+    tmux attach-session -t "$session"
+  fi
+}
+
 ghi() {
   local repos=("$@")
   [[ ${#repos} -eq 0 ]] && { print -u2 "usage: ghi user/repo [user/repo ...]"; return 1 }
@@ -81,18 +129,10 @@ for a in data.get('assets', []):
         ;;
       *) cp "$dl" "$src/${url:t}" ;;
     esac
-    # Descend through a single wrapper dir (e.g. nvim-macos-arm64/). Keep this
-    # as an array: glob qualifiers do not reliably expand in the old [[ -d ... ]]
-    # test, which made archives with bin/lib/share fall through to "copy binary".
     local entries=("$src"/*(N))
     [[ ${#entries} -eq 1 && -d ${entries[1]} ]] && src="${entries[1]}"
     mkdir -p ~/.local/bin
     if [[ -d "$src/bin" || -d "$src/lib" || -d "$src/share" ]]; then
-      # Full tree: rsync merges into ~/.local/ without clobbering other tools.
-      # Trailing slash on src is load-bearing — it means "merge contents", not
-      # "copy the directory itself". This ensures share/ and lib/ land correctly,
-      # which is required for tools like Neovim that need runtime files alongside
-      # their binary.
       rsync -a "$src"/ ~/.local/
       chmod +x ~/.local/bin/*(N)
       print "✓ merged ${repo:t} → ~/.local/"
