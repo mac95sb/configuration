@@ -20,47 +20,29 @@ printf "  → Add it at: https://github.com/settings/ssh/new\n\n"
 printf "Press Enter once you've added the key to GitHub..."
 read _
 
-# Clone and link configuration files
-CONFIG_TMP=$(mktemp -d "$HOME/.config.tmp.XXXXXX")
-trap '[ -n "${CONFIG_TMP:-}" ] && rm -rf "$CONFIG_TMP"' EXIT
-git clone git@github.com:mac95sb/configuration "$CONFIG_TMP"
-if [ -d "$HOME/.config" ]; then
-	mv "$HOME/.config" "$HOME/.config.bak.$(date +%Y%m%d_%H%M%S)"
-fi
-mv "$CONFIG_TMP" "$HOME/.config"
-CONFIG_TMP=
+# Clone configuration and link dotfiles
+[ -d "$HOME/.config" ] && mv "$HOME/.config" "$HOME/.config.bak.$(date +%Y%m%d_%H%M%S)"
+git clone git@github.com:mac95sb/configuration "$HOME/.config"
 for f in "$HOME"/.config/.[!.]*; do
-	[ -e "$f" ] || continue
-	[ "$(basename "$f")" = ".git" ] && continue
-	target="$HOME/$(basename "$f")"
-	if [ -e "$target" ] || [ -L "$target" ]; then
-		printf "Skipping %s; target already exists.\n" "$target"
-		continue
-	fi
-	ln -s "$f" "$target"
+	base=$(basename "$f")
+	[ "$base" = ".git" ] && continue
+	[ -e "$HOME/$base" ] && ! [ -L "$HOME/$base" ] && continue
+	ln -sf "$f" "$HOME/$base"
 done
 
-# Install Nerd Font (Liga SF Mono)
-FONT_DIR="$HOME/Library/Fonts"
-mkdir -p "$FONT_DIR"
-curl -fsSL "https://github.com/shaunsingh/SFMono-Nerd-Font-Ligaturized/raw/refs/heads/main/LigaSFMonoNerdFont-Regular.otf" \
-	-o "$FONT_DIR/LigaSFMonoNerdFont-Regular.otf"
-printf "✓ LigaSFMonoNerdFont-Regular installed.\n"
-printf "  → Set it as your terminal font to enable Neovim icons.\n\n"
-
-# Install dependencies
-zsh -c "source ~/.zshrc && ghi neovim/neovim tmux/tmux-builds apple/container"
-zsh -c "source ~/.zshrc && nvim_deps"
-curl -fsSL https://claude.ai/install.sh | bash
-curl -fsSL https://chatgpt.com/codex/install.sh | sh
-
-# Set up dev container
-container system start --enable-kernel-install
-zsh -c "source ~/.zshrc && dev_build"
-if ! container machine inspect dev >/dev/null 2>&1; then
-	container machine create --name dev --set-default local/dev-void:latest
-else
-	container machine set-default dev
+# Install Homebrew if missing
+if ! command -v brew >/dev/null 2>&1; then
+	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
+eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || true
+
+# Install packages
+brew bundle --file "$HOME/.config/Brewfile"
+
+# Install Neovim plugins and start container system in parallel
+printf 'a\n' | nvim --headless 2>/dev/null &
+container system start --enable-kernel-install &
+wait
 
 printf "\nInstallation complete. Enjoy!\n"
+printf "  → Open Neovim and run :Mason to install language servers.\n"
