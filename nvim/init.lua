@@ -59,7 +59,6 @@ vim.cmd.colorscheme("default")
 apply_transparency()
 
 -- ––– Mini modules –––
-
 for _, mod in ipairs({ "icons", "git", "files", "extra" }) do
   require("mini." .. mod).setup()
 end
