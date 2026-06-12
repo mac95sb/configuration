@@ -42,6 +42,7 @@ opt.clipboard = "unnamedplus"
 vim.pack.add({
   "https://github.com/echasnovski/mini.nvim",
   "https://github.com/nvim-treesitter/nvim-treesitter",
+  "https://github.com/williamboman/mason.nvim",
 })
 
 -- ––– Transparency –––
@@ -163,6 +164,20 @@ map("n", "<C-j>", "<C-w>j", { desc = "Window: down" })
 map("n", "<C-k>", "<C-w>k", { desc = "Window: up" })
 map("n", "<C-l>", "<C-w>l", { desc = "Window: right" })
 
+-- Tmux/nvim unified pane navigation (Alt + hjkl)
+local function nav(dir)
+  local dirs = { h = "L", j = "D", k = "U", l = "R" }
+  local cur = vim.api.nvim_get_current_win()
+  vim.cmd("wincmd " .. dir)
+  if vim.api.nvim_get_current_win() == cur and vim.env.TMUX then
+    vim.fn.system("tmux select-pane -" .. dirs[dir])
+  end
+end
+map("n", "<A-h>", function() nav("h") end, { desc = "Navigate: left" })
+map("n", "<A-j>", function() nav("j") end, { desc = "Navigate: down" })
+map("n", "<A-k>", function() nav("k") end, { desc = "Navigate: up" })
+map("n", "<A-l>", function() nav("l") end, { desc = "Navigate: right" })
+
 -- Keep visual selection after indent
 map("x", "<", "<gv")
 map("x", ">", ">gv")
@@ -234,6 +249,11 @@ vim.api.nvim_create_user_command("TSInstallConfigured", function()
   treesitter.install(ts_languages)
 end, {})
 
+vim.defer_fn(function() treesitter.install(ts_languages) end, 0)
+
+-- ––– Mason –––
+require("mason").setup()
+
 -- ––– LSP –––
 local servers = {
   sourcekit = {
@@ -242,8 +262,7 @@ local servers = {
     root_markers = { "Package.swift", ".git" },
   },
   pyright = {
-    cmd          = { "container", "machine", "run", "-i", "--workdir", "/", "--", "pyright-langserver", "--stdio" },
-    container_cmd = "pyright-langserver",
+    cmd          = { "pyright-langserver", "--stdio" },
     filetypes    = { "python" },
     root_markers = { "pyproject.toml", "setup.py", ".git" },
     settings     = { python = { analysis = { autoSearchPaths = true, useLibraryCodeForTypes = true } } },
@@ -258,78 +277,45 @@ local servers = {
     }},
   },
   ts_ls = {
-    cmd          = { "container", "machine", "run", "-i", "--workdir", "/", "--", "typescript-language-server", "--stdio" },
-    container_cmd = "typescript-language-server",
+    cmd          = { "typescript-language-server", "--stdio" },
     filetypes    = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
     root_markers = { "tsconfig.json", "package.json", ".git" },
   },
   volar = {
-    cmd          = { "container", "machine", "run", "-i", "--workdir", "/", "--", "vue-language-server", "--stdio" },
-    container_cmd = "vue-language-server",
+    cmd          = { "vue-language-server", "--stdio" },
     filetypes    = { "vue" },
     root_markers = { "vite.config.ts", "package.json", ".git" },
   },
 }
 
-local configured_servers = {}
-local function dev_machine_running()
-  local result = vim.system({ "container", "machine", "list" }, { text = true }):wait()
-  if result.code ~= 0 then
-    return false
-  end
-  for line in result.stdout:lower():gmatch("[^\r\n]+") do
-    if line:find("dev") and line:find("running") then
-      return true
-    end
-  end
-  return false
+for name, cfg in pairs(servers) do
+  vim.lsp.config(name, cfg)
 end
 
-local function container_cmd_available(cmd)
-  if vim.fn.executable("container") == 0 or not dev_machine_running() then
-    return false
-  end
-  return vim.system({ "container", "machine", "run", "--workdir", "/", "--", "sh", "-lc", "command -v \"$1\" >/dev/null 2>&1", "sh", cmd }):wait().code == 0
-end
-
-local function lsp_cmd_available(cfg)
-  if cfg.container_cmd then
-    return container_cmd_available(cfg.container_cmd)
-  end
-  if vim.fn.executable(cfg.cmd[1]) == 0 then
-    return false
-  end
-  return true
-end
-
-local function enable_available_servers(filetype)
-  local enabled = {}
-  for name, cfg in pairs(servers) do
-    if (not filetype or vim.list_contains(cfg.filetypes, filetype)) and lsp_cmd_available(cfg) then
-      if not configured_servers[name] then
-        vim.lsp.config(name, cfg)
-        configured_servers[name] = true
-      end
-      table.insert(enabled, name)
-    end
-  end
+local function enable_lsp()
+  local enabled = vim.tbl_filter(function(name)
+    return vim.fn.executable(servers[name].cmd[1]) == 1
+  end, vim.tbl_keys(servers))
   if #enabled > 0 then
     vim.lsp.enable(enabled)
   end
 end
+enable_lsp()
 
-enable_available_servers()
-
-autocmd({ "FileType", "BufEnter" }, {
-  group = augroup("enable_available_lsp", { clear = true }),
-  callback = function(ev)
-    enable_available_servers(vim.bo[ev.buf].filetype)
-  end,
-})
-
-vim.api.nvim_create_user_command("LspEnableAvailable", function()
-  enable_available_servers(vim.bo.filetype)
-end, {})
+-- Auto-install Mason packages; re-enable LSP after each one finishes
+vim.defer_fn(function()
+  local ok, registry = pcall(require, "mason-registry")
+  if not ok then return end
+  local packages = { "lua-language-server", "pyright", "typescript-language-server", "vue-language-server" }
+  registry.refresh(function()
+    for _, name in ipairs(packages) do
+      local pkg_ok, pkg = pcall(registry.get_package, name)
+      if pkg_ok and not pkg:is_installed() then
+        pkg:install():once("closed", vim.schedule_wrap(enable_lsp))
+      end
+    end
+  end)
+end, 0)
 
 autocmd("LspAttach", {
   group    = augroup("lsp_keys", { clear = true }),
