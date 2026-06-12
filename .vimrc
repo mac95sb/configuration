@@ -2,7 +2,6 @@ vim9script
 
 # Core Settings
 syntax enable
-set nocompatible
 set encoding=utf-8
 
 # UI Settings
@@ -50,6 +49,3 @@ g:netrw_banner = 0
 g:netrw_liststyle = 3
 nnoremap <leader>e :Explore<CR>
 
-# Commenting
-nnoremap gc gcc
-vnoremap gc gc

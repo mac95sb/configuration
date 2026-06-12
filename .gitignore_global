@@ -10,3 +10,4 @@
 .env
 .swiftpm/
 Thumbs.db
+nvim.log
