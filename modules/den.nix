@@ -3,7 +3,11 @@
 
   den.schema.user.classes = lib.mkDefault [ "homeManager" ];
 
-  den.default.homeManager.home.stateVersion = "25.11";
+  den.default.homeManager.home = {
+    stateVersion  = "25.11";
+    homeDirectory = lib.mkDefault "/Users/mac";
+    sessionPath   = [ "$HOME/.local/bin" ];
+  };
 
   # mac host (aarch64-darwin) with mac user
   den.hosts.aarch64-darwin.mac.users.mac = {};

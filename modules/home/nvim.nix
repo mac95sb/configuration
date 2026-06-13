@@ -1,5 +1,5 @@
-{ den, inputs, pkgs, ... }: {
-  den.aspects.mac.homeManager = { pkgs, lib, ... }: {
+{ den, inputs, ... }: {
+  den.aspects.mac.homeManager = { pkgs, ... }: {
     imports = [ inputs.nvf.homeManagerModules.default ];
 
     programs.nvf = {
@@ -8,43 +8,40 @@
         viAlias = false;
         vimAlias = false;
 
-        # nvf's LSP infrastructure — required for vim.languages.vue to work.
         lsp.enable = true;
 
-        # Vue handled entirely by nvf: grammar, vue-language-server (with its
-        # built-in tsserver/request forwarding to typescript-language-server),
-        # and no biome format (we use prettier via our conform config below).
-        languages.vue = {
-          enable = true;
-          lsp.servers = [ "vue-language-server" ];
-          treesitter.enable = true;
-          format.enable = false;
+        languages = {
+          enableTreesitter = true;
+          enableFormat     = true;
+
+          nix    = { enable = true; format.type = [ "nixfmt" ]; };
+          lua.enable    = true;
+          python.enable = true;
+          ts.enable     = true;
+          css.enable    = true;
+          html.enable   = true;   # uses superhtml LSP + formatter
+          vue = {
+            enable       = true;
+            lsp.servers  = [ "vue-language-server" ];
+            format.enable = false;  # superhtml/biome not wanted; use prettier below
+          };
         };
 
-        # LSP binaries and formatters — available only to neovim's PATH.
-        # devenv.nix per-project can shadow these where needed.
-        extraPackages = with pkgs; [
-          lua-language-server
-          nil                            # Nix LSP
-          nixfmt-rfc-style               # Nix formatter
-          pyright
-          nodePackages.typescript-language-server
-          vscode-langservers-extracted   # html-lsp, css-lsp, eslint-lsp
-          tailwindcss-language-server
-          nodePackages.prettier
-          stylua
-          black
-        ];
+        # Tailwind has no vim.languages module
+        lsp.presets.tailwindcss-language-server.enable = true;
+
+        # Global conform settings + prettier for vue
+        formatter.conform-nvim.setupOpts = {
+          format_on_save = {
+            timeout_ms = 3000;
+            lsp_format  = "fallback";
+          };
+          formatters_by_ft.vue = [ "prettier" ];
+        };
 
         startPlugins = with pkgs.vimPlugins; [
           blink-cmp
           mini-nvim
-          (nvim-treesitter.withPlugins (p: with p; [
-            lua nix python typescript javascript
-            # vue grammar managed by vim.languages.vue.treesitter
-            # swift grammar comes from Xcode's tree-sitter; add if available
-          ]))
-          conform-nvim
         ];
 
         luaConfigRC.init = # lua
@@ -218,7 +215,7 @@
             -- ––– blink.cmp –––
             local blink = require("blink.cmp")
             blink.setup({
-              keymap    = { preset = "default" },
+              keymap     = { preset = "default" },
               appearance = { nerd_font_variant = "mono" },
               completion = {
                 documentation = { auto_show = false },
@@ -226,20 +223,20 @@
               },
               sources = {
                 default = { "lsp", "path", "snippets", "buffer" },
-                providers = {
-                  lsp = {
-                    override = {
-                      get_trigger_characters = function(self)
-                        local chars = self:get_trigger_characters()
-                        vim.list_extend(chars, { " " })
-                        return chars
-                      end,
-                    },
-                  },
-                },
               },
               fuzzy     = { implementation = "lua" },
               signature = { enabled = true, window = { show_documentation = false } },
+            })
+
+            -- Pass blink capabilities to all LSP servers (including nvf-managed ones)
+            vim.lsp.config('*', {
+              capabilities = blink.get_lsp_capabilities(),
+            })
+
+            -- ––– Diagnostics –––
+            vim.diagnostic.config({
+              virtual_text = { severity = { min = vim.diagnostic.severity.WARN } },
+              signs        = false,
             })
 
             -- ––– Keymaps –––
@@ -326,130 +323,7 @@
               command = "tabdo wincmd =",
             })
 
-            -- ––– Treesitter –––
-            -- Parsers pre-installed by Nix — no runtime install needed.
-            local ts_languages = { "lua", "nix", "python", "swift", "typescript", "javascript" }
-            local treesitter = require("nvim-treesitter")
-            treesitter.setup()
-
-            autocmd("FileType", {
-              group   = augroup("treesitter_features", { clear = true }),
-              pattern = ts_languages,
-              callback = function()
-                if pcall(vim.treesitter.start) then
-                  vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
-                end
-              end,
-            })
-
-            -- ––– Formatting –––
-            require("conform").setup({
-              formatters_by_ft = {
-                lua             = { "stylua" },
-              nix             = { "nixfmt" },
-                python          = { "black" },
-                swift           = { "swiftformat" },
-                javascript      = { "prettier" },
-                javascriptreact = { "prettier" },
-                typescript      = { "prettier" },
-                typescriptreact = { "prettier" },
-                vue             = { "prettier" },
-                html            = { "prettier" },
-                css             = { "prettier" },
-                scss            = { "prettier" },
-                less            = { "prettier" },
-              },
-              format_on_save = {
-                timeout_ms = 3000,
-                lsp_format = "fallback",
-              },
-            })
-
-            -- ––– LSP –––
-            vim.diagnostic.config({
-              virtual_text = { severity = { min = vim.diagnostic.severity.WARN } },
-              signs        = false,
-            })
-
-            -- vue-language-server is configured by nvf (vim.languages.vue).
-            -- Its tsserver/request forwarding looks for "typescript-language-server"
-            -- via vim.lsp.get_clients, so we register ts_ls under that name.
-            local servers = {
-              nil_ls = {
-                cmd          = { "nil" },
-                filetypes    = { "nix" },
-                root_markers = { "flake.nix", ".git" },
-                settings     = { ["nil"] = { formatting = { command = { "nixfmt" } } } },
-              },
-              sourcekit = {
-                cmd          = { "sourcekit-lsp" },
-                filetypes    = { "swift" },
-                root_markers = { "Package.swift", ".git" },
-              },
-              pyright = {
-                cmd          = { "pyright-langserver", "--stdio" },
-                filetypes    = { "python" },
-                root_markers = { "pyproject.toml", "setup.py", ".git" },
-                settings     = { python = { analysis = {
-                  autoSearchPaths    = true,
-                  useLibraryCodeForTypes = true,
-                } } },
-              },
-              lua_ls = {
-                cmd          = { "lua-language-server" },
-                filetypes    = { "lua" },
-                root_markers = { ".luarc.json", ".git" },
-                settings     = { Lua = {
-                  runtime   = { version = "LuaJIT" },
-                  workspace = {
-                    library = vim.api.nvim_get_runtime_file("", true),
-                    checkThirdParty = false,
-                  },
-                } },
-              },
-              ["typescript-language-server"] = {
-                cmd          = { "typescript-language-server", "--stdio" },
-                filetypes    = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
-                root_markers = { "tsconfig.json", "package.json", ".git" },
-              },
-              html = {
-                cmd          = { "vscode-html-language-server", "--stdio" },
-                filetypes    = { "html" },
-                root_markers = { "package.json", ".git" },
-              },
-              cssls = {
-                cmd          = { "vscode-css-language-server", "--stdio" },
-                filetypes    = { "css", "scss", "less" },
-                root_markers = { "package.json", ".git" },
-              },
-              tailwindcss = {
-                cmd          = { "tailwindcss-language-server", "--stdio" },
-                filetypes    = {
-                  "html", "css", "scss",
-                  "javascript", "javascriptreact", "typescript", "typescriptreact", "vue",
-                },
-                root_markers = {
-                  "tailwind.config.js", "tailwind.config.ts",
-                  "postcss.config.js", "package.json", ".git",
-                },
-              },
-            }
-
-            for name, cfg in pairs(servers) do
-              cfg.capabilities = blink.get_lsp_capabilities(cfg.capabilities)
-              vim.lsp.config(name, cfg)
-            end
-
-            -- Only enable servers whose binary is actually in PATH.
-            -- nvf's extraPackages covers the defaults; devenv adds project-specific ones.
-            local function enable_lsp()
-              local enabled = vim.tbl_filter(function(name)
-                return vim.fn.executable(servers[name].cmd[1]) == 1
-              end, vim.tbl_keys(servers))
-              if #enabled > 0 then vim.lsp.enable(enabled) end
-            end
-            enable_lsp()
-
+            -- ––– LSP keymaps (override nvf defaults) –––
             autocmd("LspAttach", {
               group    = augroup("lsp_keys", { clear = true }),
               callback = function(ev)
