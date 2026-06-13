@@ -39,6 +39,13 @@ eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || true
 # Install packages
 brew bundle --file "$HOME/.config/Brewfile"
 
+# Install tmux plugins
+mkdir -p "$HOME/.tmux/plugins"
+if [ ! -d "$HOME/.tmux/plugins/tpm" ]; then
+	git clone https://github.com/tmux-plugins/tpm "$HOME/.tmux/plugins/tpm"
+fi
+"$HOME/.tmux/plugins/tpm/bin/install_plugins"
+
 # Enable Touch ID for sudo
 if ! grep -q '^auth.*pam_tid.so' /etc/pam.d/sudo_local 2>/dev/null; then
 	sudo sed 's/^#auth/auth/' /etc/pam.d/sudo_local.template | sudo tee /etc/pam.d/sudo_local > /dev/null

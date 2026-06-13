@@ -18,7 +18,7 @@ curl -fsSl https://raw.githubusercontent.com/mac95sb/configuration/refs/heads/ma
 | Command | Action |
 |---------|--------|
 | `kp <port>` | Kill the process listening on a port |
-| `tdl [agent ...]` | Open a tmux coding layout: editor left, optional agent pane right, shell bottom |
+| `tdl [agent ...]` | Open a tmux coding layout: editor left, optional agent pane right, floating shell on `Alt+Shift+F` |
 
 ---
 
@@ -63,7 +63,7 @@ curl -fsSl https://raw.githubusercontent.com/mac95sb/configuration/refs/heads/ma
 
 ---
 
-### tmux 
+### tmux
 
 #### Panes
 
@@ -71,6 +71,7 @@ curl -fsSl https://raw.githubusercontent.com/mac95sb/configuration/refs/heads/ma
 |-----|--------|
 | `Alt+h/j/k/l` | Focus pane left/down/up/right |
 | `Alt+H/J/K/L` | Resize pane left/down/up/right |
+| `Alt+Shift+F` | Toggle floating shell |
 | `Alt+Enter` | Split horizontal |
 | `Alt+Shift+Enter` | Split vertical |
 | `Ctrl+Alt+h` | New pane to the left |

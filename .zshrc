@@ -64,7 +64,6 @@ tdl() {
   editor_pane=$(tmux display-message -p -t "$target" '#{pane_id}')
   tmux send-keys -t "$editor_pane" -- "$editor" C-m
 
-  tmux split-window -v -p 18 -t "$editor_pane" -c "$PWD" >/dev/null
   agent_pane=$(tmux split-window -h -p 30 -t "$editor_pane" -c "$PWD" -P -F '#{pane_id}')
 
   local pane="$agent_pane"
