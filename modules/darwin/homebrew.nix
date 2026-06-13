@@ -1,51 +1,55 @@
-{ inputs, ... }: {
-  nix-homebrew = {
-    enable = true;
-    enableRosetta = true;
-    user = "mac";
-    autoMigrate = true;
-    taps = {
-      "homebrew/homebrew-core" = inputs.homebrew-core;
-      "homebrew/homebrew-cask" = inputs.homebrew-cask;
-    };
-    mutableTaps = false;
-  };
+{ inputs, den, ... }: {
+  den.aspects.mac.darwin = { ... }: {
+    imports = [ inputs.nix-homebrew.darwinModules.nix-homebrew ];
 
-  homebrew = {
-    enable = true;
-    onActivation = {
-      autoUpdate = true;
-      upgrade = true;
-      cleanup = "zap";
+    nix-homebrew = {
+      enable = true;
+      enableRosetta = true;
+      user = "mac";
+      autoMigrate = true;
+      taps = {
+        "homebrew/homebrew-core" = inputs.homebrew-core;
+        "homebrew/homebrew-cask" = inputs.homebrew-cask;
+      };
+      mutableTaps = false;
     };
 
-    # CLI tools not available in nixpkgs
-    brews = [
-      "container" # Apple Silicon containerization framework
-    ];
+    homebrew = {
+      enable = true;
+      onActivation = {
+        autoUpdate = true;
+        upgrade = true;
+        cleanup = "zap";
+      };
 
-    # GUI applications and fonts not found in nixpkgs
-    casks = [
-      "claude-code"
-      "codex"
-      "crossover"
-      "font-sf-mono-nerd-font-ligaturized"
-      "ghostty"
-      "steam"
-    ];
+      # CLI tools not available in nixpkgs
+      brews = [
+        "container" # Apple Silicon containerization framework
+      ];
 
-    masApps = {
-      "Compressor"     = 424390742;
-      "Final Cut Pro"  = 424389933;
-      "Keynote"        = 361285480;
-      "Logic Pro"      = 634148309;
-      "MainStage"      = 634159523;
-      "Motion"         = 434290957;
-      "Numbers"        = 361304891;
-      "Pages"          = 361309726;
-      "Pixelmator Pro" = 1289583905;
-      "Wipr 2"         = 1662217862;
-      "Xcode"          = 497799835;
+      # GUI applications and fonts not in nixpkgs
+      casks = [
+        "claude-code"
+        "codex"
+        "crossover"
+        "font-sf-mono-nerd-font-ligaturized"
+        "ghostty"
+        "steam"
+      ];
+
+      masApps = {
+        "Compressor"     = 424390742;
+        "Final Cut Pro"  = 424389933;
+        "Keynote"        = 361285480;
+        "Logic Pro"      = 634148309;
+        "MainStage"      = 634159523;
+        "Motion"         = 434290957;
+        "Numbers"        = 361304891;
+        "Pages"          = 361309726;
+        "Pixelmator Pro" = 1289583905;
+        "Wipr 2"         = 1662217862;
+        "Xcode"          = 497799835;
+      };
     };
   };
 }

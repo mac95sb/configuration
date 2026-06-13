@@ -6,7 +6,7 @@ and dotfiles declaratively via nix-darwin, home-manager, nvf, and nix-homebrew.
 ## Quick Start
 
 ```sh
-# 1. Install Lix (a Nix implementation with better UX)
+# 1. Install Lix (A Nix Implementation)
 curl -sSf -L https://install.lix.systems/lix | sh -s -- install
 
 # 2. Generate an SSH key and add it to GitHub
@@ -47,7 +47,7 @@ sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#mac
 
 | Layer | Tool | Covers |
 |-------|------|--------|
-| System | nix-darwin | firewall, keyboard, trackpad, Night Shift, dock, symbolichotkeys |
+| System | nix-darwin | firewall, keyboard, trackpad, Night Shift, dock |
 | Packages | nixpkgs | neovim (nvf), tmux, git, zsh, LSP servers, formatters |
 | GUI / Fonts | nix-homebrew + Homebrew casks | Ghostty, Claude Code, Codex, CrossOver, Steam, Liga SFMono Nerd Font |
 | App Store | homebrew masApps | Final Cut Pro, Logic Pro, Xcode, Pages, Keynote, etc. |
