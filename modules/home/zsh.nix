@@ -3,6 +3,10 @@
     programs.zsh = {
       enable = true;
       autocd = true;
+      enableCompletion = true;
+
+      autosuggestion.enable = true;
+      syntaxHighlighting.enable = true;
 
       history = {
         size = 50000;
@@ -19,9 +23,9 @@
         hr = "home-manager switch --flake ~/Developer/configuration#mac";
       };
 
+      # PATH extension is handled by home.sessionPath in defaults.nix.
+      # Only shell functions that have no structured home-manager equivalent remain here.
       initContent = ''
-        export PATH="$HOME/.local/bin:$PATH"
-
         _git_info() {
           local out
           out=$(git status --porcelain=v1 -b 2>/dev/null) || return
@@ -50,7 +54,6 @@
 
         tdl() {
           emulate -L zsh
-
           if ! command -v tmux >/dev/null 2>&1; then
             print -u2 "tdl: tmux is not installed"
             return 1
@@ -87,10 +90,7 @@
           (( $# )) && tmux send-keys -t "$pane" -- "''${@[-1]}" C-m
 
           tmux select-pane -t "$editor_pane"
-
-          if [[ -z $TMUX ]]; then
-            tmux attach-session -t "$session"
-          fi
+          [[ -z $TMUX ]] && tmux attach-session -t "$session"
         }
       '';
     };

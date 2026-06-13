@@ -1,7 +1,8 @@
 { den, ... }: {
-  den.aspects.mac.homeManager = { ... }: {
+  den.aspects.mac.homeManager = { pkgs, ... }: {
     programs.ghostty = {
       enable = true;
+      package = pkgs.ghostty-bin;
       settings = {
         theme = "Nvim Dark";
         background-opacity = 0.9;

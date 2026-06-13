@@ -1,10 +1,13 @@
 { den, ... }: {
   den.aspects.mac.homeManager = { ... }: {
-    home.file.".claude/settings.json".text = builtins.toJSON {
-      theme = "dark";
-      attribution = {
-        commit = "";
-        pr = "";
+    programs.claude-code = {
+      enable = true;
+      settings = {
+        theme = "dark";
+        attribution = {
+          commit = "";
+          pr = "";
+        };
       };
     };
   };
