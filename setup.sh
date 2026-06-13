@@ -30,6 +30,18 @@ for f in "$HOME"/.config/.[!.]*; do
 	ln -sf "$f" "$HOME/$base"
 done
 
+# Link pi's global agent
+mkdir -p "$HOME/.pi/agent"
+for f in "$HOME"/.config/pi/agent/*; do
+	[ -e "$f" ] || continue
+	base=$(basename "$f")
+	target="$HOME/.pi/agent/$base"
+	if [ -e "$target" ] && ! [ -L "$target" ]; then
+		mv "$target" "$target.bak.$(date +%Y%m%d_%H%M%S)"
+	fi
+	ln -sfn "$f" "$target"
+done
+
 # Install Homebrew if missing
 if ! command -v brew >/dev/null 2>&1; then
 	/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
