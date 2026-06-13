@@ -31,6 +31,8 @@ in
         # not the system PATH. devenv.nix per-project will shadow these where needed.
         extraPackages = with pkgs; [
           lua-language-server
+          nil                            # Nix LSP
+          nixfmt-rfc-style               # Nix formatter
           pyright
           nodePackages.typescript-language-server
           vscode-langservers-extracted   # html-lsp, css-lsp, eslint-lsp
@@ -45,7 +47,7 @@ in
           blink-cmp
           mini-nvim
           (nvim-treesitter.withPlugins (p: with p; [
-            lua python typescript javascript vue
+            lua nix python typescript javascript vue
             # swift grammar comes from Xcode's tree-sitter; add if available
           ]))
           conform-nvim
@@ -336,7 +338,7 @@ in
 
             -- ––– Treesitter –––
             -- Parsers pre-installed by Nix — no runtime install needed.
-            local ts_languages = { "lua", "python", "swift", "typescript", "javascript", "vue" }
+            local ts_languages = { "lua", "nix", "python", "swift", "typescript", "javascript", "vue" }
             local treesitter = require("nvim-treesitter")
             treesitter.setup()
 
@@ -354,6 +356,7 @@ in
             require("conform").setup({
               formatters_by_ft = {
                 lua             = { "stylua" },
+              nix             = { "nixfmt" },
                 python          = { "black" },
                 swift           = { "swiftformat" },
                 javascript      = { "prettier" },
@@ -382,6 +385,12 @@ in
             local vue_tsdk              = vim.g.nix_vue_tsdk
 
             local servers = {
+              nil_ls = {
+                cmd          = { "nil" },
+                filetypes    = { "nix" },
+                root_markers = { "flake.nix", ".git" },
+                settings     = { ["nil"] = { formatting = { command = { "nixfmt" } } } },
+              },
               sourcekit = {
                 cmd          = { "sourcekit-lsp" },
                 filetypes    = { "swift" },
