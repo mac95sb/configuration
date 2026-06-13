@@ -22,15 +22,10 @@
         cleanup = "zap";
       };
 
-      # CLI tools not available in nixpkgs
       brews = [
-        "container" # Apple Silicon containerization framework
+        "container"
       ];
 
-      # GUI applications and fonts not in nixpkgs
-      # ghostty → programs.ghostty with pkgs.ghostty-bin
-      # claude-code → programs.claude-code
-      # codex → programs.codex
       casks = [
         "crossover"
         "font-sf-mono-nerd-font-ligaturized"
