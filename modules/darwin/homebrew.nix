@@ -28,12 +28,12 @@
       ];
 
       # GUI applications and fonts not in nixpkgs
+      # ghostty → programs.ghostty with pkgs.ghostty-bin
+      # claude-code → programs.claude-code
+      # codex → programs.codex
       casks = [
-        "claude-code"
-        "codex"
         "crossover"
         "font-sf-mono-nerd-font-ligaturized"
-        "ghostty"
         "steam"
       ];
 

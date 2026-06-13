@@ -1,4 +1,4 @@
-{ den, pkgs, inputs, ... }: {
+{ den, inputs, ... }: {
   den.aspects.mac.homeManager = { pkgs, ... }: {
     programs.tmux = {
       enable = true;
@@ -9,6 +9,8 @@
       terminal = "tmux-256color";
       escapeTime = 0;
       focusEvents = true;
+      keyMode = "vi";
+      sensibleOnTop = false;
 
       plugins = [
         {
@@ -43,13 +45,11 @@
         set -g pane-border-lines single
 
         # Status bar
-        set -g status on
         set -g status-position bottom
         set -g status-justify centre
         set -g status-style "bg=default,fg=default"
         set -g status-left ""
         set -g status-right ""
-
         setw -g window-status-format         " #I "
         setw -g window-status-current-format " #I "
         setw -g window-status-style          "fg=#4f5258,bg=default"
@@ -60,7 +60,7 @@
         unbind-key -a -T root
         set -g prefix None
 
-        # Pane focus (Alt+hjkl) — pass through to nvim when it's the active process
+        # Pane focus (Alt+hjkl) — pass through to nvim when active
         is_nvim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\S+\/)?nvim$'"
         bind -n M-h if-shell "$is_nvim" "send-keys M-h" "select-pane -L"
         bind -n M-j if-shell "$is_nvim" "send-keys M-j" "select-pane -D"
@@ -73,11 +73,11 @@
         bind -n M-K resize-pane -U 5
         bind -n M-L resize-pane -R 5
 
-        # New tab / close tab
+        # New / close window
         bind -n M-t new-window
         bind -n M-w kill-window
 
-        # Directional new pane (Ctrl+Alt+hjkl)
+        # Directional split (Ctrl+Alt+hjkl)
         bind -n C-M-h split-window -h \; swap-pane -D
         bind -n C-M-j split-window -v
         bind -n C-M-k split-window -v \; swap-pane -D
@@ -94,21 +94,19 @@
         bind -n M-8 select-window -t 8
         bind -n M-9 select-window -t 9
 
-        # Copy mode (vi keys)
-        setw -g mode-keys vi
+        # Copy mode (vi bindings set via keyMode = "vi" above)
         bind -n M-[ copy-mode
         bind -T copy-mode-vi v send -X begin-selection
         bind -T copy-mode-vi y send -X copy-pipe-and-cancel "pbcopy"
         bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel "pbcopy"
 
-        # Floating shell hook
+        # Floating shell session hook
         set-hook -g session-created \
           'if -F "#{==:#{session_name},tdl-shell}" \
-          "set-option -t tdl-shell status off \; \
-           split-window -h -p 50 -t tdl-shell:1.1 -c \"#{pane_current_path}\" \; \
-           select-pane -t tdl-shell:1.1"'
+           "set-option -t tdl-shell status off \; \
+            split-window -h -p 50 -t tdl-shell:1.1 -c \"#{pane_current_path}\" \; \
+            select-pane -t tdl-shell:1.1"'
 
-        # Colors
         set -ag terminal-overrides ",xterm-256color:RGB"
       '';
     };
