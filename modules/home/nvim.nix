@@ -1,23 +1,4 @@
-{ den, inputs, pkgs, lib, ... }:
-let
-  # Resolve vue-language-server store path so lua can find the TypeScript plugin.
-  # Falls back gracefully if the package isn't available under either attribute.
-  vueLS =
-    if pkgs ? vue-language-server then pkgs.vue-language-server
-    else if pkgs.nodePackages ? vue-language-server then pkgs.nodePackages.vue-language-server
-    else null;
-
-  vueTypescriptPlugin =
-    if vueLS != null
-    then "${vueLS}/lib/node_modules/@vue/language-server/node_modules/@vue/typescript-plugin"
-    else "";
-
-  vueTsdk =
-    if vueLS != null
-    then "${vueLS}/lib/node_modules/typescript/lib"
-    else "";
-in
-{
+{ den, inputs, pkgs, ... }: {
   den.aspects.mac.homeManager = { pkgs, lib, ... }: {
     imports = [ inputs.nvf.homeManagerModules.default ];
 
@@ -27,8 +8,21 @@ in
         viAlias = false;
         vimAlias = false;
 
-        # All LSP binaries and formatters live here — available only to neovim,
-        # not the system PATH. devenv.nix per-project will shadow these where needed.
+        # nvf's LSP infrastructure — required for vim.languages.vue to work.
+        lsp.enable = true;
+
+        # Vue handled entirely by nvf: grammar, vue-language-server (with its
+        # built-in tsserver/request forwarding to typescript-language-server),
+        # and no biome format (we use prettier via our conform config below).
+        languages.vue = {
+          enable = true;
+          lsp.servers = [ "vue-language-server" ];
+          treesitter.enable = true;
+          format.enable = false;
+        };
+
+        # LSP binaries and formatters — available only to neovim's PATH.
+        # devenv.nix per-project can shadow these where needed.
         extraPackages = with pkgs; [
           lua-language-server
           nil                            # Nix LSP
@@ -40,14 +34,14 @@ in
           nodePackages.prettier
           stylua
           black
-        ] ++ lib.optional (vueLS != null) vueLS;
+        ];
 
-        # Plugins managed by Nix — replaces vim.pack.add
         startPlugins = with pkgs.vimPlugins; [
           blink-cmp
           mini-nvim
           (nvim-treesitter.withPlugins (p: with p; [
-            lua nix python typescript javascript vue
+            lua nix python typescript javascript
+            # vue grammar managed by vim.languages.vue.treesitter
             # swift grammar comes from Xcode's tree-sitter; add if available
           ]))
           conform-nvim
@@ -56,10 +50,6 @@ in
         luaConfigRC.init = # lua
           ''
             vim.loader.enable()
-
-            -- Nix-resolved paths for vue-language-server
-            vim.g.nix_vue_typescript_plugin = "${vueTypescriptPlugin}"
-            vim.g.nix_vue_tsdk             = "${vueTsdk}"
 
             -- ––– Leaders –––
             vim.g.mapleader      = " "
@@ -338,7 +328,7 @@ in
 
             -- ––– Treesitter –––
             -- Parsers pre-installed by Nix — no runtime install needed.
-            local ts_languages = { "lua", "nix", "python", "swift", "typescript", "javascript", "vue" }
+            local ts_languages = { "lua", "nix", "python", "swift", "typescript", "javascript" }
             local treesitter = require("nvim-treesitter")
             treesitter.setup()
 
@@ -381,9 +371,9 @@ in
               signs        = false,
             })
 
-            local vue_typescript_plugin = vim.g.nix_vue_typescript_plugin
-            local vue_tsdk              = vim.g.nix_vue_tsdk
-
+            -- vue-language-server is configured by nvf (vim.languages.vue).
+            -- Its tsserver/request forwarding looks for "typescript-language-server"
+            -- via vim.lsp.get_clients, so we register ts_ls under that name.
             local servers = {
               nil_ls = {
                 cmd          = { "nil" },
@@ -417,24 +407,14 @@ in
                   },
                 } },
               },
-              ts_ls = {
+              ["typescript-language-server"] = {
                 cmd          = { "typescript-language-server", "--stdio" },
-                filetypes    = { "typescript", "javascript", "typescriptreact", "javascriptreact", "vue" },
+                filetypes    = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
                 root_markers = { "tsconfig.json", "package.json", ".git" },
-                init_options = {
-                  hostInfo = "neovim",
-                  plugins  = {
-                    {
-                      name      = "@vue/typescript-plugin",
-                      location  = vue_typescript_plugin,
-                      languages = { "typescript", "javascript", "vue" },
-                    },
-                  },
-                },
               },
               html = {
                 cmd          = { "vscode-html-language-server", "--stdio" },
-                filetypes    = { "html", "vue" },
+                filetypes    = { "html" },
                 root_markers = { "package.json", ".git" },
               },
               cssls = {
@@ -452,40 +432,6 @@ in
                   "tailwind.config.js", "tailwind.config.ts",
                   "postcss.config.js", "package.json", ".git",
                 },
-              },
-              volar = {
-                cmd          = { "vue-language-server", "--stdio", "--tsdk=" .. vue_tsdk },
-                filetypes    = { "vue" },
-                root_markers = { "vite.config.ts", "package.json", ".git" },
-                on_init      = function(client)
-                  client.handlers["tsserver/request"] = function(_, result, context)
-                    local retries = 0
-                    local function try()
-                      local ts_client = vim.lsp.get_clients({ bufnr = context.bufnr, name = "ts_ls" })[1]
-                      if not ts_client then
-                        if retries < 10 then
-                          retries = retries + 1
-                          vim.defer_fn(try, 100)
-                        else
-                          vim.notify(
-                            "Could not find ts_ls required by vue-language-server.",
-                            vim.log.levels.ERROR
-                          )
-                        end
-                        return
-                      end
-                      local id, command, payload = result[1][1], result[1][2], result[1][3]
-                      ts_client:exec_cmd({
-                        title     = "vue_request_forward",
-                        command   = "typescript.tsserverRequest",
-                        arguments = { command, payload },
-                      }, { bufnr = context.bufnr }, function(_, response)
-                        client:notify("tsserver/response", { { id, response and response.body } })
-                      end)
-                    end
-                    try()
-                  end
-                end,
               },
             }
 
