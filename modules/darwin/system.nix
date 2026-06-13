@@ -1,16 +1,13 @@
 { den, ... }: {
   den.aspects.mac.darwin = { ... }: {
-    # Touch ID for sudo (with tmux reattach support)
     security.pam.services.sudo_local.touchIdAuth = true;
     security.pam.services.sudo_local.reattach = true;
 
-    # Caps Lock → Control
     system.keyboard = {
       enableKeyMapping = true;
       remapCapsLockToControl = true;
     };
 
-    # Firewall
     networking.firewall.enable = true;
 
     system.defaults = {
@@ -20,32 +17,15 @@
       };
 
       NSGlobalDomain = {
-        AppleInterfaceStyle = "Dark";
-        NSAutomaticQuoteSubstitutionEnabled = false;
-        NSAutomaticDashSubstitutionEnabled = false;
-        NSAutomaticSpellingCorrectionEnabled = false;
-        "com.apple.sound.beep.feedback" = 0;
-        KeyRepeat = 2;
-        InitialKeyRepeat = 15;
-      };
-
-      dock = {
-        autohide = true;
-        show-recents = false;
-        minimize-to-application = true;
-        tilesize = 48;
+        AppleInterfaceStyleSwitchesAutomatically = true;
       };
 
       finder = {
         AppleShowAllExtensions = true;
         FXPreferredViewStyle = "clmv";
         ShowPathbar = true;
-        ShowStatusBar = true;
         FXEnableExtensionChangeWarning = false;
       };
-
-      screencapture.location = "~/Desktop";
-      loginwindow.GuestEnabled = false;
 
       # Ctrl+1–9: switch to Desktop 1–9
       # Parameters: [unicode_char, key_code, modifier_flags] — Ctrl = 262144
@@ -62,14 +42,6 @@
       };
     };
 
-    # Night Shift: CoreBrightness stores schedule per-display UUID so the
-    # sunset-to-sunrise schedule must be enabled once via System Settings →
-    # Displays → Night Shift. This activation script fixes the colour temperature.
-    system.activationScripts.nightShift.text = ''
-      /usr/bin/defaults write com.apple.CoreBrightness \
-        CBBlueLightReductionCCTTargetRaw -float 2700 2>/dev/null || true
-    '';
-
     nix.settings = {
       experimental-features = "nix-command flakes";
       auto-optimise-store = true;
@@ -85,6 +57,6 @@
       home = "/Users/mac";
     };
 
-    system.stateVersion = 6;
+    system.stateVersion = 7;
   };
 }
