@@ -8,6 +8,44 @@
         viAlias = false;
         vimAlias = false;
 
+        enableLuaLoader = true;
+
+        globals = {
+          mapleader      = " ";
+          maplocalleader = "\\";
+        };
+
+        options = {
+          number         = true;
+          relativenumber = true;
+          wrap           = false;
+          scrolloff      = 10;
+          signcolumn     = "yes";
+          cursorline     = true;
+          showmode       = false;
+          ruler          = false;
+          showcmd        = false;
+          cmdheight      = 0;
+          laststatus     = 2;
+          pumheight      = 10;
+          pumborder      = "rounded";
+          tabstop        = 2;
+          shiftwidth     = 2;
+          softtabstop    = 2;
+          expandtab      = true;
+          smartindent    = true;
+          ignorecase     = true;
+          smartcase      = true;
+          undofile       = true;
+          updatetime     = 300;
+          timeoutlen     = 500;
+          completeopt    = "menu,menuone,noselect";
+          splitright     = true;
+          splitbelow     = true;
+          termguicolors  = true;
+          clipboard      = "unnamedplus";
+        };
+
         lsp.enable = true;
 
         languages = {
@@ -46,46 +84,6 @@
 
         luaConfigRC.init = # lua
           ''
-            vim.loader.enable()
-
-            -- ––– Leaders –––
-            vim.g.mapleader      = " "
-            vim.g.maplocalleader = "\\"
-
-            -- ––– Options –––
-            local opt = vim.opt
-
-            opt.number         = true
-            opt.relativenumber = true
-            opt.wrap           = false
-            opt.scrolloff      = 10
-            opt.signcolumn     = "yes"
-            opt.cursorline     = true
-            opt.showmode       = false
-            opt.ruler          = false
-            opt.showcmd        = false
-            opt.cmdheight      = 0
-            opt.laststatus     = 2
-            opt.pumheight      = 10
-            opt.pumborder      = "rounded"
-
-            opt.tabstop     = 2
-            opt.shiftwidth  = 2
-            opt.softtabstop = 2
-            opt.expandtab   = true
-            opt.smartindent = true
-
-            opt.ignorecase    = true
-            opt.smartcase     = true
-            opt.undofile      = true
-            opt.updatetime    = 300
-            opt.timeoutlen    = 500
-            opt.completeopt   = "menu,menuone,noselect"
-            opt.splitright    = true
-            opt.splitbelow    = true
-            opt.termguicolors = true
-            opt.clipboard     = "unnamedplus"
-
             -- ––– Transparency –––
             local function apply_transparency()
               local groups = {

@@ -33,11 +33,6 @@
       url = "github:homebrew/homebrew-cask";
       flake = false;
     };
-
-    tmux-floax = {
-      url = "github:omerxx/tmux-floax";
-      flake = false;
-    };
   };
 
   outputs = inputs:

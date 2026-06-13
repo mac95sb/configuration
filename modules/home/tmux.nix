@@ -1,4 +1,4 @@
-{ den, inputs, ... }: {
+{ den, ... }: {
   den.aspects.mac.homeManager = { pkgs, ... }: {
     programs.tmux = {
       enable = true;
@@ -14,12 +14,7 @@
 
       plugins = [
         {
-          plugin = pkgs.tmuxPlugins.mkTmuxPlugin {
-            pluginName = "floax";
-            rtpFilePath = "floax.tmux";
-            version = "unstable";
-            src = inputs.tmux-floax;
-          };
+          plugin = pkgs.tmuxPlugins.tmux-floax;
           extraConfig = ''
             set -g @floax-bind '-n M-F'
             set -g @floax-width '88%'

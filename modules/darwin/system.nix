@@ -21,7 +21,6 @@
       };
 
       finder = {
-        AppleShowAllExtensions = true;
         FXPreferredViewStyle = "clmv";
         ShowPathbar = true;
         FXEnableExtensionChangeWarning = false;
@@ -50,11 +49,6 @@
     nixpkgs = {
       hostPlatform = "aarch64-darwin";
       config.allowUnfree = true;
-    };
-
-    users.users.mac = {
-      name = "mac";
-      home = "/Users/mac";
     };
 
     system.stateVersion = 7;
