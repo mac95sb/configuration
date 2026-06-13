@@ -32,7 +32,7 @@
         push.autoSetupRemote = true;
         fetch.prune = true;
         core = {
-          editor = "vim";
+          editor = "nvim";
           pager = "less -FRX";
         };
         gpg.format = "ssh";

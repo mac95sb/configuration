@@ -8,9 +8,6 @@
 
       packages = with pkgs; [
         gh
-        ripgrep
-        jq
-        fd
       ];
     };
   };
