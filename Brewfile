@@ -1,9 +1,12 @@
+brew "claude"
+brew "codex"
 brew "container"
 brew "mas"
 brew "neovim"
 brew "node"
-brew "pi-coding-agent"
+brew "black"
 brew "tmux"
+brew "tree-sitter-cli"
 
 cask "crossover"
 cask "font-sf-mono-nerd-font-ligaturized"
