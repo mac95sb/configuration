@@ -23,4 +23,4 @@ mas "Numbers",        id: 361304891
 mas "Pages",          id: 361309726
 mas "Pixelmator Pro", id: 1289583905
 mas "Wipr 2",         id: 1662217862
-mas "Xcode",          id: 497799835
+#mas "Xcode",          id: 497799835
