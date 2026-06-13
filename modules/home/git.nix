@@ -42,5 +42,10 @@
         rerere.enabled = true;
       };
     };
+
+    programs.gh = {
+      enable = true;
+      settings.git_protocol = "ssh";
+    };
   };
 }
