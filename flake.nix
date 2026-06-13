@@ -4,7 +4,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
 
-    nix-darwin = {
+    darwin = {
       url = "github:nix-darwin/nix-darwin/master";
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -13,6 +13,9 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    den.url = "github:denful/den";
+    import-tree.url = "github:denful/import-tree";
 
     nvf = {
       url = "github:NotAShelf/nvf";
@@ -37,23 +40,9 @@
     };
   };
 
-  outputs = inputs@{ self, nixpkgs, nix-darwin, home-manager, nvf, nix-homebrew, ... }: {
-    darwinConfigurations.mac = nix-darwin.lib.darwinSystem {
-      system = "aarch64-darwin";
+  outputs = inputs:
+    (inputs.nixpkgs.lib.evalModules {
+      modules = [ (inputs.import-tree ./modules) ];
       specialArgs = { inherit inputs; };
-      modules = [
-        ./modules/darwin
-        home-manager.darwinModules.home-manager
-        nix-homebrew.darwinModules.nix-homebrew
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            extraSpecialArgs = { inherit inputs; };
-            users.mac = import ./modules/home;
-          };
-        }
-      ];
-    };
-  };
+    }).config.flake;
 }
