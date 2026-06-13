@@ -1,6 +1,6 @@
 { den, ... }:
 let
-  commentStyle = ''
+  globalContext = ''
     When writing code comments, only explain *why* something is done when
     the reason is non-obvious (e.g. a subtle invariant, a workaround for a
     specific bug, a hidden constraint). Never write comments that describe
@@ -15,18 +15,17 @@ in
     programs.claude-code = {
       enable = true;
       settings = {
-        theme = "dark";
         attribution = {
           commit = "";
           pr = "";
         };
       };
-      context = commentStyle;
+      context = globalContext;
     };
 
     programs.codex = {
       enable = true;
-      context = commentStyle;
+      context = globalContext;
     };
   };
 }
