@@ -15,6 +15,9 @@ opt.scrolloff      = 10
 opt.signcolumn     = "yes"
 opt.cursorline     = true
 opt.showmode       = false
+opt.ruler          = false
+opt.showcmd        = false
+opt.cmdheight      = 0
 opt.laststatus     = 2
 opt.pumheight      = 10
 opt.pumborder      = "rounded"
@@ -40,8 +43,10 @@ opt.clipboard = "unnamedplus"
 
 -- ––– Plugins –––
 vim.pack.add({
+  { src = "https://github.com/Saghen/blink.cmp", version = "v1.10.2" },
   "https://github.com/echasnovski/mini.nvim",
   "https://github.com/nvim-treesitter/nvim-treesitter",
+  "https://github.com/stevearc/conform.nvim",
   "https://github.com/williamboman/mason.nvim",
 })
 
@@ -57,13 +62,70 @@ local function apply_transparency()
   end
 end
 
-vim.api.nvim_create_autocmd("ColorScheme", { pattern = "*", callback = apply_transparency })
+local function apply_ui_highlights()
+  apply_transparency()
+  local mode = {
+    MiniStatuslineModeNormal  = "#7aa2f7",
+    MiniStatuslineModeInsert  = "#9ece6a",
+    MiniStatuslineModeVisual  = "#bb9af7",
+    MiniStatuslineModeReplace = "#f7768e",
+    MiniStatuslineModeCommand = "#e0af68",
+    MiniStatuslineModeOther   = "#7dcfff",
+  }
+  for group, fg in pairs(mode) do
+    vim.api.nvim_set_hl(0, group, { fg = fg, bg = "NONE", bold = true })
+  end
+  vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = "#c0caf5", bg = "NONE" })
+  vim.api.nvim_set_hl(0, "MiniStatuslineInactive", { fg = "#565f89", bg = "NONE" })
+end
+
+vim.api.nvim_create_autocmd("ColorScheme", { pattern = "*", callback = apply_ui_highlights })
 vim.cmd.colorscheme("default")
+apply_ui_highlights()
 
 -- ––– Mini modules –––
 for _, mod in ipairs({ "icons", "git", "files", "extra" }) do
   require("mini." .. mod).setup()
 end
+
+-- mini.statusline — mode colour bars, filename/branch, cursor location only
+local statusline = require("mini.statusline")
+local function statusline_branch()
+  local summary = vim.b.minigit_summary_string or vim.b.gitsigns_head
+  if summary == nil or summary == "" then return "" end
+  return summary:match("^[^|%s%(]+") or summary
+end
+
+statusline.setup({
+  use_icons = true,
+  content = {
+    active = function()
+      local _, mode_hl = statusline.section_mode({ trunc_width = 120 })
+      local filename = vim.fn.expand("%:t")
+      if filename == "" then filename = "[No Name]" end
+      local branch = statusline_branch()
+      local left = branch == "" and filename or (filename .. " " .. branch)
+      local location = "%l:%c"
+
+      return statusline.combine_groups({
+        { hl = mode_hl, strings = { "▊" } },
+        { hl = "MiniStatuslineFilename", strings = { left } },
+        "%=",
+        { hl = "MiniStatuslineFilename", strings = { location } },
+        { hl = mode_hl, strings = { "▊" } },
+      })
+    end,
+    inactive = function()
+      local filename = vim.fn.expand("%:t")
+      if filename == "" then filename = "[No Name]" end
+      return statusline.combine_groups({
+        { hl = "MiniStatuslineInactive", strings = { "▊", filename } },
+        "%=",
+        { hl = "MiniStatuslineInactive", strings = { "%l:%c", "▊" } },
+      })
+    end,
+  },
+})
 
 -- mini.diff — signs against HEAD (stable regardless of staging state)
 require("mini.diff").setup({
@@ -126,6 +188,48 @@ require("mini.pick").setup({
   },
 })
 
+-- blink.cmp — completion and LSP signature help
+local blink = require("blink.cmp")
+blink.setup({
+  keymap = { preset = "default" },
+  appearance = {
+    nerd_font_variant = "mono",
+  },
+  completion = {
+    documentation = { auto_show = false },
+    trigger = {
+      show_on_blocked_trigger_characters = {},
+    },
+  },
+  sources = {
+    default = { "lsp", "path", "snippets", "buffer", "class_names" },
+    providers = {
+      lsp = {
+        override = {
+          get_trigger_characters = function(self)
+            local trigger_characters = self:get_trigger_characters()
+            vim.list_extend(trigger_characters, { " " })
+            return trigger_characters
+          end,
+        },
+      },
+      class_names = {
+        name = "Classes",
+        module = "config.class_source",
+      },
+    },
+  },
+  fuzzy = {
+    implementation = "lua",
+  },
+  signature = {
+    enabled = true,
+    window = {
+      show_documentation = false,
+    },
+  },
+})
+
 -- ––– Keymaps –––
 local map = vim.keymap.set
 
@@ -181,12 +285,6 @@ map("n", "<A-l>", function() nav("l") end, { desc = "Navigate: right" })
 -- Keep visual selection after indent
 map("x", "<", "<gv")
 map("x", ">", ">gv")
-
--- Move lines
-map("n", "<A-j>", "<Cmd>m .+1<CR>==",  { desc = "Move line down" })
-map("n", "<A-k>", "<Cmd>m .-2<CR>==",  { desc = "Move line up" })
-map("x", "<A-j>", ":m '>+1<CR>gv=gv", { desc = "Move selection down" })
-map("x", "<A-k>", ":m '<-2<CR>gv=gv", { desc = "Move selection up" })
 
 -- Clear search highlight
 map("n", "<Esc>", "<Cmd>nohlsearch<CR>", { desc = "Clear search highlight" })
@@ -254,7 +352,42 @@ vim.defer_fn(function() treesitter.install(ts_languages) end, 0)
 -- ––– Mason –––
 require("mason").setup()
 
+-- ––– Formatting –––
+require("conform").setup({
+  formatters_by_ft = {
+    lua = { "stylua" },
+    python = { "black" },
+    swift = { "swiftformat" },
+    javascript = { "prettier" },
+    javascriptreact = { "prettier" },
+    typescript = { "prettier" },
+    typescriptreact = { "prettier" },
+    vue = { "prettier" },
+    html = { "prettier" },
+    css = { "prettier" },
+    scss = { "prettier" },
+    less = { "prettier" },
+  },
+  format_on_save = {
+    timeout_ms = 3000,
+    lsp_format = "fallback",
+  },
+})
+
 -- ––– LSP –––
+vim.diagnostic.config({
+  virtual_text = {
+    severity = { min = vim.diagnostic.severity.WARN },
+  },
+  signs = false,
+})
+
+-- ––– LSP –––
+local mason_packages = vim.fn.stdpath("data") .. "/mason/packages"
+local vue_language_server = mason_packages .. "/vue-language-server"
+local vue_typescript_plugin = vue_language_server .. "/node_modules/@vue/typescript-plugin"
+local vue_tsdk = vue_language_server .. "/node_modules/typescript/lib"
+
 local servers = {
   sourcekit = {
     cmd          = { "sourcekit-lsp" },
@@ -278,17 +411,91 @@ local servers = {
   },
   ts_ls = {
     cmd          = { "typescript-language-server", "--stdio" },
-    filetypes    = { "typescript", "javascript", "typescriptreact", "javascriptreact" },
+    filetypes    = { "typescript", "javascript", "typescriptreact", "javascriptreact", "vue" },
     root_markers = { "tsconfig.json", "package.json", ".git" },
+    init_options = {
+      hostInfo = "neovim",
+      plugins = {
+        {
+          name      = "@vue/typescript-plugin",
+          location  = vue_typescript_plugin,
+          languages = { "typescript", "javascript", "vue" },
+        },
+      },
+    },
+  },
+  html = {
+    cmd          = { "vscode-html-language-server", "--stdio" },
+    filetypes    = { "html", "vue" },
+    root_markers = { "package.json", ".git" },
+  },
+  cssls = {
+    cmd          = { "vscode-css-language-server", "--stdio" },
+    filetypes    = { "css", "scss", "less" },
+    root_markers = { "package.json", ".git" },
+  },
+  tailwindcss = {
+    cmd          = { "tailwindcss-language-server", "--stdio" },
+    filetypes    = {
+      "html",
+      "css",
+      "scss",
+      "javascript",
+      "javascriptreact",
+      "typescript",
+      "typescriptreact",
+      "vue",
+    },
+    root_markers = {
+      "tailwind.config.js",
+      "tailwind.config.cjs",
+      "tailwind.config.mjs",
+      "tailwind.config.ts",
+      "postcss.config.js",
+      "postcss.config.cjs",
+      "postcss.config.mjs",
+      "postcss.config.ts",
+      "package.json",
+      ".git",
+    },
   },
   volar = {
-    cmd          = { "vue-language-server", "--stdio" },
+    cmd          = { "vue-language-server", "--stdio", "--tsdk=" .. vue_tsdk },
     filetypes    = { "vue" },
     root_markers = { "vite.config.ts", "package.json", ".git" },
+    on_init      = function(client)
+      local retries = 0
+
+      client.handlers["tsserver/request"] = function(_, result, context)
+        local ts_client = vim.lsp.get_clients({ bufnr = context.bufnr, name = "ts_ls" })[1]
+        if not ts_client then
+          if retries <= 10 then
+            retries = retries + 1
+            vim.defer_fn(function()
+              client.handlers["tsserver/request"](_, result, context)
+            end, 100)
+          else
+            vim.notify("Could not find ts_ls client required by vue-language-server.", vim.log.levels.ERROR)
+          end
+          return
+        end
+
+        local request = result[1]
+        local id, command, payload = request[1], request[2], request[3]
+        ts_client:exec_cmd({
+          title = "vue_request_forward",
+          command = "typescript.tsserverRequest",
+          arguments = { command, payload },
+        }, { bufnr = context.bufnr }, function(_, response)
+          client:notify("tsserver/response", { { id, response and response.body } })
+        end)
+      end
+    end,
   },
 }
 
 for name, cfg in pairs(servers) do
+  cfg.capabilities = blink.get_lsp_capabilities(cfg.capabilities)
   vim.lsp.config(name, cfg)
 end
 
@@ -306,7 +513,18 @@ enable_lsp()
 vim.defer_fn(function()
   local ok, registry = pcall(require, "mason-registry")
   if not ok then return end
-  local packages = { "lua-language-server", "pyright", "typescript-language-server", "vue-language-server" }
+  local packages = {
+    "lua-language-server",
+    "pyright",
+    "typescript-language-server",
+    "vue-language-server",
+    "html-lsp",
+    "css-lsp",
+    "tailwindcss-language-server",
+    "stylua",
+    "prettier",
+    "swiftformat",
+  }
   registry.refresh(function()
     for _, name in ipairs(packages) do
       local pkg_ok, pkg = pcall(registry.get_package, name)
@@ -330,5 +548,10 @@ autocmd("LspAttach", {
     lmap("<leader>ca", vim.lsp.buf.code_action,    "LSP: code action")
     lmap("[d",         vim.diagnostic.goto_prev,   "Diagnostic: prev")
     lmap("]d",         vim.diagnostic.goto_next,   "Diagnostic: next")
+
+    local client = vim.lsp.get_client_by_id(ev.data.client_id)
+    if client and client:supports_method("textDocument/inlayHint") then
+      vim.lsp.inlay_hint.enable(true, { bufnr = ev.buf })
+    end
   end,
 })
