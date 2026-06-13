@@ -11,3 +11,5 @@ window-padding-y = 8
 window-padding-balance = true
 
 macos-option-as-alt = true
+
+keybind = alt+shift+3=text:#
