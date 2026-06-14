@@ -1,5 +1,5 @@
 { den, ... }: {
-  den.aspects.mac.homeManager = { ... }: {
+  den.aspects.mac.homeManager = { lib, ... }: {
     programs.zsh = {
       enable = true;
       autocd = true;
@@ -11,7 +11,7 @@
       history = {
         size = 50000;
         save = 50000;
-        path = "$HOME/.zsh_history";
+        path = "/Users/mac/.zsh_history";
         ignoreDups = true;
         ignoreSpace = true;
         expireDuplicatesFirst = true;
@@ -23,10 +23,8 @@
         hr = "home-manager switch --flake ~/Developer/configuration#mac";
       };
 
-      # PATH extension is handled by home.sessionPath in defaults.nix.
-      # Only shell functions that have no structured home-manager equivalent remain here.
-      initContent = ''
-        _git_info() {
+      siteFunctions = {
+        _git_info = ''
           local out
           out=$(git status --porcelain=v1 -b 2>/dev/null) || return
           local branch=''${''${out%%$'\n'*}#'## '}
@@ -35,24 +33,22 @@
           [[ $out == *$'\n'?[!\ ?]* ]] && s="*"
           [[ $out == *$'\n'[!\ ?]* ]] && s+="+"
           print " $branch$s"
-        }
+        '';
 
-        _build_prompt() {
+        _build_prompt = ''
           local e=$?
           local sym="%F{#a6dbff}"
           (( e != 0 )) && sym="%F{#ff9e64}"
           PROMPT="
         %F{#6C91BF}%~%F{#767676}$(_git_info)%f
         ''${sym}λ%f "
-        }
+        '';
 
-        precmd_functions+=(_build_prompt)
-
-        kp() {
+        kp = ''
           lsof -ti :"$1" | xargs kill -9
-        }
+        '';
 
-        tdl() {
+        tdl = ''
           emulate -L zsh
           if ! command -v tmux >/dev/null 2>&1; then
             print -u2 "tdl: tmux is not installed"
@@ -91,7 +87,11 @@
 
           tmux select-pane -t "$editor_pane"
           [[ -z $TMUX ]] && tmux attach-session -t "$session"
-        }
+        '';
+      };
+
+      initContent = lib.mkOrder 1200 ''
+        precmd_functions+=(_build_prompt)
       '';
     };
   };
