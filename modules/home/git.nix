@@ -1,5 +1,5 @@
 { den, ... }: {
-  den.aspects.mac.homeManager = { ... }: {
+  den.aspects.mac.homeManager = _: {
     programs.git = {
       enable = true;
 

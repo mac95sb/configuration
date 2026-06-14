@@ -1,5 +1,5 @@
 {
-  description = "Mac's nix-darwin configuration";
+  description = "Mac's configuration";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
@@ -35,17 +35,19 @@
     };
   };
 
-  outputs = inputs:
+  outputs =
+    inputs:
     let
-      flake = (inputs.nixpkgs.lib.evalModules {
-        modules = [ (inputs.import-tree ./modules) ];
-        specialArgs = { inherit inputs; };
-      }).config.flake;
+      flake =
+        (inputs.nixpkgs.lib.evalModules {
+          modules = [ (inputs.import-tree ./modules) ];
+          specialArgs = { inherit inputs; };
+        }).config.flake;
     in
-      builtins.removeAttrs flake [
-        "collisionPolicy"
-        "denful"
-        "id_hash"
-        "resolved"
-      ];
+    builtins.removeAttrs flake [
+      "collisionPolicy"
+      "denful"
+      "id_hash"
+      "resolved"
+    ];
 }

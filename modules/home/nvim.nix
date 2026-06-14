@@ -1,5 +1,6 @@
 { den, inputs, ... }: {
-  den.aspects.mac.homeManager = { lib, ... }:
+  den.aspects.mac.homeManager =
+    { lib, ... }:
     let
       lua = lib.generators.mkLuaInline;
     in
@@ -13,38 +14,38 @@
           hideSearchHighlight = true;
 
           globals = {
-            mapleader      = " ";
+            mapleader = " ";
             maplocalleader = "\\";
           };
 
           options = {
-            number         = true;
+            number = true;
             relativenumber = true;
-            wrap           = false;
-            scrolloff      = 10;
-            signcolumn     = "yes";
-            cursorline     = true;
-            showmode       = false;
-            ruler          = false;
-            showcmd        = false;
-            cmdheight      = 0;
-            laststatus     = 2;
-            pumheight      = 10;
-            tabstop        = 2;
-            shiftwidth     = 2;
-            softtabstop    = 2;
-            expandtab      = true;
-            smartindent    = true;
-            ignorecase     = true;
-            smartcase      = true;
-            undofile       = true;
-            updatetime     = 300;
-            timeoutlen     = 500;
-            completeopt    = "menu,menuone,noselect";
-            splitright     = true;
-            splitbelow     = true;
-            termguicolors  = true;
-            clipboard      = "unnamedplus";
+            wrap = false;
+            scrolloff = 10;
+            signcolumn = "no";
+            cursorline = true;
+            showmode = false;
+            ruler = false;
+            showcmd = false;
+            cmdheight = 0;
+            laststatus = 2;
+            pumheight = 10;
+            tabstop = 2;
+            shiftwidth = 2;
+            softtabstop = 2;
+            expandtab = true;
+            smartindent = true;
+            ignorecase = true;
+            smartcase = true;
+            undofile = true;
+            updatetime = 300;
+            timeoutlen = 500;
+            completeopt = "menu,menuone,noselect";
+            splitright = true;
+            splitbelow = true;
+            termguicolors = true;
+            clipboard = "unnamedplus";
           };
 
           lsp = {
@@ -52,22 +53,35 @@
             servers."*".capabilities = lua "require('blink.cmp').get_lsp_capabilities()";
           };
 
-          diagnostics.config = {
-            virtual_text.severity.min = lua "vim.diagnostic.severity.WARN";
-            signs = false;
+          diagnostics = {
+            enable = true;
+            config = {
+              virtual_text = {
+                prefix = "●";
+                source = "if_many";
+                spacing = 4;
+              };
+              signs = false;
+            };
           };
 
           languages = {
             enableTreesitter = true;
-            enableFormat     = true;
+            enableFormat = true;
 
-            nix  = { enable = true; format.type = [ "nixfmt" ]; };
+            nix = {
+              enable = true;
+              format.type = [ "nixfmt" ];
+            };
             vue = {
-              enable        = true;
-              lsp.servers   = [ "vue-language-server" ];
+              enable = true;
+              lsp.servers = [ "vue-language-server" ];
               format.enable = false;
             };
-          } // lib.genAttrs [ "html" "lua" "python" "typescript" "css" ] (_: { enable = true; });
+          }
+          // lib.genAttrs [ "html" "lua" "markdown" "python" "typescript" "css" ] (_: {
+            enable = true;
+          });
 
           # Tailwind has no vim.languages module.
           lsp.presets.tailwindcss-language-server.enable = true;
@@ -75,7 +89,7 @@
           formatter.conform-nvim.setupOpts = {
             format_on_save = {
               timeout_ms = 3000;
-              lsp_format  = "fallback";
+              lsp_format = "fallback";
             };
             formatters_by_ft.vue = [ "prettier" ];
           };
@@ -89,7 +103,12 @@
                 documentation.auto_show = false;
                 trigger.show_on_blocked_trigger_characters = [ ];
               };
-              sources.default = [ "lsp" "path" "snippets" "buffer" ];
+              sources.default = [
+                "lsp"
+                "path"
+                "snippets"
+                "buffer"
+              ];
               fuzzy.implementation = "lua";
               signature = {
                 enabled = true;
@@ -111,19 +130,19 @@
                 view = {
                   style = "sign";
                   signs = {
-                    add    = "┃";
+                    add = "┃";
                     change = "┃";
                     delete = "";
                   };
                 };
                 mappings = {
-                  apply      = "gh";
-                  reset      = "gH";
+                  apply = "gh";
+                  reset = "gH";
                   textobject = "ih";
                   goto_first = "[H";
-                  goto_prev  = "[h";
-                  goto_next  = "]h";
-                  goto_last  = "]H";
+                  goto_prev = "[h";
+                  goto_next = "]h";
+                  goto_last = "]H";
                 };
               };
             };
@@ -132,18 +151,54 @@
               enable = true;
               setupOpts = {
                 triggers = [
-                  { mode = "n"; keys = "<Leader>"; }
-                  { mode = "x"; keys = "<Leader>"; }
-                  { mode = "i"; keys = "<C-x>"; }
-                  { mode = "n"; keys = "g"; }
-                  { mode = "x"; keys = "g"; }
-                  { mode = "n"; keys = "'"; }
-                  { mode = "n"; keys = "`"; }
-                  { mode = "n"; keys = "\""; }
-                  { mode = "i"; keys = "<C-r>"; }
-                  { mode = "n"; keys = "<C-w>"; }
-                  { mode = "n"; keys = "z"; }
-                  { mode = "x"; keys = "z"; }
+                  {
+                    mode = "n";
+                    keys = "<Leader>";
+                  }
+                  {
+                    mode = "x";
+                    keys = "<Leader>";
+                  }
+                  {
+                    mode = "i";
+                    keys = "<C-x>";
+                  }
+                  {
+                    mode = "n";
+                    keys = "g";
+                  }
+                  {
+                    mode = "x";
+                    keys = "g";
+                  }
+                  {
+                    mode = "n";
+                    keys = "'";
+                  }
+                  {
+                    mode = "n";
+                    keys = "`";
+                  }
+                  {
+                    mode = "n";
+                    keys = "\"";
+                  }
+                  {
+                    mode = "i";
+                    keys = "<C-r>";
+                  }
+                  {
+                    mode = "n";
+                    keys = "<C-w>";
+                  }
+                  {
+                    mode = "n";
+                    keys = "z";
+                  }
+                  {
+                    mode = "x";
+                    keys = "z";
+                  }
                 ];
                 clues = [
                   (lua "require('mini.clue').gen_clues.builtin_completion()")
@@ -152,10 +207,26 @@
                   (lua "require('mini.clue').gen_clues.registers()")
                   (lua "require('mini.clue').gen_clues.windows()")
                   (lua "require('mini.clue').gen_clues.z()")
-                  { mode = "n"; keys = "<Leader>b";  desc = "Buffer"; }
-                  { mode = "n"; keys = "<Leader>t";  desc = "Tab"; }
-                  { mode = "n"; keys = "<Leader>f";  desc = "Find"; }
-                  { mode = "n"; keys = "<Leader>ca"; desc = "Code action"; }
+                  {
+                    mode = "n";
+                    keys = "<Leader>b";
+                    desc = "Buffer";
+                  }
+                  {
+                    mode = "n";
+                    keys = "<Leader>t";
+                    desc = "Tab";
+                  }
+                  {
+                    mode = "n";
+                    keys = "<Leader>f";
+                    desc = "Find";
+                  }
+                  {
+                    mode = "n";
+                    keys = "<Leader>ca";
+                    desc = "Code action";
+                  }
                 ];
                 window = {
                   delay = 200;
@@ -215,18 +286,67 @@
           };
 
           keymaps = [
-            { mode = "n"; key = "Q"; action = "<Nop>"; }
+            {
+              mode = "n";
+              key = "Q";
+              action = "<Nop>";
+            }
 
-            { mode = "n"; key = "<leader>bc"; action = "<Cmd>enew<CR>";                      desc = "Buffer: new"; }
-            { mode = "n"; key = "<leader>bn"; action = "<Cmd>bnext<CR>";                     desc = "Buffer: next"; }
-            { mode = "n"; key = "<leader>bp"; action = "<Cmd>bprevious<CR>";                 desc = "Buffer: prev"; }
-            { mode = "n"; key = "<leader>bd"; action = "<Cmd>bdelete<CR>";                   desc = "Buffer: delete"; }
-            { mode = "n"; key = "<leader>bo"; action = "<Cmd>%bdelete|edit #|bdelete #<CR>"; desc = "Buffer: only"; }
+            {
+              mode = "n";
+              key = "<leader>bc";
+              action = "<Cmd>enew<CR>";
+              desc = "Buffer: new";
+            }
+            {
+              mode = "n";
+              key = "<leader>bn";
+              action = "<Cmd>bnext<CR>";
+              desc = "Buffer: next";
+            }
+            {
+              mode = "n";
+              key = "<leader>bp";
+              action = "<Cmd>bprevious<CR>";
+              desc = "Buffer: prev";
+            }
+            {
+              mode = "n";
+              key = "<leader>bd";
+              action = "<Cmd>bdelete<CR>";
+              desc = "Buffer: delete";
+            }
+            {
+              mode = "n";
+              key = "<leader>bo";
+              action = "<Cmd>%bdelete|edit #|bdelete #<CR>";
+              desc = "Buffer: only";
+            }
 
-            { mode = "n"; key = "<leader>tc"; action = "<Cmd>tabnew<CR>";      desc = "Tab: new"; }
-            { mode = "n"; key = "<leader>td"; action = "<Cmd>tabclose<CR>";    desc = "Tab: close"; }
-            { mode = "n"; key = "<leader>tn"; action = "<Cmd>tabnext<CR>";     desc = "Tab: next"; }
-            { mode = "n"; key = "<leader>tp"; action = "<Cmd>tabprevious<CR>"; desc = "Tab: prev"; }
+            {
+              mode = "n";
+              key = "<leader>tc";
+              action = "<Cmd>tabnew<CR>";
+              desc = "Tab: new";
+            }
+            {
+              mode = "n";
+              key = "<leader>td";
+              action = "<Cmd>tabclose<CR>";
+              desc = "Tab: close";
+            }
+            {
+              mode = "n";
+              key = "<leader>tn";
+              action = "<Cmd>tabnext<CR>";
+              desc = "Tab: next";
+            }
+            {
+              mode = "n";
+              key = "<leader>tp";
+              action = "<Cmd>tabprevious<CR>";
+              desc = "Tab: prev";
+            }
 
             {
               mode = "n";
@@ -242,15 +362,55 @@
               desc = "Explorer: toggle";
             }
 
-            { mode = "n"; key = "<leader>ff"; action = "<Cmd>Pick files<CR>";     desc = "Find: files"; }
-            { mode = "n"; key = "<leader>fb"; action = "<Cmd>Pick buffers<CR>";   desc = "Find: buffers"; }
-            { mode = "n"; key = "<leader>f/"; action = "<Cmd>Pick grep_live<CR>"; desc = "Find: grep (live)"; }
-            { mode = "n"; key = "<leader>fh"; action = "<Cmd>Pick help<CR>";      desc = "Find: help"; }
+            {
+              mode = "n";
+              key = "<leader>ff";
+              action = "<Cmd>Pick files<CR>";
+              desc = "Find: files";
+            }
+            {
+              mode = "n";
+              key = "<leader>fb";
+              action = "<Cmd>Pick buffers<CR>";
+              desc = "Find: buffers";
+            }
+            {
+              mode = "n";
+              key = "<leader>f/";
+              action = "<Cmd>Pick grep_live<CR>";
+              desc = "Find: grep (live)";
+            }
+            {
+              mode = "n";
+              key = "<leader>fh";
+              action = "<Cmd>Pick help<CR>";
+              desc = "Find: help";
+            }
 
-            { mode = "n"; key = "<C-h>"; action = "<C-w>h"; desc = "Window: left"; }
-            { mode = "n"; key = "<C-j>"; action = "<C-w>j"; desc = "Window: down"; }
-            { mode = "n"; key = "<C-k>"; action = "<C-w>k"; desc = "Window: up"; }
-            { mode = "n"; key = "<C-l>"; action = "<C-w>l"; desc = "Window: right"; }
+            {
+              mode = "n";
+              key = "<C-h>";
+              action = "<C-w>h";
+              desc = "Window: left";
+            }
+            {
+              mode = "n";
+              key = "<C-j>";
+              action = "<C-w>j";
+              desc = "Window: down";
+            }
+            {
+              mode = "n";
+              key = "<C-k>";
+              action = "<C-w>k";
+              desc = "Window: up";
+            }
+            {
+              mode = "n";
+              key = "<C-l>";
+              action = "<C-w>l";
+              desc = "Window: right";
+            }
 
             {
               mode = "n";
@@ -313,18 +473,80 @@
               desc = "Navigate: right";
             }
 
-            { mode = "x"; key = "<"; action = "<gv"; }
-            { mode = "x"; key = ">"; action = ">gv"; }
+            {
+              mode = "x";
+              key = "<";
+              action = "<gv";
+            }
+            {
+              mode = "x";
+              key = ">";
+              action = ">gv";
+            }
 
-            { mode = "n"; key = "gd";         lua = true; action = "vim.lsp.buf.definition";     desc = "LSP: definition"; }
-            { mode = "n"; key = "gD";         lua = true; action = "vim.lsp.buf.declaration";    desc = "LSP: declaration"; }
-            { mode = "n"; key = "gr";         lua = true; action = "vim.lsp.buf.references";     desc = "LSP: references"; }
-            { mode = "n"; key = "gi";         lua = true; action = "vim.lsp.buf.implementation"; desc = "LSP: implementation"; }
-            { mode = "n"; key = "K";          lua = true; action = "vim.lsp.buf.hover";          desc = "LSP: hover"; }
-            { mode = "n"; key = "<leader>r";  lua = true; action = "vim.lsp.buf.rename";         desc = "LSP: rename"; }
-            { mode = "n"; key = "<leader>ca"; lua = true; action = "vim.lsp.buf.code_action";    desc = "LSP: code action"; }
-            { mode = "n"; key = "[d";         lua = true; action = "vim.diagnostic.goto_prev";   desc = "Diagnostic: prev"; }
-            { mode = "n"; key = "]d";         lua = true; action = "vim.diagnostic.goto_next";   desc = "Diagnostic: next"; }
+            {
+              mode = "n";
+              key = "gd";
+              lua = true;
+              action = "vim.lsp.buf.definition";
+              desc = "LSP: definition";
+            }
+            {
+              mode = "n";
+              key = "gD";
+              lua = true;
+              action = "vim.lsp.buf.declaration";
+              desc = "LSP: declaration";
+            }
+            {
+              mode = "n";
+              key = "gr";
+              lua = true;
+              action = "vim.lsp.buf.references";
+              desc = "LSP: references";
+            }
+            {
+              mode = "n";
+              key = "gi";
+              lua = true;
+              action = "vim.lsp.buf.implementation";
+              desc = "LSP: implementation";
+            }
+            {
+              mode = "n";
+              key = "K";
+              lua = true;
+              action = "vim.lsp.buf.hover";
+              desc = "LSP: hover";
+            }
+            {
+              mode = "n";
+              key = "<leader>r";
+              lua = true;
+              action = "vim.lsp.buf.rename";
+              desc = "LSP: rename";
+            }
+            {
+              mode = "n";
+              key = "<leader>ca";
+              lua = true;
+              action = "vim.lsp.buf.code_action";
+              desc = "LSP: code action";
+            }
+            {
+              mode = "n";
+              key = "[d";
+              lua = true;
+              action = "vim.diagnostic.goto_prev";
+              desc = "Diagnostic: prev";
+            }
+            {
+              mode = "n";
+              key = "]d";
+              lua = true;
+              action = "vim.diagnostic.goto_next";
+              desc = "Diagnostic: next";
+            }
           ];
 
           augroups = [
