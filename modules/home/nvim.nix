@@ -1,6 +1,6 @@
 { den, inputs, ... }: {
   den.aspects.mac.homeManager =
-    { lib, ... }:
+    { lib, pkgs, ... }:
     let
       lua = lib.generators.mkLuaInline;
     in
@@ -50,7 +50,78 @@
 
           lsp = {
             enable = true;
-            servers."*".capabilities = lua "require('blink.cmp').get_lsp_capabilities()";
+            servers = {
+              "*".capabilities = lua "require('blink.cmp').get_lsp_capabilities()";
+              vscode-html-language-server = {
+                enable = true;
+                cmd = [
+                  "${pkgs.vscode-langservers-extracted}/bin/vscode-html-language-server"
+                  "--stdio"
+                ];
+                filetypes = [
+                  "html"
+                  "shtml"
+                  "xhtml"
+                  "htm"
+                  "vue"
+                ];
+                root_markers = [
+                  ".git"
+                  "package.json"
+                ];
+                init_options = {
+                  provideFormatter = true;
+                };
+                get_language_id = lua ''
+                  function(_, _)
+                    return "html"
+                  end
+                '';
+              };
+              tailwindcss-language-server = {
+                root_dir = lib.mkForce (lua ''
+                  function(bufnr, on_dir)
+                    local root_files = {
+                      'tailwind.config.js',
+                      'tailwind.config.cjs',
+                      'tailwind.config.mjs',
+                      'tailwind.config.ts',
+                      'postcss.config.js',
+                      'postcss.config.cjs',
+                      'postcss.config.mjs',
+                      'postcss.config.ts',
+                      'vite.config.js',
+                      'vite.config.ts',
+                      'nuxt.config.js',
+                      'nuxt.config.ts',
+                      'package.json',
+                    }
+                    local fname = vim.api.nvim_buf_get_name(bufnr)
+                    local root = vim.fs.dirname(vim.fs.find(root_files, { path = fname, upward = true })[1])
+                    on_dir(root)
+                  end
+                '');
+                settings.tailwindCSS = {
+                  includeLanguages = {
+                    vue = "html";
+                    javascript = "javascript";
+                    typescript = "typescript";
+                    javascriptreact = "javascriptreact";
+                    typescriptreact = "typescriptreact";
+                  };
+                  experimental.classRegex = [
+                    [
+                      "class[:=]\\s*\"([^\"]*)\""
+                      "\"([^\"]*)\""
+                    ]
+                    [
+                      "class[:=]\\s*'([^']*)'"
+                      "'([^']*)'"
+                    ]
+                  ];
+                };
+              };
+            };
           };
 
           diagnostics = {
@@ -75,11 +146,26 @@
             };
             vue = {
               enable = true;
-              lsp.servers = [ "vue-language-server" ];
+              lsp.servers = [
+                "vue-language-server"
+                "vtsls"
+                "emmet-ls"
+              ];
               format.enable = false;
             };
+            html = {
+              enable = true;
+              lsp.servers = [ "emmet-ls" ];
+            };
+            css = {
+              enable = true;
+              lsp.servers = [
+                "vscode-css-language-server"
+                "emmet-ls"
+              ];
+            };
           }
-          // lib.genAttrs [ "html" "lua" "markdown" "python" "typescript" "css" ] (_: {
+          // lib.genAttrs [ "lua" "markdown" "python" "typescript" ] (_: {
             enable = true;
           });
 
@@ -96,6 +182,7 @@
 
           autocomplete.blink-cmp = {
             enable = true;
+            friendly-snippets.enable = true;
             setupOpts = {
               keymap.preset = "default";
               appearance.nerd_font_variant = "mono";
@@ -115,6 +202,7 @@
                 window.show_documentation = false;
               };
             };
+            sourcePlugins.ripgrep.enable = true;
           };
 
           mini = {
