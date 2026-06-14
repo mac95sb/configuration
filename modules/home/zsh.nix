@@ -20,7 +20,11 @@
 
       shellAliases = {
         dr = "sudo darwin-rebuild switch --flake ~/Developer/configuration#mac";
-        hr = "home-manager switch --flake ~/Developer/configuration#mac";
+        hr = "sudo darwin-rebuild switch --flake ~/Developer/configuration#mac";
+      };
+
+      localVariables = {
+        EDITOR = "nvim";
       };
 
       siteFunctions = {
@@ -36,12 +40,12 @@
         '';
 
         _build_prompt = ''
-          local e=$?
-          local sym="%F{#a6dbff}"
-          (( e != 0 )) && sym="%F{#ff9e64}"
-          PROMPT="
-        %F{#6C91BF}%~%F{#767676}$(_git_info)%f
-        ''${sym}λ%f "
+            local e=$?
+            local sym="%F{#a6dbff}"
+            (( e != 0 )) && sym="%F{#ff9e64}"
+            PROMPT="
+          %F{#6C91BF}%~%F{#767676}$(_git_info)%f
+          ''${sym}λ%f "
         '';
 
         kp = ''
@@ -55,7 +59,7 @@
             return 1
           fi
 
-          local editor="''${EDITOR:-nvim}"
+          local editor="''${VISUAL:-''${EDITOR:-nvim}}"
           local window_name="''${PWD:t}"
           [[ -z $window_name ]] && window_name="tdl"
 

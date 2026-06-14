@@ -50,6 +50,16 @@ let
       - https://fastapi.tiangolo.com/tutorial/
       - https://fastapi.tiangolo.com/tutorial/body/
       - https://docs.pydantic.dev/latest/concepts/models/
+    - Nix: prefer small modules, explicit option definitions, `lib` helpers, and
+      declarative attrset composition over ad hoc string manipulation. Use
+      `mkDefault`, `mkIf`, `mkMerge`, and `genAttrs` when they make precedence,
+      conditionals, merging, or repeated attributes clearer.
+      References:
+      - https://nix.dev/manual/nix/latest/language/
+      - https://nix.dev/tutorials/module-system/
+      - https://nixos.org/manual/nixpkgs/stable/#sec-functions-library
+      - https://nix-darwin.github.io/nix-darwin/manual/
+      - https://nix-community.github.io/home-manager/
     - Tailwind: use utilities intentionally, extract repeated UI patterns, and
       keep design tokens centralized.
       References:

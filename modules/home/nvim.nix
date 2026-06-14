@@ -67,7 +67,7 @@
               lsp.servers   = [ "vue-language-server" ];
               format.enable = false;
             };
-          } // lib.genAttrs [ "html" "lua" "python" "ts" "css" ] (_: { enable = true; });
+          } // lib.genAttrs [ "html" "lua" "python" "typescript" "css" ] (_: { enable = true; });
 
           # Tailwind has no vim.languages module.
           lsp.presets.tailwindcss-language-server.enable = true;
