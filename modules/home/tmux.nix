@@ -1,8 +1,7 @@
 { den, ... }: {
-  den.aspects.mac.homeManager = { pkgs, ... }: {
+  den.aspects.mac.homeManager = { pkgs, lib, ... }: {
     programs.tmux = {
       enable = true;
-      shell = "${pkgs.zsh}/bin/zsh";
       mouse = true;
       baseIndex = 1;
       historyLimit = 50000;
@@ -28,7 +27,6 @@
       ];
 
       extraConfig = ''
-        set -g pane-base-index 1
         set -g renumber-windows on
         set -g extended-keys on
         set -g extended-keys-format csi-u
@@ -79,15 +77,7 @@
         bind -n C-M-l split-window -h
 
         # Jump to window by number (Alt+1–9)
-        bind -n M-1 select-window -t 1
-        bind -n M-2 select-window -t 2
-        bind -n M-3 select-window -t 3
-        bind -n M-4 select-window -t 4
-        bind -n M-5 select-window -t 5
-        bind -n M-6 select-window -t 6
-        bind -n M-7 select-window -t 7
-        bind -n M-8 select-window -t 8
-        bind -n M-9 select-window -t 9
+        ${lib.concatMapStrings (n: "bind -n M-${toString n} select-window -t ${toString n}\n        ") (lib.range 1 9)}
 
         # Copy mode (vi bindings set via keyMode = "vi" above)
         bind -n M-[ copy-mode
