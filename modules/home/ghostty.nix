@@ -10,7 +10,11 @@
 
         font-family = "Liga SFMono Nerd Font";
         font-size = 11;
-        font-feature = [ "+liga" "+calt" "+dlig" ];
+        font-feature = [
+          "+liga"
+          "+calt"
+          "+dlig"
+        ];
 
         window-padding-x = 8;
         window-padding-y = 8;

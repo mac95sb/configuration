@@ -70,7 +70,7 @@ let
   '';
 in
 {
-  den.aspects.mac.homeManager = { ... }: {
+  den.aspects.mac.homeManager = _: {
     programs.claude-code = {
       enable = true;
       settings = {

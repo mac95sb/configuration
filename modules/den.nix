@@ -1,23 +1,35 @@
-{ inputs, den, lib, ... }: {
+{
+  inputs,
+  den,
+  lib,
+  ...
+}:
+{
   imports = [ inputs.den.flakeModule ];
 
   den.schema.user.classes = lib.mkDefault [ "homeManager" ];
 
   den.default.homeManager.home = {
-    stateVersion  = "25.11";
+    stateVersion = "25.11";
     homeDirectory = lib.mkDefault "/Users/mac";
-    sessionPath   = [ "$HOME/.local/bin" ];
+    sessionPath = [ "$HOME/.local/bin" ];
   };
   den.default.homeManager.nixpkgs.config.allowUnfree = true;
   den.default.includes = [ den.batteries.define-user ];
 
   # mac host (aarch64-darwin) with mac user
-  den.hosts.aarch64-darwin.mac.users.mac = {};
+  den.hosts.aarch64-darwin.mac.users.mac = { };
 
   den.aspects.mac = {
     includes = [ den.batteries.hostname ];
 
-    homeManager = { config, lib, pkgs, ... }:
+    homeManager =
+      {
+        config,
+        lib,
+        pkgs,
+        ...
+      }:
       lib.mkMerge [
         {
           targets.darwin.copyApps = {
