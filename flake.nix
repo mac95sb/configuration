@@ -36,8 +36,16 @@
   };
 
   outputs = inputs:
-    (inputs.nixpkgs.lib.evalModules {
-      modules = [ (inputs.import-tree ./modules) ];
-      specialArgs = { inherit inputs; };
-    }).config.flake;
+    let
+      flake = (inputs.nixpkgs.lib.evalModules {
+        modules = [ (inputs.import-tree ./modules) ];
+        specialArgs = { inherit inputs; };
+      }).config.flake;
+    in
+      builtins.removeAttrs flake [
+        "collisionPolicy"
+        "denful"
+        "id_hash"
+        "resolved"
+      ];
 }
