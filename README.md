@@ -29,19 +29,8 @@ sudo nix run nix-darwin/master#darwin-rebuild -- switch --flake .#mac
 Authenticate GitHub after `gh` is installed by the flake:
 
 ```sh
+ssh-keygen
 gh auth login --hostname github.com --git-protocol ssh --scopes "repo,read:org,gist"
-```
-
-Create the SSH key used for Git commit signing if it does not already exist:
-
-```sh
-test -f ~/.ssh/id_ed25519 || ssh-keygen -t ed25519 -C "$(hostname)" -f ~/.ssh/id_ed25519
-```
-
-Add the public key to GitHub as a signing key:
-
-```sh
-gh ssh-key add ~/.ssh/id_ed25519.pub --type signing --title "$(hostname)-signing"
 ```
 
 ## Shell Helpers

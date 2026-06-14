@@ -2,20 +2,10 @@
   den.aspects.mac.homeManager = { ... }: {
     programs.git = {
       enable = true;
-      userName = "Mac";
-      userEmail = "contact@maclong.dev";
 
       signing = {
         signByDefault = true;
         key = "~/.ssh/id_ed25519";
-      };
-
-      aliases = {
-        br = "branch";
-        cm = "commit -m";
-        co = "checkout";
-        lg = "log --graph --oneline --decorate --all";
-        st = "status -sb";
       };
 
       ignores = [
@@ -27,6 +17,17 @@
       ];
 
       settings = {
+        user = {
+          name = "Mac";
+          email = "contact@maclong.dev";
+        };
+        alias = {
+          br = "branch";
+          cm = "commit -m";
+          co = "checkout";
+          lg = "log --graph --oneline --decorate --all";
+          st = "status -sb";
+        };
         init.defaultBranch = "main";
         pull.rebase = true;
         push.autoSetupRemote = true;

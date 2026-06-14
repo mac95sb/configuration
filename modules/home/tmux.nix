@@ -1,5 +1,9 @@
 { den, ... }: {
-  den.aspects.mac.homeManager = { pkgs, lib, ... }: {
+  den.aspects.mac.homeManager = { pkgs, lib, ... }:
+    let
+      floax = pkgs.tmuxPlugins.tmux-floax;
+    in
+    {
     programs.tmux = {
       enable = true;
       mouse = true;
@@ -13,7 +17,7 @@
 
       plugins = [
         {
-          plugin = pkgs.tmuxPlugins.tmux-floax;
+          plugin = floax;
           extraConfig = ''
             set -g @floax-bind '-n M-F'
             set -g @floax-width '88%'
@@ -21,7 +25,6 @@
             set -g @floax-border-color '#4f5258'
             set -g @floax-text-color '#e0e2ea'
             set -g @floax-title 'shell'
-            set -g @floax-session-name 'tdl-shell'
           '';
         }
       ];
@@ -52,6 +55,14 @@
         # Remove all root-table defaults; use Alt as prefix-free modifier
         unbind-key -a -T root
         set -g prefix None
+        bind -n M-F run-shell "${floax}/share/tmux-plugins/tmux-floax/scripts/floax.sh"
+
+        # Restore mouse bindings removed by clearing the root table.
+        bind -T root MouseDown1Pane if -Ft= "#{mouse_any_flag}" "send-keys -M" "select-pane -t="
+        bind -T root MouseDrag1Pane if -Ft= "#{mouse_any_flag}" "send-keys -M" "copy-mode -M"
+        bind -T root MouseDrag1Border resize-pane -M
+        bind -T root WheelUpPane if -Ft= "#{mouse_any_flag}" "send-keys -M" "if -Ft= \"#{pane_in_mode}\" \"send-keys -M\" \"copy-mode -e\""
+        bind -T root WheelDownPane select-pane -t= \; send-keys -M
 
         # Pane focus (Alt+hjkl) — pass through to nvim when active
         is_nvim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\S+\/)?nvim$'"
@@ -85,15 +96,15 @@
         bind -T copy-mode-vi y send -X copy-pipe-and-cancel "pbcopy"
         bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel "pbcopy"
 
-        # Floating shell session hook
+        # FloaX always uses a session named scratch; split it into two panes on first creation.
         set-hook -g session-created \
-          'if -F "#{==:#{session_name},tdl-shell}" \
-           "set-option -t tdl-shell status off \; \
-            split-window -h -p 50 -t tdl-shell:1.1 -c \"#{pane_current_path}\" \; \
-            select-pane -t tdl-shell:1.1"'
+          'if -F "#{==:#{session_name},scratch}" \
+           "set-option -t scratch status off \; \
+            split-window -h -p 50 -t scratch:1 -c \"#{pane_current_path}\" \; \
+            select-pane -t scratch:1.0"'
 
         set -ag terminal-overrides ",xterm-256color:RGB"
       '';
     };
-  };
+    };
 }
