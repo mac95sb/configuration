@@ -1,0 +1,54 @@
+[alias]
+	br = "branch"
+	cm = "commit -m"
+	co = "checkout"
+	lg = "log --graph --oneline --decorate --all"
+	st = "status -sb"
+
+[branch]
+	sort = "-committerdate"
+
+[commit]
+	gpgSign = true
+
+[core]
+	editor = "nvim"
+	pager = "less -FRX"
+
+[credential "https://gist.github.com"]
+	helper = ""
+	helper = "/nix/store/fhnpw0hs0gjms1ha6ap02jq7rx13gkbp-gh-2.94.0/bin/gh auth git-credential"
+
+[credential "https://github.com"]
+	helper = ""
+	helper = "/nix/store/fhnpw0hs0gjms1ha6ap02jq7rx13gkbp-gh-2.94.0/bin/gh auth git-credential"
+
+[fetch]
+	prune = true
+
+[gpg]
+	format = "ssh"
+
+[init]
+	defaultBranch = "main"
+
+[merge]
+	conflictstyle = "zdiff3"
+
+[pull]
+	rebase = true
+
+[push]
+	autoSetupRemote = true
+
+[rerere]
+	enabled = true
+
+[tag]
+	gpgSign = true
+	gpgsign = true
+
+[user]
+	email = "contact@maclong.dev"
+	name = "Mac"
+	signingKey = "~/.ssh/id_ed25519"
