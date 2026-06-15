@@ -79,14 +79,14 @@
           bind -n M-L resize-pane -R 5
 
           # New / close window
-          bind -n M-t new-window
+          bind -n M-t new-window -c "#{pane_current_path}"
           bind -n M-w kill-window
 
           # Directional split (Ctrl+Alt+hjkl)
-          bind -n C-M-h split-window -h \; swap-pane -D
-          bind -n C-M-j split-window -v
-          bind -n C-M-k split-window -v \; swap-pane -D
-          bind -n C-M-l split-window -h
+          bind -n C-M-h split-window -h -c "#{pane_current_path}" \; swap-pane -D
+          bind -n C-M-j split-window -v -c "#{pane_current_path}"
+          bind -n C-M-k split-window -v -c "#{pane_current_path}" \; swap-pane -D
+          bind -n C-M-l split-window -h -c "#{pane_current_path}"
 
           # Jump to window by number (Alt+1–9)
           ${lib.concatMapStrings (n: "bind -n M-${toString n} select-window -t ${toString n}\n        ") (
