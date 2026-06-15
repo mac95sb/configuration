@@ -20,7 +20,6 @@
 
       shellAliases = {
         dr = "sudo darwin-rebuild switch --flake ~/Developer/configuration#mac";
-        hr = "sudo darwin-rebuild switch --flake ~/Developer/configuration#mac";
       };
 
       localVariables = {
@@ -50,6 +49,138 @@
 
         kp = ''
           lsof -ti :"$1" | xargs kill -9
+        '';
+
+        hr = ''
+          emulate -L zsh
+
+          local config_dir="$HOME/Developer/configuration"
+          local activation
+          activation=$(nix build --no-link --print-out-paths "$config_dir#darwinConfigurations.mac.config.home-manager.users.mac.home.activationPackage") || return
+          "$activation/activate"
+        '';
+
+        theme = ''
+          emulate -L zsh
+          setopt extended_glob
+
+          local config_dir="$HOME/Developer/configuration"
+          local theme_file="$config_dir/state/theme-selection.nix"
+
+          local -a labels ghostty nvim_name nvim_style
+          labels=(
+            "Nvim Dark : None (Default)"
+            "Everforest Dark Hard : everforest"
+            "GitHub Dark Default : github"
+            "Gruvbox Dark : gruvbox"
+            "Atom One Dark : onedark"
+            "Oxocarbon : oxocarbon"
+            "Rose Pine : rose-pine"
+          )
+          ghostty=(
+            "Nvim Dark"
+            "Everforest Dark Hard"
+            "GitHub Dark Default"
+            "Gruvbox Dark"
+            "Atom One Dark"
+            "Oxocarbon"
+            "Rose Pine"
+          )
+          nvim_name=("" "everforest" "github" "gruvbox" "onedark" "oxocarbon" "rose-pine")
+          nvim_style=("" "hard" "dark_default" "dark" "dark" "dark" "main")
+
+          local current_ghostty=""
+          local current_index=""
+          if [[ -r "$theme_file" ]]; then
+            current_ghostty=$(sed -n 's/^  ghostty = "\(.*\)";$/\1/p' "$theme_file")
+            local i
+            for i in {1..''${#ghostty[@]}}; do
+              if [[ "''${ghostty[$i]}" == "$current_ghostty" ]]; then
+                current_index="$i"
+                break
+              fi
+            done
+          fi
+
+          local choice="$*"
+          local index=""
+          if [[ -z "$choice" ]]; then
+            local i
+            for i in {1..''${#labels[@]}}; do
+              if [[ "$i" == "$current_index" ]]; then
+                print "''${i}) ''${labels[$i]} [active]"
+              else
+                print "''${i}) ''${labels[$i]}"
+              fi
+            done
+            print -n "Theme: "
+            read -r choice
+          fi
+
+          if [[ "$choice" == <-> ]]; then
+            index="$choice"
+          else
+            local needle="''${choice:l}"
+            local i
+            for i in {1..''${#labels[@]}}; do
+              if [[ "''${labels[$i]:l}" == *"$needle"* || "''${ghostty[$i]:l}" == *"$needle"* || "''${nvim_name[$i]:l}" == "$needle" ]]; then
+                index="$i"
+                break
+              fi
+            done
+          fi
+
+          if [[ -z "$index" || "$index" -lt 1 || "$index" -gt ''${#labels[@]} ]]; then
+            print -u2 "theme: unknown theme '$choice'"
+            return 1
+          fi
+
+          local nvim_config="null"
+          if [[ -n "''${nvim_name[$index]}" ]]; then
+            nvim_config="{ name = \"''${nvim_name[$index]}\"; style = \"''${nvim_style[$index]}\"; }"
+          fi
+
+          {
+            print "{"
+            print "  ghostty = \"''${ghostty[$index]}\";"
+            print "  nvim = $nvim_config;"
+            print "}"
+          } >| "$theme_file"
+
+          print "Switching theme: ''${labels[$index]}"
+          local activation
+          activation=$(nix build --no-link --print-out-paths "$config_dir#darwinConfigurations.mac.config.home-manager.users.mac.home.activationPackage") || return
+          "$activation/activate" || return
+
+          if command -v nvim >/dev/null 2>&1; then
+            local nvim_server_dir="''${CONFIGURATION_NVIM_SERVER_DIR:-''${TMPDIR:-/tmp}/configuration-nvim}"
+            local nvim_init
+            nvim_init=$(sed -n "s/^export VIMINIT='source \(.*\)'$/\1/p" "$(command -v nvim)")
+            local nvim_config_dir="''${nvim_init:h}"
+            local nvim_reload="$nvim_server_dir/reload.lua"
+            if [[ -n "$nvim_init" && -r "$nvim_init" ]]; then
+              mkdir -p "$nvim_server_dir"
+              {
+                print "vim.opt.packpath:prepend(\"$nvim_config_dir\")"
+                print "vim.opt.runtimepath:prepend(\"$nvim_config_dir\")"
+                print "dofile(\"$nvim_init\")"
+              } >| "$nvim_reload"
+            fi
+
+            if [[ -r "$nvim_reload" ]]; then
+              local server
+              for server in "$nvim_server_dir"/nvim-*.pipe(N); do
+                nvim --server "$server" --remote-expr "luaeval('dofile(_A)', '$nvim_reload')" >/dev/null 2>&1 || rm -f "$server"
+              done
+            fi
+          fi
+
+          if [[ -n "$GHOSTTY_RESOURCES_DIR" ]] && command -v osascript >/dev/null 2>&1; then
+            osascript \
+              -e 'tell application "Ghostty" to activate' \
+              -e 'tell application "System Events" to keystroke "," using {command down, shift down}' \
+              >/dev/null 2>&1 || print -u2 "theme: reload Ghostty manually with Cmd+Shift+,"
+          fi
         '';
 
         tdl = ''

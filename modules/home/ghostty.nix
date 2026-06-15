@@ -1,10 +1,14 @@
-{ den, ... }: {
+{ den, ... }:
+let
+  selectedTheme = import ../../state/theme-selection.nix;
+in
+{
   den.aspects.mac.homeManager = { pkgs, ... }: {
     programs.ghostty = {
       enable = true;
       package = pkgs.ghostty-bin;
       settings = {
-        theme = "Nvim Dark";
+        theme = selectedTheme.ghostty;
         background-opacity = 0.9;
         background-blur = true;
 

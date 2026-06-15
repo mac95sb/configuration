@@ -3,6 +3,7 @@
     { lib, pkgs, ... }:
     let
       lua = lib.generators.mkLuaInline;
+      selectedTheme = import ../../state/theme-selection.nix;
     in
     {
       imports = [ inputs.nvf.homeManagerModules.default ];
@@ -12,6 +13,12 @@
         settings.vim = {
           enableLuaLoader = true;
           hideSearchHighlight = true;
+          theme = lib.mkIf (selectedTheme.nvim != null) {
+            enable = true;
+            name = selectedTheme.nvim.name;
+            style = selectedTheme.nvim.style;
+            transparent = true;
+          };
 
           globals = {
             mapleader = " ";
@@ -708,6 +715,23 @@
 
           luaConfigRC.init = # lua
             ''
+              do
+                local server_dir = vim.env.CONFIGURATION_NVIM_SERVER_DIR
+                  or ((vim.env.TMPDIR or "/tmp") .. "/configuration-nvim")
+                vim.fn.mkdir(server_dir, "p")
+                local server = server_dir .. "/nvim-" .. vim.fn.getpid() .. ".pipe"
+                pcall(vim.fn.serverstart, server)
+                vim.api.nvim_create_autocmd("VimLeavePre", {
+                  callback = function()
+                    pcall(vim.fn.delete, server)
+                  end,
+                })
+              end
+
+              ${lib.optionalString (selectedTheme.nvim == null) ''
+                vim.cmd.colorscheme("default")
+              ''}
+
               local function apply_transparency()
                 local groups = {
                   "Normal", "NormalNC", "NormalFloat", "FloatBorder", "FloatTitle",
