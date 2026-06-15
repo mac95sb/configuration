@@ -1,0 +1,82 @@
+#!/usr/bin/env sh
+set -eu
+
+if [ "${CONFIGURATION_SYNC_POSIX:-}" = "1" ]; then
+  exit 0
+fi
+
+repo_root=$(git rev-parse --show-toplevel)
+current_branch=$(git -C "$repo_root" branch --show-current 2>/dev/null || true)
+if [ "$current_branch" = "posix" ]; then
+  exit 0
+fi
+
+worktree="${CONFIGURATION_POSIX_WORKTREE:-${TMPDIR:-/tmp}/configuration-posix-worktree}"
+
+if git -C "$repo_root" show-ref --verify --quiet refs/heads/posix; then
+  if [ ! -e "$worktree/.git" ]; then
+    git -C "$repo_root" worktree add "$worktree" posix
+  fi
+else
+  git -C "$repo_root" worktree add --detach "$worktree" HEAD
+  git -C "$worktree" checkout --orphan posix
+fi
+
+if [ "$(git -C "$worktree" branch --show-current 2>/dev/null || true)" != "posix" ]; then
+  git -C "$worktree" checkout posix
+fi
+
+git -C "$worktree" rm -r --ignore-unmatch . >/dev/null 2>&1 || true
+find "$worktree" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
+
+copy_home_path() {
+  relative_path=$1
+  source_path="$HOME/$relative_path"
+  target_path="$worktree/$relative_path"
+
+  if [ ! -e "$source_path" ] && [ ! -L "$source_path" ]; then
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$target_path")"
+  if [ -d "$source_path" ]; then
+    cp -R -L "$source_path" "$target_path"
+  else
+    cp -L "$source_path" "$target_path"
+  fi
+}
+
+copy_home_path ".zprofile"
+copy_home_path ".zshenv"
+copy_home_path ".zshrc"
+copy_home_path ".config/ghostty/config"
+copy_home_path ".config/tmux/tmux.conf"
+copy_home_path ".config/git/config"
+copy_home_path ".config/git/ignore"
+copy_home_path ".config/gh/config.yml"
+copy_home_path ".config/nvim"
+
+nix eval --raw "$repo_root#darwinConfigurations.mac.config.homebrew.brewfile" > "$worktree/Brewfile"
+
+cat > "$worktree/README.md" <<'EOF'
+# POSIX fallback
+
+This branch is generated from the Nix-managed macOS configuration.
+
+It is intended for machines where Nix is unavailable. Install Homebrew
+packages with:
+
+```sh
+brew bundle --file Brewfile
+```
+
+The dotfiles in this branch are raw copies of the active files from `$HOME`.
+EOF
+
+git -C "$worktree" add -A
+if git -C "$worktree" diff --cached --quiet; then
+  exit 0
+fi
+
+source_head=$(git -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+CONFIGURATION_SYNC_POSIX=1 git -C "$worktree" commit --no-verify -m "Sync POSIX fallback from $source_head"
