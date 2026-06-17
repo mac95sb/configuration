@@ -11,22 +11,27 @@ if [ "$current_branch" = "posix" ]; then
   exit 0
 fi
 
+git_clean_env() (
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_PREFIX
+  git "$@"
+)
+
 worktree="${CONFIGURATION_POSIX_WORKTREE:-${TMPDIR:-/tmp}/configuration-posix-worktree}"
 
-if git -C "$repo_root" show-ref --verify --quiet refs/heads/posix; then
+if git_clean_env -C "$repo_root" show-ref --verify --quiet refs/heads/posix; then
   if [ ! -e "$worktree/.git" ]; then
-    git -C "$repo_root" worktree add "$worktree" posix
+    git_clean_env -C "$repo_root" worktree add "$worktree" posix
   fi
 else
-  git -C "$repo_root" worktree add --detach "$worktree" HEAD
-  git -C "$worktree" checkout --orphan posix
+  git_clean_env -C "$repo_root" worktree add --detach "$worktree" HEAD
+  git_clean_env -C "$worktree" checkout --orphan posix
 fi
 
-if [ "$(git -C "$worktree" branch --show-current 2>/dev/null || true)" != "posix" ]; then
-  git -C "$worktree" checkout posix
+if [ "$(git_clean_env -C "$worktree" branch --show-current 2>/dev/null || true)" != "posix" ]; then
+  git_clean_env -C "$worktree" checkout posix
 fi
 
-git -C "$worktree" rm -r --ignore-unmatch . >/dev/null 2>&1 || true
+git_clean_env -C "$worktree" rm -r --ignore-unmatch . >/dev/null 2>&1 || true
 find "$worktree" -mindepth 1 -maxdepth 1 ! -name .git -exec rm -rf {} +
 
 copy_home_path() {
@@ -52,11 +57,24 @@ copy_home_path ".zshrc"
 copy_home_path ".config/ghostty/config"
 copy_home_path ".config/tmux/tmux.conf"
 copy_home_path ".config/git/config"
+copy_home_path ".config/git/allowed_signers"
 copy_home_path ".config/git/ignore"
 copy_home_path ".config/gh/config.yml"
 copy_home_path ".config/nvim"
 
 nix eval --raw "$repo_root#darwinConfigurations.mac.config.homebrew.brewfile" > "$worktree/Brewfile"
+
+cat >> "$worktree/Brewfile" <<'EOF'
+
+# POSIX fallbacks for apps and CLI tools managed by Nix/Home Manager in the
+# main branch. Keep these explicit: Nix package names do not always map cleanly
+# to Homebrew formula or cask names.
+brew "gh"
+brew "git"
+brew "neovim"
+brew "tmux"
+cask "ghostty"
+EOF
 
 cat > "$worktree/README.md" <<'EOF'
 # POSIX fallback
@@ -73,10 +91,10 @@ brew bundle --file Brewfile
 The dotfiles in this branch are raw copies of the active files from `$HOME`.
 EOF
 
-git -C "$worktree" add -A
-if git -C "$worktree" diff --cached --quiet; then
+git_clean_env -C "$worktree" add -A
+if git_clean_env -C "$worktree" diff --cached --quiet; then
   exit 0
 fi
 
-source_head=$(git -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo "unknown")
-CONFIGURATION_SYNC_POSIX=1 git -C "$worktree" commit --no-verify -m "Sync POSIX fallback from $source_head"
+source_head=$(git_clean_env -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo "unknown")
+CONFIGURATION_SYNC_POSIX=1 git_clean_env -C "$worktree" commit --no-verify -m "Sync POSIX fallback from $source_head"

@@ -1,5 +1,20 @@
 { den, ... }: {
-  den.aspects.mac.homeManager = { lib, ... }: {
+  den.aspects.mac.homeManager = { lib, pkgs, ... }: {
+    home.packages = [ pkgs.vim ];
+
+    home.file.".vimrc".text = ''
+      set nocompatible
+
+      set number
+      set relativenumber
+      set cursorline
+      set exrc
+      set noswapfile
+
+      syntax on
+      filetype plugin indent on
+    '';
+
     programs.zsh = {
       enable = true;
       autocd = true;

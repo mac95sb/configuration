@@ -2,6 +2,10 @@
   den.aspects.mac.homeManager =
     { lib, pkgs, ... }:
     {
+      home.file.".config/git/allowed_signers".text = ''
+        contact@maclong.dev ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHG84kHk81YW93M91uK9QqYxeT82LkZd8RndkBnISAF4 mac@mac
+      '';
+
       programs.git = {
         enable = true;
 
@@ -38,7 +42,10 @@
             editor = "nvim";
             pager = "less -FRX";
           };
-          gpg.format = "ssh";
+          gpg = {
+            format = "ssh";
+            ssh.allowedSignersFile = "~/.config/git/allowed_signers";
+          };
           tag.gpgsign = true;
           branch.sort = "-committerdate";
           merge.conflictstyle = "zdiff3";

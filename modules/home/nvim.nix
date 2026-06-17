@@ -32,6 +32,7 @@
             scrolloff = 10;
             signcolumn = "no";
             cursorline = true;
+            exrc = true;
             showmode = false;
             ruler = false;
             showcmd = false;
@@ -128,6 +129,10 @@
                   ];
                 };
               };
+              lua-language-server.settings.Lua = {
+                diagnostics.globals = [ "vim" ];
+                workspace.checkThirdParty = false;
+              };
             };
           };
 
@@ -171,8 +176,16 @@
                 "emmet-ls"
               ];
             };
+            markdown = {
+              enable = true;
+              extensions.render-markdown-nvim.enable = true;
+            };
+            lua = {
+              enable = true;
+              lsp.lazydev.enable = true;
+            };
           }
-          // lib.genAttrs [ "lua" "markdown" "python" "typescript" ] (_: {
+          // lib.genAttrs [ "python" "typescript" ] (_: {
             enable = true;
           });
 
@@ -180,10 +193,17 @@
           lsp.presets.tailwindcss-language-server.enable = true;
 
           formatter.conform-nvim.setupOpts = {
-            format_on_save = {
-              timeout_ms = 3000;
-              lsp_format = "fallback";
-            };
+            format_on_save = lua ''
+              function(bufnr)
+                if vim.b.disable_autoformat then
+                  return
+                end
+                return {
+                  timeout_ms = 3000,
+                  lsp_format = "fallback"
+                }
+              end
+            '';
             formatters_by_ft.vue = [ "prettier" ];
           };
 
@@ -321,6 +341,11 @@
                     mode = "n";
                     keys = "<Leader>ca";
                     desc = "Code action";
+                  }
+                  {
+                    mode = "n";
+                    keys = "<Leader>af";
+                    desc = "Format";
                   }
                 ];
                 window = {
@@ -480,6 +505,48 @@
               key = "<leader>fh";
               action = "<Cmd>Pick help<CR>";
               desc = "Find: help";
+            }
+            {
+              mode = "n";
+              key = "<leader>fm";
+              lua = true;
+              action = ''
+                function()
+                  local items = {}
+
+                  local function add_marks(mark_list)
+                    for _, info in ipairs(mark_list) do
+                      if info.mark:match("^'[A-Za-z]$") then
+                        local path
+                        if type(info.file) == "string" then
+                          path = vim.fn.fnamemodify(info.file, ":.")
+                        end
+
+                        local bufnr
+                        if path == nil then
+                          bufnr = info.pos[1]
+                        end
+
+                        local line, col = info.pos[2], math.abs(info.pos[3])
+                        local text = string.format(
+                          "%s │ %s%s│%s",
+                          info.mark:sub(2),
+                          path == nil and "" or (path .. "│"),
+                          line,
+                          col
+                        )
+                        table.insert(items, { text = text, bufnr = bufnr, path = path, lnum = line, col = col })
+                      end
+                    end
+                  end
+
+                  add_marks(vim.fn.getmarklist(vim.api.nvim_get_current_buf()))
+                  add_marks(vim.fn.getmarklist())
+
+                  require("mini.pick").start({ source = { items = items, name = "Marks" } })
+                end
+              '';
+              desc = "Find: marks";
             }
 
             {
@@ -642,6 +709,20 @@
               action = "vim.diagnostic.goto_next";
               desc = "Diagnostic: next";
             }
+
+            {
+              mode = "n";
+              key = "<leader>af";
+              lua = true;
+              action = ''
+                function()
+                  vim.b.disable_autoformat = not vim.b.disable_autoformat
+                  local status = vim.b.disable_autoformat and "disabled" or "enabled"
+                  vim.notify("Auto-format " .. status, vim.log.levels.INFO)
+                end
+              '';
+              desc = "Format: toggle auto";
+            }
           ];
 
           augroups = [
@@ -728,10 +809,6 @@
                 })
               end
 
-              ${lib.optionalString (selectedTheme.nvim == null) ''
-                vim.cmd.colorscheme("default")
-              ''}
-
               local function apply_transparency()
                 local groups = {
                   "Normal", "NormalNC", "NormalFloat", "FloatBorder", "FloatTitle",
@@ -758,9 +835,111 @@
                 end
                 vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = "#c0caf5", bg = "NONE" })
                 vim.api.nvim_set_hl(0, "MiniStatuslineInactive", { fg = "#565f89", bg = "NONE" })
+
+                local treesitter_highlights = {
+                  ["@keyword"] = { fg = "#bb9af7", bold = true },
+                  ["@keyword.function"] = { fg = "#bb9af7", bold = true },
+                  ["@function"] = { fg = "#7dcfff" },
+                  ["@function.call"] = { fg = "#7dcfff" },
+                  ["@method"] = { fg = "#7dcfff" },
+                  ["@method.call"] = { fg = "#7dcfff" },
+                  ["@variable"] = { fg = "#c0caf5" },
+                  ["@variable.member"] = { fg = "#7aa2f7" },
+                  ["@property"] = { fg = "#7aa2f7" },
+                  ["@string"] = { fg = "#9ece6a" },
+                  ["@string.special.url"] = { fg = "#73daca", underline = true },
+                  ["@constant"] = { fg = "#ff9e64" },
+                  ["@number"] = { fg = "#ff9e64" },
+                  ["@boolean"] = { fg = "#ff9e64" },
+                  ["@type"] = { fg = "#2ac3de" },
+                  ["@constructor"] = { fg = "#2ac3de" },
+                  ["@module"] = { fg = "#7aa2f7" },
+                  ["@operator"] = { fg = "#89ddff" },
+                  ["@punctuation.delimiter"] = { fg = "#89ddff" },
+                  ["@punctuation.bracket"] = { fg = "#89ddff" },
+                  ["@comment"] = { fg = "#565f89", italic = true },
+                  ["@tag"] = { fg = "#7dcfff" },
+                  ["@tag.delimiter"] = { fg = "#89ddff" },
+                  ["@tag.attribute"] = { fg = "#7aa2f7" },
+                  ["@markup.heading"] = { fg = "#e0af68", bold = true },
+                  ["@markup.heading.1"] = { fg = "#e0af68", bold = true },
+                  ["@markup.heading.2"] = { fg = "#e0af68", bold = true },
+                  ["@markup.heading.3"] = { fg = "#e0af68", bold = true },
+                  ["@markup.heading.4"] = { fg = "#e0af68", bold = true },
+                  ["@markup.heading.5"] = { fg = "#e0af68", bold = true },
+                  ["@markup.heading.6"] = { fg = "#e0af68", bold = true },
+                }
+                for group, hl in pairs(treesitter_highlights) do
+                  vim.api.nvim_set_hl(0, group, hl)
+                end
               end
 
+              ${lib.optionalString (selectedTheme.nvim == null) ''
+                vim.cmd.colorscheme("default")
+              ''}
+
               apply_ui_highlights()
+
+              local web_syntax_by_filetype = {
+                html = "html",
+                htmldjango = "html",
+                xhtml = "html",
+                javascript = "javascript",
+                javascriptreact = "javascript",
+                typescript = "typescript",
+                typescriptreact = "typescript",
+                vue = "vue",
+                css = "css",
+              }
+
+              local web_syntax_by_extension = {
+                html = "html",
+                htm = "html",
+                xhtml = "html",
+                js = "javascript",
+                jsx = "javascript",
+                mjs = "javascript",
+                cjs = "javascript",
+                ts = "typescript",
+                tsx = "typescript",
+                mts = "typescript",
+                cts = "typescript",
+                vue = "vue",
+                css = "css",
+              }
+
+              local function apply_web_highlighting(bufnr)
+                bufnr = bufnr or vim.api.nvim_get_current_buf()
+                local ft = vim.bo[bufnr].filetype
+                local syntax = web_syntax_by_filetype[ft]
+                if syntax == nil then
+                  local name = vim.api.nvim_buf_get_name(bufnr)
+                  local ext = name:match("%.([^.]+)$")
+                  syntax = ext == nil and nil or web_syntax_by_extension[ext]
+                end
+                if syntax == nil then return end
+
+                vim.bo[bufnr].syntax = syntax
+                pcall(vim.treesitter.start, bufnr)
+              end
+
+              vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "FileType", "VimEnter" }, {
+                callback = function(ev)
+                  apply_web_highlighting(ev.buf)
+                end,
+              })
+
+              local function apply_web_highlighting_to_loaded_buffers()
+                for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+                  if vim.api.nvim_buf_is_loaded(bufnr) then
+                    apply_web_highlighting(bufnr)
+                  end
+                end
+              end
+
+              apply_web_highlighting_to_loaded_buffers()
+              vim.schedule(apply_web_highlighting_to_loaded_buffers)
+              vim.defer_fn(apply_web_highlighting_to_loaded_buffers, 10)
             '';
         };
       };
