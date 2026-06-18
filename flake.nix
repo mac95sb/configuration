@@ -33,7 +33,7 @@
           modules = [ (inputs.import-tree ./modules) ];
           specialArgs = {
         inherit inputs;
-        theme = import ./theme.nix;
+        theme = import ./.theme.nix;
       };
         }).config.flake;
     in
