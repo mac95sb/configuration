@@ -60,7 +60,7 @@ let
         chmod -R u+w source
         cd source
         statix check .
-        deadnix --no-lambda-pattern-names --fail .
+        deadnix --fail .
         touch "$out"
       '';
 in

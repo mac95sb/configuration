@@ -2,7 +2,6 @@
   den.aspects.mac.homeManager =
     {
       lib,
-      pkgs,
       config,
       ...
     }:

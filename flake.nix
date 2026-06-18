@@ -33,7 +33,13 @@
           modules = [ (inputs.import-tree ./modules) ];
           specialArgs = {
         inherit inputs;
-        theme = import ./.theme.nix;
+        theme =
+          if builtins.pathExists ./.theme.nix
+          then import ./.theme.nix
+          else {
+            ghostty = "dark-plus";
+            nvim = null;
+          };
       };
         }).config.flake;
     in

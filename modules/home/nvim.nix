@@ -1,6 +1,6 @@
 { inputs, theme, ... }: {
   den.aspects.mac.homeManager =
-    { lib, pkgs, ... }:
+    { lib, ... }:
     let
       lua = lib.generators.mkLuaInline;
     in
