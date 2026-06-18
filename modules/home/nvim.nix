@@ -58,12 +58,23 @@
 
           lsp = {
             enable = true;
-            servers = {
-              "*".capabilities = lua "require('blink.cmp').get_lsp_capabilities()";
-              lua-language-server.settings.Lua = {
-                diagnostics.globals = [ "vim" ];
-                workspace.checkThirdParty = false;
-              };
+            formatOnSave = true;
+            inlayHints.enable = true;
+            servers.lua-language-server.settings.Lua = {
+              diagnostics.globals = [ "vim" ];
+              workspace.checkThirdParty = false;
+            };
+            mappings = {
+              goToDefinition = "gd";
+              goToDeclaration = "gD";
+              listReferences = "gr";
+              listImplementations = "gi";
+              hover = "K";
+              renameSymbol = "<leader>r";
+              codeAction = "<leader>ca";
+              previousDiagnostic = "[d";
+              nextDiagnostic = "]d";
+              toggleFormatOnSave = "<leader>af";
             };
           };
 
@@ -96,8 +107,6 @@
               ];
               format.enable = false;
             };
-            html.enable = true;
-            css.enable = true;
             markdown = {
               enable = true;
               extensions.render-markdown-nvim.enable = true;
@@ -107,27 +116,14 @@
               lsp.lazydev.enable = true;
             };
           }
-          // lib.genAttrs [ "python" "typescript" ] (_: {
+          // lib.genAttrs [ "html" "css" "javascript" "python" "typescript" ] (_: {
             enable = true;
           });
 
           # Tailwind has no vim.languages module.
           lsp.presets.tailwindcss-language-server.enable = true;
 
-          formatter.conform-nvim.setupOpts = {
-            format_on_save = lua ''
-              function(bufnr)
-                if vim.b.disable_autoformat then
-                  return
-                end
-                return {
-                  timeout_ms = 3000,
-                  lsp_format = "fallback"
-                }
-              end
-            '';
-            formatters_by_ft.vue = [ "prettier" ];
-          };
+          formatter.conform-nvim.setupOpts.formatters_by_ft.vue = [ "prettier" ];
 
           autocomplete.blink-cmp = {
             enable = true;
@@ -568,83 +564,6 @@
               action = ">gv";
             }
 
-            {
-              mode = "n";
-              key = "gd";
-              lua = true;
-              action = "vim.lsp.buf.definition";
-              desc = "LSP: definition";
-            }
-            {
-              mode = "n";
-              key = "gD";
-              lua = true;
-              action = "vim.lsp.buf.declaration";
-              desc = "LSP: declaration";
-            }
-            {
-              mode = "n";
-              key = "gr";
-              lua = true;
-              action = "vim.lsp.buf.references";
-              desc = "LSP: references";
-            }
-            {
-              mode = "n";
-              key = "gi";
-              lua = true;
-              action = "vim.lsp.buf.implementation";
-              desc = "LSP: implementation";
-            }
-            {
-              mode = "n";
-              key = "K";
-              lua = true;
-              action = "vim.lsp.buf.hover";
-              desc = "LSP: hover";
-            }
-            {
-              mode = "n";
-              key = "<leader>r";
-              lua = true;
-              action = "vim.lsp.buf.rename";
-              desc = "LSP: rename";
-            }
-            {
-              mode = "n";
-              key = "<leader>ca";
-              lua = true;
-              action = "vim.lsp.buf.code_action";
-              desc = "LSP: code action";
-            }
-            {
-              mode = "n";
-              key = "[d";
-              lua = true;
-              action = "vim.diagnostic.goto_prev";
-              desc = "Diagnostic: prev";
-            }
-            {
-              mode = "n";
-              key = "]d";
-              lua = true;
-              action = "vim.diagnostic.goto_next";
-              desc = "Diagnostic: next";
-            }
-
-            {
-              mode = "n";
-              key = "<leader>af";
-              lua = true;
-              action = ''
-                function()
-                  vim.b.disable_autoformat = not vim.b.disable_autoformat
-                  local status = vim.b.disable_autoformat and "disabled" or "enabled"
-                  vim.notify("Auto-format " .. status, vim.log.levels.INFO)
-                end
-              '';
-              desc = "Format: toggle auto";
-            }
           ];
 
           augroups = [
@@ -653,7 +572,6 @@
             { name = "restore_cursor"; }
             { name = "strip_trailing_ws"; }
             { name = "resize_splits"; }
-            { name = "lsp_inlay_hints"; }
           ];
 
           autocmds = [
@@ -702,18 +620,6 @@
               group = "resize_splits";
               command = "tabdo wincmd =";
             }
-            {
-              event = [ "LspAttach" ];
-              group = "lsp_inlay_hints";
-              callback = lua ''
-                function(ev)
-                  local client = vim.lsp.get_client_by_id(ev.data.client_id)
-                  if client and client:supports_method("textDocument/inlayHint") then
-                    vim.lsp.inlay_hint.enable(true, { bufnr = ev.buf })
-                  end
-                end
-              '';
-            }
           ];
 
           luaConfigRC.init = # lua
@@ -757,43 +663,6 @@
                 end
                 vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = "#c0caf5", bg = "NONE" })
                 vim.api.nvim_set_hl(0, "MiniStatuslineInactive", { fg = "#565f89", bg = "NONE" })
-
-                local treesitter_highlights = {
-                  ["@keyword"] = { fg = "#bb9af7", bold = true },
-                  ["@keyword.function"] = { fg = "#bb9af7", bold = true },
-                  ["@function"] = { fg = "#7dcfff" },
-                  ["@function.call"] = { fg = "#7dcfff" },
-                  ["@method"] = { fg = "#7dcfff" },
-                  ["@method.call"] = { fg = "#7dcfff" },
-                  ["@variable"] = { fg = "#c0caf5" },
-                  ["@variable.member"] = { fg = "#7aa2f7" },
-                  ["@property"] = { fg = "#7aa2f7" },
-                  ["@string"] = { fg = "#9ece6a" },
-                  ["@string.special.url"] = { fg = "#73daca", underline = true },
-                  ["@constant"] = { fg = "#ff9e64" },
-                  ["@number"] = { fg = "#ff9e64" },
-                  ["@boolean"] = { fg = "#ff9e64" },
-                  ["@type"] = { fg = "#2ac3de" },
-                  ["@constructor"] = { fg = "#2ac3de" },
-                  ["@module"] = { fg = "#7aa2f7" },
-                  ["@operator"] = { fg = "#89ddff" },
-                  ["@punctuation.delimiter"] = { fg = "#89ddff" },
-                  ["@punctuation.bracket"] = { fg = "#89ddff" },
-                  ["@comment"] = { fg = "#565f89", italic = true },
-                  ["@tag"] = { fg = "#7dcfff" },
-                  ["@tag.delimiter"] = { fg = "#89ddff" },
-                  ["@tag.attribute"] = { fg = "#7aa2f7" },
-                  ["@markup.heading"] = { fg = "#e0af68", bold = true },
-                  ["@markup.heading.1"] = { fg = "#e0af68", bold = true },
-                  ["@markup.heading.2"] = { fg = "#e0af68", bold = true },
-                  ["@markup.heading.3"] = { fg = "#e0af68", bold = true },
-                  ["@markup.heading.4"] = { fg = "#e0af68", bold = true },
-                  ["@markup.heading.5"] = { fg = "#e0af68", bold = true },
-                  ["@markup.heading.6"] = { fg = "#e0af68", bold = true },
-                }
-                for group, hl in pairs(treesitter_highlights) do
-                  vim.api.nvim_set_hl(0, group, hl)
-                end
               end
 
               ${lib.optionalString (selectedTheme.nvim == null) ''
