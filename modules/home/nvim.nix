@@ -116,7 +116,7 @@
               lsp.lazydev.enable = true;
             };
           }
-          // lib.genAttrs [ "html" "css" "javascript" "python" "typescript" ] (_: {
+          // lib.genAttrs [ "html" "css" "python" "typescript" ] (_: {
             enable = true;
           });
 
