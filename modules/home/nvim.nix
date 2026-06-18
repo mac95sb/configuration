@@ -60,77 +60,6 @@
             enable = true;
             servers = {
               "*".capabilities = lua "require('blink.cmp').get_lsp_capabilities()";
-              vscode-html-language-server = {
-                enable = true;
-                cmd = [
-                  "${pkgs.vscode-langservers-extracted}/bin/vscode-html-language-server"
-                  "--stdio"
-                ];
-                filetypes = [
-                  "html"
-                  "shtml"
-                  "xhtml"
-                  "htm"
-                  "vue"
-                ];
-                root_markers = [
-                  ".git"
-                  "package.json"
-                ];
-                init_options = {
-                  provideFormatter = true;
-                };
-                get_language_id = lua ''
-                  function(_, _)
-                    return "html"
-                  end
-                '';
-              };
-              tailwindcss-language-server = {
-                root_dir = lib.mkForce (lua ''
-                  function(bufnr, on_dir)
-                    local root_files = {
-                      'tailwind.config.js',
-                      'tailwind.config.cjs',
-                      'tailwind.config.mjs',
-                      'tailwind.config.ts',
-                      'postcss.config.js',
-                      'postcss.config.cjs',
-                      'postcss.config.mjs',
-                      'postcss.config.ts',
-                      'vite.config.js',
-                      'vite.config.ts',
-                      'nuxt.config.js',
-                      'nuxt.config.ts',
-                      'package.json',
-                    }
-                    local fname = vim.api.nvim_buf_get_name(bufnr)
-                    local found = vim.fs.find(root_files, { path = fname, upward = true })[1]
-                    if not found then return end
-                    local root = vim.fs.dirname(found)
-                    on_dir(root)
-                  end
-                '');
-                settings.tailwindCSS = {
-                  includeLanguages = {
-                    vue = "html";
-                    javascript = "javascript";
-                    typescript = "typescript";
-                    javascriptreact = "javascriptreact";
-                    typescriptreact = "typescriptreact";
-                  };
-                  experimental.classRegex = [
-                    [
-                      "class[:=]\\s*\"([^\"]*)\""
-                      "\"([^\"]*)\""
-                    ]
-                    [
-                      "class[:=]\\s*'([^']*)'"
-                      "'([^']*)'"
-                    ]
-                  ];
-                };
-              };
               lua-language-server.settings.Lua = {
                 diagnostics.globals = [ "vim" ];
                 workspace.checkThirdParty = false;
@@ -167,17 +96,8 @@
               ];
               format.enable = false;
             };
-            html = {
-              enable = true;
-              lsp.servers = [ "emmet-ls" ];
-            };
-            css = {
-              enable = true;
-              lsp.servers = [
-                "vscode-css-language-server"
-                "emmet-ls"
-              ];
-            };
+            html.enable = true;
+            css.enable = true;
             markdown = {
               enable = true;
               extensions.render-markdown-nvim.enable = true;
@@ -881,65 +801,6 @@
               ''}
 
               apply_ui_highlights()
-
-              local web_syntax_by_filetype = {
-                html = "html",
-                htmldjango = "html",
-                xhtml = "html",
-                javascript = "javascript",
-                javascriptreact = "javascript",
-                typescript = "typescript",
-                typescriptreact = "typescript",
-                vue = "vue",
-                css = "css",
-              }
-
-              local web_syntax_by_extension = {
-                html = "html",
-                htm = "html",
-                xhtml = "html",
-                js = "javascript",
-                jsx = "javascript",
-                mjs = "javascript",
-                cjs = "javascript",
-                ts = "typescript",
-                tsx = "typescript",
-                mts = "typescript",
-                cts = "typescript",
-                vue = "vue",
-                css = "css",
-              }
-
-              local function apply_web_highlighting(bufnr)
-                bufnr = bufnr or vim.api.nvim_get_current_buf()
-                local ft = vim.bo[bufnr].filetype
-                local syntax = web_syntax_by_filetype[ft]
-                if syntax == nil then
-                  local name = vim.api.nvim_buf_get_name(bufnr)
-                  local ext = name:match("%.([^.]+)$")
-                  syntax = ext == nil and nil or web_syntax_by_extension[ext]
-                end
-                if syntax == nil then return end
-
-                vim.bo[bufnr].syntax = syntax
-                pcall(vim.treesitter.start, bufnr)
-              end
-
-              vim.api.nvim_create_autocmd({ "BufEnter", "BufWinEnter", "FileType", "VimEnter" }, {
-                callback = function(ev)
-                  apply_web_highlighting(ev.buf)
-                end,
-              })
-
-              local function apply_web_highlighting_to_loaded_buffers()
-                for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-                  if vim.api.nvim_buf_is_loaded(bufnr) then
-                    apply_web_highlighting(bufnr)
-                  end
-                end
-              end
-
-              vim.schedule(apply_web_highlighting_to_loaded_buffers)
             '';
         };
       };
