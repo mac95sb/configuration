@@ -1,29 +1,31 @@
-{ theme, ... }: {
-  den.aspects.mac.homeManager = { pkgs, ... }: {
-    programs.ghostty = {
-      enable = true;
-      package = pkgs.ghostty-bin;
-      settings = {
-        theme = theme.ghostty;
-        background-opacity = 0.9;
-        background-blur = true;
+{ ... }: {
+  den.aspects.mac.homeManager =
+    { pkgs, config, ... }:
+    {
+      programs.ghostty = {
+        enable = true;
+        package = pkgs.ghostty-bin;
+        settings = {
+          "config-file" = "${config.home.homeDirectory}/.local/state/ghostty-theme";
+          background-opacity = 0.9;
+          background-blur = true;
 
-        font-family = "Liga SFMono Nerd Font";
-        font-size = 11;
-        font-feature = [
-          "+liga"
-          "+calt"
-          "+dlig"
-        ];
+          font-family = "Liga SFMono Nerd Font";
+          font-size = 11;
+          font-feature = [
+            "+liga"
+            "+calt"
+            "+dlig"
+          ];
 
-        window-padding-x = 8;
-        window-padding-y = 8;
-        window-padding-balance = true;
+          window-padding-x = 8;
+          window-padding-y = 8;
+          window-padding-balance = true;
 
-        macos-option-as-alt = true;
+          macos-option-as-alt = true;
 
-        keybind = [ "alt+shift+3=text:#" ];
+          keybind = [ "alt+shift+3=text:#" ];
+        };
       };
     };
-  };
 }

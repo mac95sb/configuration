@@ -1,6 +1,6 @@
-{ inputs, theme, ... }: {
+{ inputs, ... }: {
   den.aspects.mac.homeManager =
-    { lib, ... }:
+    { lib, pkgs, ... }:
     let
       lua = lib.generators.mkLuaInline;
     in
@@ -12,12 +12,15 @@
         settings.vim = {
           enableLuaLoader = true;
           hideSearchHighlight = true;
-          theme = lib.mkIf (theme.nvim != null) {
-            enable = true;
-            name = theme.nvim.name;
-            style = theme.nvim.style;
-            transparent = true;
-          };
+
+          startPlugins = with pkgs.vimPlugins; [
+            everforest
+            github-nvim-theme
+            gruvbox-nvim
+            onedark-nvim
+            oxocarbon-nvim
+            rose-pine
+          ];
 
           globals = {
             mapleader = " ";
@@ -664,9 +667,19 @@
                 vim.api.nvim_set_hl(0, "MiniStatuslineInactive", { fg = "#565f89", bg = "NONE" })
               end
 
-              ${lib.optionalString (theme.nvim == null) ''
-                vim.cmd.colorscheme("default")
-              ''}
+              pcall(function() vim.g.everforest_background = "hard" end)
+              pcall(function() require("rose-pine").setup({ variant = "main" }) end)
+              pcall(function() require("onedark").setup({ style = "dark" }) end)
+              pcall(function() require("github-theme").setup({}) end)
+
+              do
+                local f = vim.fn.expand("~/.local/state/nvim-theme.lua")
+                if vim.fn.filereadable(f) == 1 then
+                  pcall(dofile, f)
+                else
+                  vim.cmd.colorscheme("default")
+                end
+              end
 
               apply_ui_highlights()
             '';

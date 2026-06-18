@@ -80,8 +80,8 @@
             emulate -L zsh
             setopt extended_glob
 
-            local config_dir="$HOME/Developer/configuration"
-            local theme_file="$config_dir/.theme.nix"
+            local state_dir="$HOME/.local/state"
+            local theme_file="$state_dir/theme.nix"
 
             local -a labels ghostty nvim_name nvim_style
             labels=(
@@ -151,11 +151,12 @@
               return 1
             fi
 
+            mkdir -p "$state_dir"
+
             local nvim_config="null"
             if [[ -n "''${nvim_name[$index]}" ]]; then
               nvim_config="{ name = \"''${nvim_name[$index]}\"; style = \"''${nvim_style[$index]}\"; }"
             fi
-
             {
               print "{"
               print "  ghostty = \"''${ghostty[$index]}\";"
@@ -163,32 +164,24 @@
               print "}"
             } >| "$theme_file"
 
+            print "theme = ''${ghostty[$index]}" >| "$state_dir/ghostty-theme"
+
+            local cs_name="''${nvim_name[$index]}"
+            [[ "$cs_name" == "github" ]] && cs_name="github_''${nvim_style[$index]}"
+            if [[ -n "$cs_name" ]]; then
+              print "vim.cmd.colorscheme(\"$cs_name\")" >| "$state_dir/nvim-theme.lua"
+            else
+              print 'vim.cmd.colorscheme("default")' >| "$state_dir/nvim-theme.lua"
+            fi
+
             print "Switching theme: ''${labels[$index]}"
-            local activation
-            activation=$(nix build --no-link --print-out-paths "$config_dir#darwinConfigurations.mac.config.home-manager.users.mac.home.activationPackage") || return
-            "$activation/activate" || return
 
             if command -v nvim >/dev/null 2>&1; then
               local nvim_server_dir="''${CONFIGURATION_NVIM_SERVER_DIR:-''${TMPDIR:-/tmp}/configuration-nvim}"
-              local nvim_init
-              nvim_init=$(sed -n "s/^export VIMINIT='source \(.*\)'$/\1/p" "$(command -v nvim)")
-              local nvim_config_dir="''${nvim_init:h}"
-              local nvim_reload="$nvim_server_dir/reload.lua"
-              if [[ -n "$nvim_init" && -r "$nvim_init" ]]; then
-                mkdir -p "$nvim_server_dir"
-                {
-                  print "vim.opt.packpath:prepend(\"$nvim_config_dir\")"
-                  print "vim.opt.runtimepath:prepend(\"$nvim_config_dir\")"
-                  print "dofile(\"$nvim_init\")"
-                } >| "$nvim_reload"
-              fi
-
-              if [[ -r "$nvim_reload" ]]; then
-                local server
-                for server in "$nvim_server_dir"/nvim-*.pipe(N); do
-                  nvim --server "$server" --remote-expr "luaeval('dofile(_A)', '$nvim_reload')" >/dev/null 2>&1 || rm -f "$server"
-                done
-              fi
+              local server
+              for server in "$nvim_server_dir"/nvim-*.pipe(N); do
+                nvim --server "$server" --remote-expr "luaeval('dofile(_A)', '$state_dir/nvim-theme.lua')" >/dev/null 2>&1 || rm -f "$server"
+              done
             fi
 
             if [[ -n "$GHOSTTY_RESOURCES_DIR" ]] && command -v osascript >/dev/null 2>&1; then
@@ -245,5 +238,14 @@
           precmd_functions+=(_build_prompt)
         '';
       };
+
+      home.activation.initThemeState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        if [[ ! -f "$HOME/.local/state/ghostty-theme" ]]; then
+          mkdir -p "$HOME/.local/state"
+          printf 'theme = dark-plus\n' > "$HOME/.local/state/ghostty-theme"
+          printf 'vim.cmd.colorscheme("default")\n' > "$HOME/.local/state/nvim-theme.lua"
+          printf '{\n  ghostty = "dark-plus";\n  nvim = null;\n}\n' > "$HOME/.local/state/theme.nix"
+        fi
+      '';
     };
 }

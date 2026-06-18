@@ -9,11 +9,7 @@
 
     homebrew = {
       enable = true;
-      onActivation = {
-        autoUpdate = true;
-        upgrade = true;
-        cleanup = "uninstall";
-      };
+      onActivation.cleanup = "uninstall";
 
       brews = [
         "container"

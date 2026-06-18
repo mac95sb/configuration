@@ -32,15 +32,8 @@
         (inputs.nixpkgs.lib.evalModules {
           modules = [ (inputs.import-tree ./modules) ];
           specialArgs = {
-        inherit inputs;
-        theme =
-          if builtins.pathExists ./.theme.nix
-          then import ./.theme.nix
-          else {
-            ghostty = "dark-plus";
-            nvim = null;
+            inherit inputs;
           };
-      };
         }).config.flake;
     in
     builtins.removeAttrs flake [
