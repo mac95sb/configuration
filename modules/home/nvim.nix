@@ -37,7 +37,7 @@
             ruler = false;
             showcmd = false;
             cmdheight = 0;
-            laststatus = 2;
+            laststatus = 3;
             pumheight = 10;
             tabstop = 2;
             shiftwidth = 2;
@@ -105,7 +105,9 @@
                       'package.json',
                     }
                     local fname = vim.api.nvim_buf_get_name(bufnr)
-                    local root = vim.fs.dirname(vim.fs.find(root_files, { path = fname, upward = true })[1])
+                    local found = vim.fs.find(root_files, { path = fname, upward = true })[1]
+                    if not found then return end
+                    local root = vim.fs.dirname(found)
                     on_dir(root)
                   end
                 '');
@@ -937,9 +939,7 @@
                 end
               end
 
-              apply_web_highlighting_to_loaded_buffers()
               vim.schedule(apply_web_highlighting_to_loaded_buffers)
-              vim.defer_fn(apply_web_highlighting_to_loaded_buffers, 10)
             '';
         };
       };

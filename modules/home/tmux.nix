@@ -21,8 +21,8 @@
             plugin = floax;
             extraConfig = ''
               set -g @floax-bind '-n M-F'
-              set -g @floax-width '88%'
-              set -g @floax-height '60%'
+              set -g @floax-width '75%'
+              set -g @floax-height '45%'
               set -g @floax-border-color '#4f5258'
               set -g @floax-text-color '#e0e2ea'
               set -g @floax-title 'shell'
@@ -56,7 +56,6 @@
           # Remove all root-table defaults; use Alt as prefix-free modifier
           unbind-key -a -T root
           set -g prefix None
-          bind -n M-F run-shell "${floax}/share/tmux-plugins/tmux-floax/scripts/floax.sh"
 
           # Restore mouse bindings removed by clearing the root table.
           bind -T root MouseDown1Pane if -Ft= "#{mouse_any_flag}" "send-keys -M" "select-pane -t="
@@ -106,7 +105,7 @@
               split-window -h -p 50 -t scratch:1 -c \"#{pane_current_path}\" \; \
               select-pane -t scratch:1.0"'
 
-          set -ag terminal-overrides ",xterm-256color:RGB"
+          set -ag terminal-overrides ",tmux-256color:RGB"
         '';
       };
     };
