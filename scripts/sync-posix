@@ -60,7 +60,6 @@ copy_home_path ".config/git/config"
 copy_home_path ".config/git/allowed_signers"
 copy_home_path ".config/git/ignore"
 copy_home_path ".config/gh/config.yml"
-copy_home_path ".config/nvim"
 
 nix eval --raw "$repo_root#darwinConfigurations.mac.config.homebrew.brewfile" > "$worktree/Brewfile"
 
@@ -98,3 +97,4 @@ fi
 
 source_head=$(git_clean_env -C "$repo_root" rev-parse --short HEAD 2>/dev/null || echo "unknown")
 CONFIGURATION_SYNC_POSIX=1 git_clean_env -C "$worktree" commit --no-verify -m "Sync POSIX fallback from $source_head"
+git_clean_env -C "$repo_root" push origin posix 2>/dev/null || true

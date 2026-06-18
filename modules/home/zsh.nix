@@ -82,7 +82,7 @@
             setopt extended_glob
 
             local config_dir="$HOME/Developer/configuration"
-            local theme_file="$config_dir/state/theme-selection.nix"
+            local theme_file="$config_dir/theme.nix"
 
             local -a labels ghostty nvim_name nvim_style
             labels=(
