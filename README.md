@@ -34,6 +34,9 @@ gh ssh-key add "$HOME/.ssh/id_ed25519.pub" --type "authentication"
 gh ssh-key add "$HOME/.ssh/id_ed25519.pub" --type "signing"
 ```
 
+The activation also wires up `.githooks` as the Git hooks directory for this
+repo, so the `posix` branch syncs automatically on every subsequent commit.
+
 ## Formatting
 
 Format Nix and Markdown files with the same formatter choices used by Neovim:
