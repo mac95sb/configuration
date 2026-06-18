@@ -83,32 +83,48 @@
             local state_dir="$HOME/.local/state"
             local theme_file="$state_dir/theme.nix"
 
-            local -a labels ghostty nvim_name nvim_style
+            local -a labels ghostty
             labels=(
-              "Nvim Dark : None (Default)"
-              "Everforest Dark Hard : everforest"
-              "GitHub Dark Default : github"
-              "Gruvbox Dark : gruvbox"
-              "Atom One Dark : onedark"
-              "Oxocarbon : oxocarbon"
-              "Rose Pine : rose-pine"
-            )
-            ghostty=(
-              "Nvim Dark"
+              "None (Default)"
+              "Catppuccin Macchiato"
+              "Catppuccin Mocha"
+              "Dracula"
               "Everforest Dark Hard"
               "GitHub Dark Default"
               "Gruvbox Dark"
+              "Gruber Darker"
+              "Mellow"
+              "Nord"
               "Atom One Dark"
               "Oxocarbon"
               "Rose Pine"
+              "Rose Pine Moon"
+              "TokyoNight Night"
+              "TokyoNight Storm"
             )
-            nvim_name=("" "everforest" "github" "gruvbox" "onedark" "oxocarbon" "rose-pine")
-            nvim_style=("" "hard" "dark_default" "dark" "dark" "dark" "main")
+            ghostty=(
+              ""
+              "Catppuccin Macchiato"
+              "Catppuccin Mocha"
+              "Dracula"
+              "Everforest Dark Hard"
+              "GitHub Dark Default"
+              "Gruvbox Dark"
+              "Gruber Darker"
+              "Mellow"
+              "Nord"
+              "Atom One Dark"
+              "Oxocarbon"
+              "Rose Pine"
+              "Rose Pine Moon"
+              "TokyoNight Night"
+              "TokyoNight Storm"
+            )
 
             local current_ghostty=""
             local current_index=""
             if [[ -r "$theme_file" ]]; then
-              current_ghostty=$(sed -n 's/^  ghostty = "\(.*\)";$/\1/p' "$theme_file")
+              current_ghostty=$(sed -n 's/^ghostty = "\(.*\)"$/\1/p' "$theme_file")
               local i
               for i in {1..''${#ghostty[@]}}; do
                 if [[ "''${ghostty[$i]}" == "$current_ghostty" ]]; then
@@ -139,7 +155,7 @@
               local needle="''${choice:l}"
               local i
               for i in {1..''${#labels[@]}}; do
-                if [[ "''${labels[$i]:l}" == *"$needle"* || "''${ghostty[$i]:l}" == *"$needle"* || "''${nvim_name[$i]:l}" == "$needle" ]]; then
+                if [[ "''${labels[$i]:l}" == *"$needle"* || "''${ghostty[$i]:l}" == *"$needle"* ]]; then
                   index="$i"
                   break
                 fi
@@ -153,26 +169,45 @@
 
             mkdir -p "$state_dir"
 
-            local nvim_config="null"
-            if [[ -n "''${nvim_name[$index]}" ]]; then
-              nvim_config="{ name = \"''${nvim_name[$index]}\"; style = \"''${nvim_style[$index]}\"; }"
-            fi
-            {
-              print "{"
-              print "  ghostty = \"''${ghostty[$index]}\";"
-              print "  nvim = $nvim_config;"
-              print "}"
-            } >| "$theme_file"
+            print "ghostty = \"''${ghostty[$index]}\"" >| "$theme_file"
 
-            print "theme = ''${ghostty[$index]}" >| "$state_dir/ghostty-theme"
-
-            local cs_name="''${nvim_name[$index]}"
-            [[ "$cs_name" == "github" ]] && cs_name="github_''${nvim_style[$index]}"
-            if [[ -n "$cs_name" ]]; then
-              print "vim.cmd.colorscheme(\"$cs_name\")" >| "$state_dir/nvim-theme.lua"
+            if [[ -n "''${ghostty[$index]}" ]]; then
+              print "theme = ''${ghostty[$index]}" >| "$state_dir/ghostty-theme"
             else
-              print 'vim.cmd.colorscheme("default")' >| "$state_dir/nvim-theme.lua"
+              :> "$state_dir/ghostty-theme"
             fi
+
+            {
+              case "$index" in
+                1)  print 'vim.cmd.colorscheme("default")' ;;
+                2)  print 'require("catppuccin").setup({ flavour = "macchiato" })'
+                    print 'vim.cmd.colorscheme("catppuccin")' ;;
+                3)  print 'require("catppuccin").setup({ flavour = "mocha" })'
+                    print 'vim.cmd.colorscheme("catppuccin")' ;;
+                4)  print 'vim.cmd.colorscheme("dracula")' ;;
+                5)  print 'vim.g.everforest_background = "hard"'
+                    print 'vim.cmd.colorscheme("everforest")' ;;
+                6)  print 'require("github-theme").setup({})'
+                    print 'vim.cmd.colorscheme("github_dark_default")' ;;
+                7)  print 'vim.cmd.colorscheme("gruvbox")' ;;
+                8)  print 'vim.cmd.colorscheme("gruber-darker")' ;;
+                9)  print 'vim.cmd.colorscheme("mellow")' ;;
+                10) print 'vim.cmd.colorscheme("nord")' ;;
+                11) print 'require("onedark").setup({ style = "dark" })'
+                    print 'require("onedark").load()' ;;
+                12) print 'vim.opt.background = "dark"'
+                    print 'vim.cmd.colorscheme("oxocarbon")' ;;
+                13) print 'require("rose-pine").setup({ variant = "main" })'
+                    print 'vim.cmd.colorscheme("rose-pine")' ;;
+                14) print 'require("rose-pine").setup({ variant = "moon" })'
+                    print 'vim.cmd.colorscheme("rose-pine")' ;;
+                15) print 'require("tokyonight").setup({})'
+                    print 'vim.cmd.colorscheme("tokyonight-night")' ;;
+                16) print 'require("tokyonight").setup({})'
+                    print 'vim.cmd.colorscheme("tokyonight-storm")' ;;
+                *)  print 'vim.cmd.colorscheme("default")' ;;
+              esac
+            } >| "$state_dir/nvim-theme.lua"
 
             print "Switching theme: ''${labels[$index]}"
 
@@ -240,11 +275,14 @@
       };
 
       home.activation.initThemeState = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        mkdir -p "$HOME/.local/state"
         if [[ ! -f "$HOME/.local/state/ghostty-theme" ]]; then
-          mkdir -p "$HOME/.local/state"
-          printf 'theme = dark-plus\n' > "$HOME/.local/state/ghostty-theme"
+          : > "$HOME/.local/state/ghostty-theme"
           printf 'vim.cmd.colorscheme("default")\n' > "$HOME/.local/state/nvim-theme.lua"
-          printf '{\n  ghostty = "dark-plus";\n  nvim = null;\n}\n' > "$HOME/.local/state/theme.nix"
+          printf 'ghostty = ""\n' > "$HOME/.local/state/theme.nix"
+        elif grep -q "^theme = dark-plus$" "$HOME/.local/state/ghostty-theme" 2>/dev/null; then
+          : > "$HOME/.local/state/ghostty-theme"
+          printf 'ghostty = ""\n' > "$HOME/.local/state/theme.nix"
         fi
       '';
     };

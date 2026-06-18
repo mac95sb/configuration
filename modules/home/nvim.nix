@@ -14,12 +14,18 @@
           hideSearchHighlight = true;
 
           startPlugins = with pkgs.vimPlugins; [
+            catppuccin-nvim
+            dracula-nvim
             everforest
             github-nvim-theme
+            gruber-darker-nvim
             gruvbox-nvim
+            mellow-nvim
+            nord-nvim
             onedark-nvim
             oxocarbon-nvim
             rose-pine
+            tokyonight-nvim
           ];
 
           globals = {
@@ -666,11 +672,6 @@
                 vim.api.nvim_set_hl(0, "MiniStatuslineFilename", { fg = "#c0caf5", bg = "NONE" })
                 vim.api.nvim_set_hl(0, "MiniStatuslineInactive", { fg = "#565f89", bg = "NONE" })
               end
-
-              pcall(function() vim.g.everforest_background = "hard" end)
-              pcall(function() require("rose-pine").setup({ variant = "main" }) end)
-              pcall(function() require("onedark").setup({ style = "dark" }) end)
-              pcall(function() require("github-theme").setup({}) end)
 
               do
                 local f = vim.fn.expand("~/.local/state/nvim-theme.lua")
