@@ -5,7 +5,6 @@ done
 
 HELPDIR="/nix/store/5qjgn064c7krl34ncilmyh45x2wvcn2m-zsh-5.9.1/share/zsh/$ZSH_VERSION/help"
 
-EDITOR="nvim"
 autoload -U compinit && compinit
 source /nix/store/7lxzhigfwqvbsqls0471qim3h8iwih40-zsh-autosuggestions-0.7.1/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 ZSH_AUTOSUGGEST_STRATEGY=(history)
@@ -30,12 +29,11 @@ for opt in "${set_opts[@]}"; do
 done
 unset opt set_opts
 
-autoload -Uz -- _build_prompt _git_info hr kp tdl theme
+autoload -Uz -- _build_prompt _git_info dr hr kp tdl theme
 if [[ -n $GHOSTTY_RESOURCES_DIR ]]; then
   source "$GHOSTTY_RESOURCES_DIR"/shell-integration/zsh/ghostty-integration
 fi
 
-alias -- dr='sudo darwin-rebuild switch --flake ~/Developer/configuration#mac'
 precmd_functions+=(_build_prompt)
 
 source /nix/store/b4xhd710lddjg6ldf2ycbaf5lsgqgika-zsh-syntax-highlighting-0.8.0/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
