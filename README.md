@@ -19,8 +19,6 @@ brew bundle
 
 # Symlink dotfiles
 mkdir -p ~/.config/ghostty ~/.config/tmux ~/.config/git ~/.config/gh
-ln -sf ~/Developer/configuration/.zprofile ~/.zprofile
-ln -sf ~/Developer/configuration/.zshenv ~/.zshenv
 ln -sf ~/Developer/configuration/.zshrc ~/.zshrc
 ln -sf ~/Developer/configuration/.config/ghostty/config ~/.config/ghostty/config
 ln -sf ~/Developer/configuration/.config/tmux/tmux.conf ~/.config/tmux/tmux.conf
