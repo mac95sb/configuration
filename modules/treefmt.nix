@@ -53,22 +53,14 @@ let
           deadnix
           statix
         ];
-
-        src = pkgs.lib.cleanSourceWith {
-          src = ../.;
-          filter =
-            path: type:
-            type == "directory" || pkgs.lib.hasSuffix ".nix" path || baseNameOf path == "statix.toml";
-        };
+        src = ../.;
       }
       ''
         cp -R "$src" source
         chmod -R u+w source
         cd source
-
         statix check .
-        deadnix --no-lambda-arg --no-lambda-pattern-names --fail .
-
+        deadnix --no-lambda-pattern-names --fail .
         touch "$out"
       '';
 in
