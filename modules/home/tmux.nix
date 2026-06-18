@@ -1,4 +1,4 @@
-{ den, ... }: {
+{ ... }: {
   den.aspects.mac.homeManager =
     { pkgs, lib, ... }:
     let

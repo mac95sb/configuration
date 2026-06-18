@@ -1,9 +1,8 @@
-{ den, inputs, ... }: {
+{ inputs, theme, ... }: {
   den.aspects.mac.homeManager =
     { lib, pkgs, ... }:
     let
       lua = lib.generators.mkLuaInline;
-      selectedTheme = import ../../state/theme-selection.nix;
     in
     {
       imports = [ inputs.nvf.homeManagerModules.default ];
@@ -13,10 +12,10 @@
         settings.vim = {
           enableLuaLoader = true;
           hideSearchHighlight = true;
-          theme = lib.mkIf (selectedTheme.nvim != null) {
+          theme = lib.mkIf (theme.nvim != null) {
             enable = true;
-            name = selectedTheme.nvim.name;
-            style = selectedTheme.nvim.style;
+            name = theme.nvim.name;
+            style = theme.nvim.style;
             transparent = true;
           };
 
@@ -665,7 +664,7 @@
                 vim.api.nvim_set_hl(0, "MiniStatuslineInactive", { fg = "#565f89", bg = "NONE" })
               end
 
-              ${lib.optionalString (selectedTheme.nvim == null) ''
+              ${lib.optionalString (theme.nvim == null) ''
                 vim.cmd.colorscheme("default")
               ''}
 

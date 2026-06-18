@@ -31,7 +31,10 @@
       flake =
         (inputs.nixpkgs.lib.evalModules {
           modules = [ (inputs.import-tree ./modules) ];
-          specialArgs = { inherit inputs; };
+          specialArgs = {
+        inherit inputs;
+        theme = import ./state/theme-selection.nix;
+      };
         }).config.flake;
     in
     builtins.removeAttrs flake [

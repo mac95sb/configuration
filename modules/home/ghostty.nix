@@ -1,14 +1,10 @@
-{ den, ... }:
-let
-  selectedTheme = import ../../state/theme-selection.nix;
-in
-{
+{ theme, ... }: {
   den.aspects.mac.homeManager = { pkgs, ... }: {
     programs.ghostty = {
       enable = true;
       package = pkgs.ghostty-bin;
       settings = {
-        theme = selectedTheme.ghostty;
+        theme = theme.ghostty;
         background-opacity = 0.9;
         background-blur = true;
 

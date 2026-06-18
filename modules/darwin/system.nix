@@ -1,4 +1,4 @@
-{ den, lib, ... }: {
+{ lib, ... }: {
   den.aspects.mac.darwin = { config, pkgs, ... }: {
     security.pam.services.sudo_local = {
       touchIdAuth = true;

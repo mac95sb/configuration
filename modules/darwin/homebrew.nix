@@ -1,4 +1,4 @@
-{ inputs, den, ... }: {
+{ inputs, ... }: {
   den.aspects.mac.darwin = _: {
     imports = [ inputs.nix-homebrew.darwinModules.nix-homebrew ];
 
