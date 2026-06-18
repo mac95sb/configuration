@@ -60,17 +60,20 @@ nix build .#checks.aarch64-darwin.nix-lint
 | ----------------- | -------------------------------------------------------------------------------------------- |
 | `kp <port>`       | Kill the process listening on a port.                                                        |
 | `tdl [agent ...]` | Open a tmux coding layout with the editor on the left and optional agent panes on the right. |
+| `theme [name]`    | Interactively pick a colour scheme and apply it to Neovim and Ghostty.                       |
 | `dr`              | Apply the full nix-darwin configuration.                                                     |
 | `hr`              | Apply only the home-manager user configuration.                                              |
 
 ## POSIX Fallback Branch
 
-Home Manager configures this repository to use `.githooks` as its Git hooks
-directory. After each commit, `.githooks/post-commit` runs `scripts/sync-posix`,
-which updates and pushes the `posix` branch.
+After the first `darwin-rebuild switch`, home-manager wires up `.githooks` as
+the Git hooks directory for this repo. After each subsequent commit,
+`.githooks/post-commit` runs `scripts/sync-posix`, which strips Nix-specific
+content from dotfiles and pushes the result to the `posix` branch.
 
-That branch contains a generated `Brewfile` and raw copies of selected
-Nix-managed files from `$HOME` for machines where Nix is unavailable.
+That branch contains a generated `Brewfile` and portable copies of selected
+dotfiles for machines where Nix is unavailable. See the `posix` branch README
+for its own quick start.
 
 ## Keybindings
 
