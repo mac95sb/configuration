@@ -1,4 +1,4 @@
 {
-  ghostty = "Oxocarbon";
-  nvim = { name = "oxocarbon"; style = "dark"; };
+  ghostty = "Rose Pine";
+  nvim = { name = "rose-pine"; style = "main"; };
 }
