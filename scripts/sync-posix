@@ -51,12 +51,41 @@ copy_home_path() {
   fi
 }
 
-copy_home_path ".zprofile"
-copy_home_path ".zshenv"
-copy_home_path ".zshrc"
+# Copy a file, piping through awk for line filtering
+copy_filtered_path() {
+  relative_path=$1
+  awk_script=$2
+  source_path="$HOME/$relative_path"
+  target_path="$worktree/$relative_path"
+
+  if [ ! -e "$source_path" ]; then
+    return 0
+  fi
+
+  mkdir -p "$(dirname "$target_path")"
+  awk "$awk_script" "$source_path" > "$target_path"
+}
+
+# Strip nix store paths, the NIX_PROFILES fpath block, and home-manager comments
+copy_filtered_path ".zshrc" '
+  /NIX_PROFILES/          { skip=1 }
+  skip && /^done$/        { skip=0; next }
+  skip                    { next }
+  /^typeset -U path/      { next }
+  /\/nix\//               { next }
+  /nix-community/         { next }
+                          { print }
+'
+
 copy_home_path ".config/ghostty/config"
 copy_home_path ".config/tmux/tmux.conf"
-copy_home_path ".config/git/config"
+
+# Replace nix-store-pinned gh credential helper with plain invocation
+copy_filtered_path ".config/git/config" '
+  /helper = "\/nix\/store\// { print "\thelper = \"gh auth git-credential\""; next }
+  { print }
+'
+
 copy_home_path ".config/git/allowed_signers"
 copy_home_path ".config/git/ignore"
 copy_home_path ".config/gh/config.yml"
@@ -97,8 +126,6 @@ brew bundle
 
 # Symlink dotfiles
 mkdir -p ~/.config/ghostty ~/.config/tmux ~/.config/git ~/.config/gh
-ln -sf ~/Developer/configuration/.zprofile ~/.zprofile
-ln -sf ~/Developer/configuration/.zshenv ~/.zshenv
 ln -sf ~/Developer/configuration/.zshrc ~/.zshrc
 ln -sf ~/Developer/configuration/.config/ghostty/config ~/.config/ghostty/config
 ln -sf ~/Developer/configuration/.config/tmux/tmux.conf ~/.config/tmux/tmux.conf
