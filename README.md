@@ -66,8 +66,8 @@ nix build .#checks.aarch64-darwin.nix-lint
 ## POSIX Fallback Branch
 
 Home Manager configures this repository to use `.githooks` as its Git hooks
-directory. On commit, `.githooks/pre-commit` runs `scripts/sync-posix`, which
-updates a separate `.git/posix-worktree` checkout for the `posix` branch.
+directory. After each commit, `.githooks/post-commit` runs `scripts/sync-posix`,
+which updates and pushes the `posix` branch.
 
 That branch contains a generated `Brewfile` and raw copies of selected
 Nix-managed files from `$HOME` for machines where Nix is unavailable.
