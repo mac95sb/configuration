@@ -1,9 +1,6 @@
 { ... }: {
   den.aspects.mac.homeManager =
-    { pkgs, lib, ... }:
-    let
-      floax = pkgs.tmuxPlugins.tmux-floax;
-    in
+    { lib, ... }:
     {
       programs.tmux = {
         enable = true;
@@ -15,20 +12,6 @@
         focusEvents = true;
         keyMode = "vi";
         sensibleOnTop = false;
-
-        plugins = [
-          {
-            plugin = floax;
-            extraConfig = ''
-              set -g @floax-bind '-n M-F'
-              set -g @floax-width '75%'
-              set -g @floax-height '45%'
-              set -g @floax-border-color '#4f5258'
-              set -g @floax-text-color '#e0e2ea'
-              set -g @floax-title 'shell'
-            '';
-          }
-        ];
 
         extraConfig = ''
           set -g renumber-windows on
@@ -64,12 +47,13 @@
           bind -T root WheelUpPane if -Ft= "#{mouse_any_flag}" "send-keys -M" "if -Ft= \"#{pane_in_mode}\" \"send-keys -M\" \"copy-mode -e\""
           bind -T root WheelDownPane select-pane -t= \; send-keys -M
 
-          # Pane focus (Alt+hjkl) — pass through to nvim when active
+          # Pane focus (Alt+hjkl) — send CSI-u sequences to nvim so <A-h> keymaps fire;
+          # nvim's mappings handle intra-nvim movement and fall through to select-pane at edges.
           is_nvim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\S+\/)?nvim$'"
-          bind -n M-h if-shell "$is_nvim" "send-keys M-h" "select-pane -L"
-          bind -n M-j if-shell "$is_nvim" "send-keys M-j" "select-pane -D"
-          bind -n M-k if-shell "$is_nvim" "send-keys M-k" "select-pane -U"
-          bind -n M-l if-shell "$is_nvim" "send-keys M-l" "select-pane -R"
+          bind -n M-h if-shell "$is_nvim" 'send-keys Escape "[104;3u"' "select-pane -L"
+          bind -n M-j if-shell "$is_nvim" 'send-keys Escape "[106;3u"' "select-pane -D"
+          bind -n M-k if-shell "$is_nvim" 'send-keys Escape "[107;3u"' "select-pane -U"
+          bind -n M-l if-shell "$is_nvim" 'send-keys Escape "[108;3u"' "select-pane -R"
 
           # Pane resize (Alt+HJKL)
           bind -n M-H resize-pane -L 5
@@ -98,12 +82,23 @@
           bind -T copy-mode-vi y send -X copy-pipe-and-cancel "pbcopy"
           bind -T copy-mode-vi Enter send -X copy-pipe-and-cancel "pbcopy"
 
-          # FloaX always uses a session named scratch; split it into two panes on first creation.
+          # Floating popup shell — one scratch session per window, split into two panes on first use.
+          bind -n M-F display-popup \
+            -S "fg=#4f5258" \
+            -s "fg=#e0e2ea" \
+            -T "shell" \
+            -w "75%" \
+            -h "45%" \
+            -b rounded \
+            -E \
+            -d "#{pane_current_path}" \
+            "tmux new-session -A -s 'scratch-#{window_id}'"
+
           set-hook -g session-created \
-            'if -F "#{==:#{session_name},scratch}" \
-             "set-option -t scratch status off \; \
-              split-window -h -p 50 -t scratch:1 -c \"#{pane_current_path}\" \; \
-              select-pane -t scratch:1.0"'
+            'if -F "#{m:scratch-*,#{session_name}}" \
+             "set-option -t #{session_name} status off \; \
+              split-window -h -p 50 -t #{session_name}:1 -c \"#{pane_current_path}\" \; \
+              select-pane -t #{session_name}:1.0"'
 
           set -ag terminal-overrides ",tmux-256color:RGB"
         '';

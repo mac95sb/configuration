@@ -26,6 +26,7 @@ let
     - Document public APIs and non-obvious decisions.
     - Write comments to explain why when the reason is non-obvious. Do not add
       comments that restate what well-named code already says.
+    - Do not write comments to mark changes to the codebase, commit messages exist for this reason.
     - Treat security, performance, accessibility, and testability as design
       constraints, not cleanup tasks.
 
@@ -36,6 +37,8 @@ let
       References:
       - https://www.swift.org/documentation/api-design-guidelines/
       - https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/
+      - https://developer.apple.com/tutorials/swiftui/design-patterns
+      - https://developer.apple.com/tutorials/swiftui/build-a-library
     - TypeScript/Vue: use strict TypeScript, avoid `any`, prefer discriminated
       unions for complex state, and use Vue Composition API with `<script setup>`.
       References:
