@@ -1,0 +1,54 @@
+[user]
+	name = Mac
+	email = contact@maclong.dev
+	signingkey = ~/.ssh/id_ed25519
+
+[alias]
+	br = branch
+	cm = commit -m
+	co = checkout
+	lg = log --graph --oneline --decorate --all
+	st = status -sb
+
+[init]
+	defaultBranch = main
+
+[pull]
+	rebase = true
+
+[push]
+	autoSetupRemote = true
+
+[fetch]
+	prune = true
+
+[core]
+	editor = nvim
+	pager = less -FRX
+
+[gpg]
+	format = ssh
+
+[gpg "ssh"]
+	allowedSignersFile = ~/.config/git/allowed_signers
+
+[commit]
+	gpgsign = true
+
+[tag]
+	gpgsign = true
+
+[branch]
+	sort = -committerdate
+
+[merge]
+	conflictstyle = zdiff3
+
+[rerere]
+	enabled = true
+
+[credential "https://github.com"]
+	helper = gh auth git-credential
+
+[credential "https://gist.github.com"]
+	helper = gh auth git-credential

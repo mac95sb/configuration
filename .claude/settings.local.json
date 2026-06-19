@@ -4,7 +4,9 @@
       "Read(//nix/store/**)",
       "Read(//Users/mac/**)",
       "Bash(tmux list-keys *)",
-      "Bash(tmux *)"
+      "Bash(tmux *)",
+      "Bash(git *)",
+      "Bash(defaults read *)"
     ]
   }
 }

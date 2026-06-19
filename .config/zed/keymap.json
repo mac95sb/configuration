@@ -1,0 +1,42 @@
+[
+  {
+    "context": "Editor && vim_mode == normal",
+    "bindings": {
+      "g z": "vim::HelixJumpToWord"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == insert && !showing_completions",
+    "bindings": {
+      "ctrl-alt-b": "editor::MoveToPreviousSubwordStart",
+      "ctrl-alt-f": "editor::MoveToNextSubwordEnd",
+      "ctrl-p": "editor::MoveUp",
+      "ctrl-n": "editor::MoveDown",
+      "ctrl-a": [
+        "editor::MoveToBeginningOfLine",
+        { "stop_at_soft_wraps": false, "stop_at_indent": true }
+      ],
+      "ctrl-e": [
+        "editor::MoveToEndOfLine",
+        { "stop_at_soft_wraps": false }
+      ],
+      "ctrl-k": "editor::KillRingCut",
+      "ctrl-u": "editor::DeleteToBeginningOfLine",
+      "ctrl-h": "editor::Backspace",
+      "ctrl-d": "editor::Delete",
+      "ctrl-w": [
+        "editor::DeleteToPreviousWordStart",
+        { "ignore_newlines": false, "ignore_brackets": false }
+      ],
+      "ctrl-alt-backspace": "editor::DeleteToPreviousSubwordStart",
+      "ctrl-alt-d": "editor::DeleteToNextSubwordEnd"
+    }
+  },
+  {
+    "context": "Editor && vim_mode == insert && showing_completions",
+    "bindings": {
+      "ctrl-p": "editor::ContextMenuPrevious",
+      "ctrl-n": "editor::ContextMenuNext"
+    }
+  }
+]

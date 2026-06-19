@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Touch ID for sudo
+SUDO_LOCAL=/etc/pam.d/sudo_local
+if ! grep -q "pam_tid.so" "$SUDO_LOCAL" 2>/dev/null; then
+  echo "Enabling Touch ID for sudo..."
+  sudo bash -c "printf 'auth       sufficient     pam_tid.so\n' >> $SUDO_LOCAL"
+fi
+
+# Trackpad
+defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
+defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
+defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+
+# Auto dark/light mode
+defaults write NSGlobalDomain AppleInterfaceStyleSwitchesAutomatically -bool true
+
+# Finder
+defaults write com.apple.finder FXPreferredViewStyle "clmv"
+defaults write com.apple.finder ShowPathbar -bool true
+defaults write com.apple.finder FXEnableExtensionChangeWarning -bool false
+
+# Window Manager (Stage Manager)
+defaults write com.apple.WindowManager GloballyEnabled -bool true
+defaults write com.apple.WindowManager EnableTiledWindowMargins -bool true
+
+# Firewall
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setglobalstate on
+sudo /usr/libexec/ApplicationFirewall/socketfilterfw --setstealthmode on
+
+killall Finder 2>/dev/null || true
+echo "macOS defaults applied. Some changes may require a logout."
