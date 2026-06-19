@@ -1,9 +1,9 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#!/bin/sh
+set -eu
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO="$(cd "$(dirname "$0")/.." && pwd)"
 
-if ! command -v brew &>/dev/null; then
+if ! command -v brew >/dev/null 2>&1; then
   echo "Installing Homebrew..."
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
@@ -14,29 +14,28 @@ echo "Installing packages..."
 brew bundle --file="$REPO/Brewfile"
 
 link() {
-  local src="$REPO/$1"
-  local dst="$HOME/$1"
+  src="$REPO/$1"
+  dst="$HOME/$1"
   mkdir -p "$(dirname "$dst")"
   ln -sf "$src" "$dst"
   echo "  linked $dst"
 }
 
 echo "Linking dotfiles..."
-link .zshrc
-link .claude/CLAUDE.md
-link .claude/settings.json
-link .config/git/config
-link .config/git/ignore
-link .config/git/allowed_signers
-link .config/gh/config.yml
-link .config/zed/settings.json
-link .config/zed/keymap.json
-link Library/LaunchAgents/com.user.hidutil.plist
+for f in \
+  .zshrc \
+  .claude/CLAUDE.md \
+  .claude/settings.json \
+  .codex/AGENTS.md \
+  .config/git/config \
+  .config/git/ignore \
+  .config/git/allowed_signers \
+  .config/gh/config.yml \
+  .config/zed/settings.json \
+  .config/zed/keymap.json \
+  Library/LaunchAgents/com.user.hidutil.plist \
+; do link "$f"; done
 
-echo "Loading CapsLock remapping..."
-launchctl unload "$HOME/Library/LaunchAgents/com.user.hidutil.plist" 2>/dev/null || true
-launchctl load "$HOME/Library/LaunchAgents/com.user.hidutil.plist"
-
-if [[ "$(uname)" == "Darwin" ]]; then
+if [ "$(uname)" = "Darwin" ]; then
   "$REPO/scripts/setup-macos"
 fi
