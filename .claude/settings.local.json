@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//nix/store/**)",
+      "Read(//Users/mac/**)",
+      "Bash(tmux list-keys *)",
+      "Bash(tmux *)"
+    ]
+  }
+}
