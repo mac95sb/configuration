@@ -10,10 +10,10 @@
     "model_parameters": [],
   },
   "agent_servers": {
-    "codex-acp": {
+    "claude-acp": {
       "type": "registry",
     },
-    "claude-acp": {
+    "codex-acp": {
       "type": "registry",
     },
   },
@@ -51,13 +51,13 @@
     "file_icons": true,
     "git_status": true,
   },
-  "ui_font_family": "SF Pro",
-  "ui_font_size": 12,
   "theme": {
-    "mode": "system",
     "dark": "Everforest Dark Hard (regular)",
     "light": "Everforest Light Hard (regular)",
+    "mode": "system",
   },
+  "ui_font_family": "SF Pro",
+  "ui_font_size": 12,
   "vim": {
     "toggle_relative_line_numbers": true,
     "use_system_clipboard": "never",

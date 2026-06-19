@@ -1,12 +1,12 @@
 [
   {
-    "context": "Editor && vim_mode == normal",
+    "context": "Editor && vim_mode == normal && !Terminal",
     "bindings": {
-      "g z": "vim::HelixJumpToWord"
-    }
+      "g z": "vim::HelixJumpToWord",
+    },
   },
   {
-    "context": "Editor && vim_mode == insert && !showing_completions",
+    "context": "Editor && vim_mode == insert && !showing_completions && !Terminal",
     "bindings": {
       "ctrl-alt-b": "editor::MoveToPreviousSubwordStart",
       "ctrl-alt-f": "editor::MoveToNextSubwordEnd",
@@ -14,29 +14,26 @@
       "ctrl-n": "editor::MoveDown",
       "ctrl-a": [
         "editor::MoveToBeginningOfLine",
-        { "stop_at_soft_wraps": false, "stop_at_indent": true }
+        { "stop_at_soft_wraps": false, "stop_at_indent": true },
       ],
-      "ctrl-e": [
-        "editor::MoveToEndOfLine",
-        { "stop_at_soft_wraps": false }
-      ],
+      "ctrl-e": ["editor::MoveToEndOfLine", { "stop_at_soft_wraps": false }],
       "ctrl-k": "editor::KillRingCut",
       "ctrl-u": "editor::DeleteToBeginningOfLine",
       "ctrl-h": "editor::Backspace",
       "ctrl-d": "editor::Delete",
       "ctrl-w": [
         "editor::DeleteToPreviousWordStart",
-        { "ignore_newlines": false, "ignore_brackets": false }
+        { "ignore_newlines": false, "ignore_brackets": false },
       ],
       "ctrl-alt-backspace": "editor::DeleteToPreviousSubwordStart",
-      "ctrl-alt-d": "editor::DeleteToNextSubwordEnd"
-    }
+      "ctrl-alt-d": "editor::DeleteToNextSubwordEnd",
+    },
   },
   {
-    "context": "Editor && vim_mode == insert && showing_completions",
+    "context": "Editor && vim_mode == insert && showing_completions && !Terminal",
     "bindings": {
       "ctrl-p": "editor::ContextMenuPrevious",
-      "ctrl-n": "editor::ContextMenuNext"
-    }
-  }
+      "ctrl-n": "editor::ContextMenuNext",
+    },
+  },
 ]
