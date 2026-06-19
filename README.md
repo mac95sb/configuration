@@ -13,10 +13,6 @@ cd ~/Developer/configuration
 
 `scripts/install` installs Homebrew (if missing), runs `brew bundle`, symlinks all dotfiles, and applies macOS system defaults (requires sudo for firewall and Touch ID).
 
-## Config rebuild
-
-After pulling changes, `cr` in the shell re-runs `scripts/install`.
-
 ## SSH key
 
 ```sh
