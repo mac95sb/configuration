@@ -1,19 +1,15 @@
 # Configuration
 
-Mac's dotfiles. Homebrew for packages, symlinked dotfiles for config.
-
 ## Setup
 
 ```sh
 mkdir -p ~/Developer
 git clone https://github.com/maclong9/configuration ~/Developer/configuration
 cd ~/Developer/configuration
-./scripts/install
+curl https://mise.run | sh
+"$HOME/.local/bin/mise" trust
+"$HOME/.local/bin/mise" bootstrap --force-dotfiles
 ```
-
-`scripts/install` installs Homebrew (if missing), runs `brew bundle`, symlinks all dotfiles, and applies macOS system defaults (requires sudo for firewall and Touch ID).
-
-Project-specific personal tooling belongs in a per-repo `MacsBrewfile`. That file is globally ignored through `.config/git/ignore`, so it can be used in work repos without polluting their tracked dependency files.
 
 ## SSH key
 
@@ -24,6 +20,6 @@ gh auth login
 
 ## Shell helpers
 
-| Command     | Action                           |
-| ----------- | -------------------------------- |
-| `kp <port>` | Kill the process on a port.      |
+| Command     | Action                            |
+| ----------- | --------------------------------- |
+| `kp <port>` | Kill the process on a port.       |

@@ -1,0 +1,48 @@
+[settings]
+experimental = true
+dotfiles.root = "~/Developer/configuration/"
+dotfiles.default_mode = "symlink"
+
+[bootstrap.packages]
+# Sytstem packages
+"brew:gh" = "latest"
+"brew:hermes-agent" = "latest"
+"brew:mas" = "latest"
+"brew:zsh-autosuggestions" = "latest"
+"brew:zsh-syntax-highlighting" = "latest"
+
+# GUI apps and fonts via Homebrew casks
+"brew-cask:crossover" = "latest"
+
+# Mac App Store Applications
+"mas:424390742"  = "latest"  # Compressor     
+"mas:424389933"  = "latest"  # Final Cut Pro  
+"mas:361285480"  = "latest"  # Keynote        
+"mas:634148309"  = "latest"  # Logic Pro      
+"mas:634159523"  = "latest"  # MainStage      
+"mas:434290957"  = "latest"  # Motion         
+"mas:361304891"  = "latest"  # Numbers        
+"mas:361309726"  = "latest"  # Pages          
+"mas:1289583905" = "latest"  # Pixelmator Pro 
+"mas:1662217862" = "latest"  # Wipr 2         
+#"mas:497799835"  = "latest"  # Xcode
+
+[dotfiles]
+"~/.config/git/config" = {}
+"~/.config/git/ignore" = {}
+"~/.config/mise/config.toml" = {}
+"~/.vimrc" = {}
+"~/.zshrc" = {}
+
+[bootstrap.macos.finder]
+preferred_view_style = "column"
+show_extensions_warning = false
+show_pathbar = true
+
+[bootstrap.macos.trackpad]
+tap_to_click = true
+three_finger_drag = true
+
+[bootstrap.macos.defaults]
+NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true }
+"com.apple.WindowManager" = { EnableTiledWindowMargins = true, GloballyEnabled = true }
