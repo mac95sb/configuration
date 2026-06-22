@@ -8,12 +8,6 @@
     },
   },
   "agent_servers": {
-    "claude-acp": {
-      "default_config_options": {
-        "mode": "auto",
-      },
-      "type": "registry",
-    },
     "hermes-agent": {
       "type": "custom",
       "command": "hermes",
@@ -25,10 +19,12 @@
     "git-firefly": true,
     "html": true,
     "make": true,
+    "markdown-oxide": true,
     "package-swift-lsp": true,
     "pbxproj": true,
     "ruby": true,
     "swift": true,
+    "toml": true,
     "vue": true,
     "xcode-themes": true,
   },
