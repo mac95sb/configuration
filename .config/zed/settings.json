@@ -6,24 +6,31 @@
       "model": "gpt-5.5",
       "provider": "openai-subscribed",
     },
-    "favorite_models": [],
-    "model_parameters": [],
   },
   "agent_servers": {
     "claude-acp": {
+      "default_config_options": {
+        "mode": "auto",
+      },
       "type": "registry",
     },
-    "codex-acp": {
-      "type": "registry",
+    "hermes-agent": {
+      "type": "custom",
+      "command": "hermes",
+      "args": ["acp"],
     },
   },
   "auto_install_extensions": {
     "comment": true,
     "git-firefly": true,
+    "html": true,
     "make": true,
+    "package-swift-lsp": true,
+    "pbxproj": true,
     "ruby": true,
     "swift": true,
     "vue": true,
+    "xcode-themes": true,
   },
   "autosave": {
     "after_delay": {
@@ -41,6 +48,9 @@
     "Markdown": {
       "soft_wrap": "bounded",
     },
+    "Ruby": {
+      "language_servers": ["!solargraph"],
+    },
   },
   "relative_line_numbers": "enabled",
   "tab_bar": {
@@ -52,11 +62,14 @@
     "git_status": true,
   },
   "theme": {
-    "dark": "Everforest Dark Hard (regular)",
-    "light": "Everforest Light Hard (regular)",
+    "dark": "Xcode Default Dark",
+    "light": "Xcode Default Light",
     "mode": "system",
   },
-  "ui_font_family": "SF Pro",
+  "title_bar": {
+    "show_sign_in": false,
+  },
+  "ui_font_family": "SF Pro Display",
   "ui_font_size": 12,
   "vim": {
     "toggle_relative_line_numbers": true,
