@@ -8,7 +8,11 @@ brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 
 # Apps
+cask "codex"
+cask "claude-code"
 cask "crossover"
+cask "font-sf-mono-nerd-font-ligaturized"
+cask "font-sf-pro"
 cask "mole-app"
 cask "notion"
 cask "zed"
