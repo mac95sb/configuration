@@ -15,19 +15,12 @@ HISTFILE="$HOME/.zsh_history"
 path+=("$HOME/.local/bin")
 typeset -U path
 
-source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
+[[ -r /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh ]] && source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh
+[[ -r /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh ]] && source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-_build_prompt() {
-  local e=$?
-  local sym="%F{#a6dbff}"
-  (( e != 0 )) && sym="%F{#ff9e64}"
-  PROMPT="
-%F{#6C91BF}%~%F{#767676}%f
-${sym}λ%f "
-}
-
-precmd_functions+=(_build_prompt)
+PROMPT='
+%F{#6C91BF}%~%f
+%(?.%F{#a6dbff}.%F{#ff9e64})λ%f '
 
 kp() {
   if [[ -z "$1" ]]; then
@@ -38,3 +31,19 @@ kp() {
   pids=$(lsof -ti :"$1") || { print -u2 "kp: no process on port $1"; return 1; }
   print "$pids" | xargs kill -9
 }
+
+bc() {
+  local file
+  local found=0
+
+  for file in Brewfile(N) MacsBrewfile(N) */Brewfile(N) */MacsBrewfile(N); do
+    [[ -f "$file" ]] || continue
+    found=1
+    brew bundle check --file="$file" || brew bundle install --file="$file" || return
+  done
+
+  (( found )) || { print -u2 "bc: no Brewfile found"; return 1; }
+}
+
+# Hermes Agent — ensure ~/.local/bin is on PATH
+export PATH="$HOME/.local/bin:$PATH"
