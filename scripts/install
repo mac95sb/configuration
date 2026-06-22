@@ -8,7 +8,14 @@ if ! command -v brew >/dev/null 2>&1; then
   /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 fi
 
-eval "$(/opt/homebrew/bin/brew shellenv)"
+if [ -x /opt/homebrew/bin/brew ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+elif [ -x /usr/local/bin/brew ]; then
+  eval "$(/usr/local/bin/brew shellenv)"
+else
+  echo "Homebrew installed, but brew was not found in a supported location." >&2
+  exit 1
+fi
 
 echo "Installing packages..."
 brew bundle --file="$REPO/Brewfile"
@@ -29,7 +36,6 @@ for f in \
   .codex/AGENTS.md \
   .config/git/config \
   .config/git/ignore \
-  .config/git/allowed_signers \
   .config/gh/config.yml \
   .config/zed/settings.json \
   .config/zed/keymap.json \

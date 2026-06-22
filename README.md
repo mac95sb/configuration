@@ -13,6 +13,8 @@ cd ~/Developer/configuration
 
 `scripts/install` installs Homebrew (if missing), runs `brew bundle`, symlinks all dotfiles, and applies macOS system defaults (requires sudo for firewall and Touch ID).
 
+Project-specific personal tooling belongs in a per-repo `MacsBrewfile`. That file is globally ignored through `.config/git/ignore`, so it can be used in work repos without polluting their tracked dependency files.
+
 ## SSH key
 
 ```sh
