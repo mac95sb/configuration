@@ -4,7 +4,7 @@
 
 ```sh
 mkdir -p ~/Developer
-git clone https://github.com/maclong9/configuration ~/Developer/configuration
+git clone https://github.com/mac95sb/configuration ~/Developer/configuration
 cd ~/Developer/configuration
 curl https://mise.run | sh
 "$HOME/.local/bin/mise" trust
