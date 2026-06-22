@@ -9,6 +9,9 @@ cd ~/Developer/configuration
 curl https://mise.run | sh
 "$HOME/.local/bin/mise" trust
 "$HOME/.local/bin/mise" bootstrap --force-dotfiles
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/opt/homebrew/bin/brew shellenv)"
+brew bundle
 ```
 
 ## SSH key

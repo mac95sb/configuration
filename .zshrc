@@ -1,4 +1,4 @@
-eval "$(mise activate zsh)"
+eval "$("$HOME/.local/bin/mise" activate zsh)"
 
 autoload -Uz compinit && compinit
 

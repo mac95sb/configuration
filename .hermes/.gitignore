@@ -1,0 +1,37 @@
+# Keep this repo's Hermes profile tracking focused and secret-safe.
+*
+
+# Tracked declarative profile files.
+!.gitignore
+!SOUL.md
+!config.yaml
+!memories/
+!memories/USER.md
+!skills/
+!skills/**
+
+# Generated skill/runtime state.
+skills/.hub/
+skills/.usage.json
+skills/.usage.json.lock
+skills/.curator_state
+
+# Defense-in-depth: never track credentials, runtime state, logs, caches, or sessions.
+.env
+auth.json
+auth.lock
+shared/
+state.db*
+sessions/
+logs/
+cache/
+audio_cache/
+image_cache/
+sandboxes/
+*_cache.json
+context_length_cache.yaml
+config.yaml.bak.*
+.hermes_history
+.skills_prompt_snapshot.json
+.update_check
+.tirith-install-failed

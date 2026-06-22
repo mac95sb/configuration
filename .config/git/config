@@ -3,13 +3,6 @@
 	email = contact@maclong.dev
 	signingkey = ~/.ssh/id_ed25519
 
-[alias]
-	br = branch
-	cm = commit -m
-	co = checkout
-	lg = log --graph --oneline --decorate --all
-	st = status -sb
-
 [init]
 	defaultBranch = main
 

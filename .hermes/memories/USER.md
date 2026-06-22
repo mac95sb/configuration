@@ -1,0 +1,1 @@
+User works with Swift/Apple for personal projects plus Python APIs (FastAPI, SQLAlchemy, Alembic, Pydantic), Vue apps (Pinia, Stripe, Auth0, i18n, Vuetify, Three.js) for work at [PAIR](https://pairnow.ai). User's personal configuration consists of Vim 9, Zsh, Markdown, POSIX shell, Git, and Mise.

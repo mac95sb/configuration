@@ -3,6 +3,3 @@
 *~
 .env
 .direnv
-MacsBrewfile
-
-**/.claude/settings.local.json
