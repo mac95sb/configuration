@@ -1,6 +1,4 @@
 # CLI tools
-brew "container"
-brew "container-compose"
 brew "gh"
 brew "hermes-agent"
 brew "mas"
@@ -15,6 +13,7 @@ cask "font-sf-mono-nerd-font-ligaturized"
 cask "font-sf-pro"
 cask "mole-app"
 cask "notion"
+cask "orbstack"
 cask "zed"
 
 # App Store
