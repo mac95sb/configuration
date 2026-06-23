@@ -4,15 +4,22 @@ dotfiles.root = "~/Developer/configuration/"
 dotfiles.default_mode = "symlink"
 
 [dotfiles]
+"~/.agents/AGENTS.md" = {}
+"~/.agents/skills" = {}
+"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
+"~/.codex/skills" = { source = "~/Developer/configuration/.agents/skills" }
+"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
+"~/.claude/skills" = { source = "~/Developer/configuration/.agents/skills" }
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = {}
 "~/.config/zed/keymap.json" = {}
 "~/.config/zed/settings.json" = {}
+"~/.hermes/AGENTS.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
 "~/.hermes/SOUL.md" = {}
 "~/.hermes/config.yaml" = {}
 "~/.hermes/memories/USER.md" = {}
-"~/.hermes/skills" = {}
+"~/.hermes/skills" = { source = "~/Developer/configuration/.agents/skills" }
 "~/.vimrc" = {}
 "~/.zshrc" = {}
 
