@@ -18,3 +18,5 @@ metadata:
 - For bisect/debugging, keep steps reproducible and record good/bad commits and test command.
 - Verify repository health after changes with status and the relevant tests/builds.
 - After build/test verification, inspect whether generated artifacts changed. If build outputs are tracked or unignored (for example `.build/` in SwiftPM repos), report that noise separately and do not run cleanup/reset commands unless the user explicitly approves that destructive cleanup scope.
+- For dotfile/configuration repositories, classify dirty files before cleanup: tracked user configuration changes, generated tool state, editor noise, and machine-specific/secret-adjacent values. Prefer adding narrowly-scoped ignore rules for reproducible generated state (for example lock/usage metadata) and removing untracked generated files; do not reset tracked dotfile edits unless the user explicitly asks.
+- When validating a dirty config cleanup, run the narrow validators for touched config types (for example shell syntax, editor settings parse checks, package-manager dry checks) and report any unmet dependencies separately from the repository cleanup.

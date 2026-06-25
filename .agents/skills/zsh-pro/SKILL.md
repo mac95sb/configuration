@@ -16,3 +16,4 @@ metadata:
 - Quote expansions unless intentional glob/splitting is required. Use zsh arrays instead of stringly command construction.
 - Keep aliases simple; use functions for arguments or logic.
 - Verify with `zsh -n file` and, for startup changes, a non-destructive interactive shell timing/check.
+- In tracked dotfiles, avoid committing machine-specific credential paths or private-key environment variables. For optional tools in `.zshrc`, guard startup hooks with `command -v tool >/dev/null 2>&1` so a fresh machine does not fail shell startup when the tool is absent.
