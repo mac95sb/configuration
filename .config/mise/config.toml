@@ -35,6 +35,3 @@ three_finger_drag = true
 [bootstrap.macos.defaults]
 NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true }
 "com.apple.WindowManager" = { EnableTiledWindowMargins = true, GloballyEnabled = true }
-
-[tools]
-node = "lts"
