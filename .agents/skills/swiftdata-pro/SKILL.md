@@ -19,6 +19,14 @@ Review process:
 
 If doing partial work, load only the relevant reference files.
 
+## External docs fallback
+
+If this skill's references do not cover a requested SwiftData API, predicate behavior, CloudKit integration, migration, or best practice, search the official Apple docs before answering or editing code. Match the user's SDK and deployment target, and cite any external guidance used.
+
+- [SwiftData documentation](https://developer.apple.com/documentation/swiftdata)
+- [Preserving your app's model data across launches](https://developer.apple.com/documentation/swiftdata/preserving-your-apps-model-data-across-launches)
+- [Syncing model data across a person's devices](https://developer.apple.com/documentation/swiftdata/syncing-model-data-across-a-persons-devices)
+
 
 ## Core Instructions
 

@@ -30,7 +30,8 @@ Use this skill when the user asks to set up, expand, review, or curate the local
    - `templates/` for copy-and-modify starter files.
    - `scripts/` for re-runnable verification/probing/automation.
 6. Add a short pointer in `SKILL.md` whenever a support file is added, so future agents know it exists.
-7. Verify the result by loading representative skills with `skill_view` and listing the library.
+7. For framework/tool umbrella skills, include an `External docs fallback` section when missing. Link official docs and best-practices sources, and instruct future agents to search those sources when the skill's own references do not cover the requested guide, API, or best practice. Include version/toolchain matching guidance and ask agents to cite external guidance they use.
+8. Verify the result by loading representative skills with `skill_view` and listing the library.
 
 ## Third-party skill intake checklist
 

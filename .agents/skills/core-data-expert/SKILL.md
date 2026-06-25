@@ -16,6 +16,14 @@ Fast, production-oriented guidance for building **correct**, **performant** Core
 6. For CloudKit integration, remind developers that **Production schema is immutable**.
 7. Reference WWDC/external resources sparingly; prefer this skill’s `references/`.
 
+## External docs fallback
+
+If this skill's references do not cover a requested Core Data API, migration path, CloudKit sync behavior, or best practice, search the official Apple docs before answering or editing code. Match the user's platform and deployment target, and cite any external guidance used.
+
+- [Core Data documentation](https://developer.apple.com/documentation/coredata)
+- [Core Data Programming Guide](https://developer.apple.com/library/archive/documentation/Cocoa/Conceptual/CoreData/)
+- [NSPersistentCloudKitContainer documentation](https://developer.apple.com/documentation/coredata/nspersistentcloudkitcontainer)
+
 ## First 60 seconds (triage template)
 
 - **Clarify the goal**: setup, bugfix, migration, performance, CloudKit?

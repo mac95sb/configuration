@@ -14,6 +14,16 @@ For quick navigation across playbooks, use `references/_index.md`.
 
 For native macOS editor/IDE shells that intentionally follow Xcode conventions, use `references/xcode-style-macos-editor-shell.md` to keep navigator, inspector, assistant, and app-target planning responsibilities separated.
 
+## External docs fallback
+
+If this skill's playbooks do not cover a requested Swift, SwiftUI/UIKit, TCA, or architecture best practice, search the relevant official or project docs before recommending a pattern. Match the project's existing dependencies and platform constraints, and cite any external guidance used.
+
+- [Swift documentation](https://www.swift.org/documentation/)
+- [SwiftUI documentation](https://developer.apple.com/documentation/swiftui)
+- [UIKit documentation](https://developer.apple.com/documentation/uikit)
+- [The Composable Architecture documentation](https://pointfreeco.github.io/swift-composable-architecture/main/documentation/composablearchitecture/)
+- [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
+
 ## Fast Path
 
 Before selecting an architecture, always capture:

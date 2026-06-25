@@ -9,6 +9,10 @@ metadata:
 
 # Zed Pro
 
+- External docs fallback: if this skill does not cover a requested Zed setting, key binding, agent server, extension, or best practice, search the official Zed docs before answering or editing configuration. Match the installed Zed version when behavior differs, and cite any external guidance used.
+  - [Zed documentation](https://zed.dev/docs)
+  - [Zed settings documentation](https://zed.dev/docs/configuring-zed)
+  - [Zed AI/agent docs](https://zed.dev/docs/ai)
 - Inspect existing `settings.json`, `keymap.json`, installed extensions, and nearby editor configuration before editing.
 - Zed settings are JSONC-like and commonly include trailing commas; preserve existing formatting conventions instead of rewriting the whole file.
 - For `agent_servers`, verify command/args shape against adjacent entries and avoid removing user preferences while adjusting a single server.

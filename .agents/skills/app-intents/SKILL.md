@@ -27,6 +27,14 @@ Review process:
 
 If doing partial work, load only the relevant reference files.
 
+## External docs fallback
+
+If this skill's references do not cover a requested App Intents API, schema, or best practice, search the official Apple docs before answering or editing code. Match the user's installed Xcode/iOS/macOS SDK when availability matters, and cite any external guidance used.
+
+- [App Intents documentation](https://developer.apple.com/documentation/appintents)
+- [Shortcuts and Siri documentation](https://developer.apple.com/documentation/sirikit)
+- [Human Interface Guidelines: App Shortcuts](https://developer.apple.com/design/human-interface-guidelines/app-shortcuts)
+
 
 ## Task-based routing
 

@@ -24,6 +24,15 @@ This skill provides expert guidance on iOS accessibility, covering VoiceOver, Dy
 4. Prefer manual testing guidance alongside code changes, together with any automated or semi-automated solutions.
 5. Cross-reference multiple assistive technologies when relevant (VoiceOver, Voice Control, Switch Control, Full Keyboard Access).
 
+## External docs fallback
+
+If this skill's references do not cover a requested accessibility API, assistive technology, testing workflow, or best practice, search Apple's accessibility and design guidance before answering or editing code. Match the user's UI framework and deployment target, and cite any external guidance used.
+
+- [Accessibility documentation](https://developer.apple.com/accessibility/)
+- [UIKit accessibility documentation](https://developer.apple.com/documentation/uikit/accessibility_for_uikit)
+- [SwiftUI accessibility documentation](https://developer.apple.com/documentation/swiftui/accessibility-fundamentals)
+- [Human Interface Guidelines: Accessibility](https://developer.apple.com/design/human-interface-guidelines/accessibility)
+
 ### Anti-Patterns to Avoid
 
 - **Do not add trait names to labels** — Say "Close", not "Close button" (VoiceOver adds "button" automatically, when using the button trait)

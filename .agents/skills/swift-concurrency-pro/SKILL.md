@@ -26,6 +26,14 @@ Review process:
 
 If doing a partial review, load only the relevant reference files.
 
+## External docs fallback
+
+If this skill's references do not cover a requested Swift concurrency API, diagnostic, migration path, or best practice, search the Swift and Apple docs before answering or editing code. Match the user's installed Swift/Xcode toolchain, and cite any external guidance used.
+
+- [Swift Concurrency chapter](https://docs.swift.org/swift-book/documentation/the-swift-programming-language/concurrency/)
+- [Swift concurrency documentation](https://www.swift.org/documentation/concurrency/)
+- [Swift evolution proposals](https://github.com/swiftlang/swift-evolution/tree/main/proposals)
+
 
 ## Core Instructions
 

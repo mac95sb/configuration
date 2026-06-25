@@ -14,6 +14,16 @@ license: MIT
 
 ---
 
+## External docs fallback
+
+If this skill's references do not cover a requested Keychain, LocalAuthentication, CryptoKit, certificate trust, or mobile-security best practice, search the official Apple and OWASP docs before answering or editing code. Match the user's platform and deployment target, and cite any external guidance used.
+
+- [Security documentation](https://developer.apple.com/documentation/security)
+- [Keychain Services documentation](https://developer.apple.com/documentation/security/keychain_services)
+- [CryptoKit documentation](https://developer.apple.com/documentation/cryptokit)
+- [LocalAuthentication documentation](https://developer.apple.com/documentation/localauthentication)
+- [OWASP MASTG](https://mas.owasp.org/MASTG/)
+
 ## Decision Tree
 
 Determine the user's intent, then follow the matching branch. If ambiguous, ask.

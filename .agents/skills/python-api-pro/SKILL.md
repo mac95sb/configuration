@@ -11,6 +11,16 @@ metadata:
 
 Use this skill for Python services built with FastAPI, SQLAlchemy, Alembic, and Pydantic.
 
+## External docs fallback
+
+If this skill does not cover a requested FastAPI, SQLAlchemy, Alembic, Pydantic, or Python API best practice, search the relevant official docs before answering or editing code. Match the project's pinned versions from its dependency files, and cite any external guidance used.
+
+- [FastAPI documentation](https://fastapi.tiangolo.com/)
+- [SQLAlchemy documentation](https://docs.sqlalchemy.org/)
+- [Alembic documentation](https://alembic.sqlalchemy.org/)
+- [Pydantic documentation](https://docs.pydantic.dev/)
+- [Python documentation](https://docs.python.org/3/)
+
 ## Default workflow
 
 1. Inspect the project first: `pyproject.toml`, dependency manager, app entrypoint, DB/session setup, model/schema layout, tests, and existing style.

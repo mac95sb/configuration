@@ -14,6 +14,15 @@ description: Run a thorough audit of an iOS / macOS Swift codebase — bugs, dea
 - **Group by root cause, not by occurrence.** If one missing `@MainActor` annotation triggers seven warnings, that's one finding listing the seven sites, not seven findings.
 - **`Dead/` (or any explicitly-archived directory) is excluded.** Check `CLAUDE.md` / project README for any "do not edit" directories before launching agents.
 
+## External docs fallback
+
+If this skill or the loaded domain skills do not cover a requested Swift, Apple framework, security, performance, or best-practice audit topic, search the official docs before finalizing findings. Prefer sources that match the project's SDK, Swift version, and deployment target, and cite any external guidance used in the audit.
+
+- [Apple Developer Documentation](https://developer.apple.com/documentation/)
+- [Swift documentation](https://www.swift.org/documentation/)
+- [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
+- [OWASP MASVS](https://mas.owasp.org/MASVS/)
+
 ## Workflow
 
 ### Step 1 — Scope the codebase

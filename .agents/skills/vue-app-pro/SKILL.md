@@ -11,6 +11,20 @@ metadata:
 
 Use this skill for Vue 3 applications, especially TypeScript + Vite projects using Pinia, Vuetify, Auth0, Stripe, i18n, or Three.js.
 
+## External docs fallback
+
+If this skill does not cover a requested Vue, Pinia, Vuetify, Auth0, Stripe, vue-i18n, Three.js, or Vite best practice, search the relevant official docs before answering or editing code. Match the project's pinned versions from `package.json` and the lockfile, and cite any external guidance used.
+
+- [Vue documentation](https://vuejs.org/guide/)
+- [Vue style guide](https://vuejs.org/style-guide/)
+- [Pinia documentation](https://pinia.vuejs.org/)
+- [Vuetify documentation](https://vuetifyjs.com/)
+- [Auth0 Vue SDK documentation](https://auth0.com/docs/libraries/auth0-vue)
+- [Stripe.js documentation](https://docs.stripe.com/js)
+- [vue-i18n documentation](https://vue-i18n.intlify.dev/)
+- [Three.js documentation](https://threejs.org/docs/)
+- [Vite documentation](https://vite.dev/guide/)
+
 ## Default workflow
 
 1. Inspect `package.json`, lockfile, Vite/Vue config, router, store layout, plugins, and tests before editing.

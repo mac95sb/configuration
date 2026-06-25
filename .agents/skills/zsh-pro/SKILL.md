@@ -9,6 +9,9 @@ metadata:
 
 # ZSH Pro
 
+- External docs fallback: if this skill does not cover a requested Zsh option, startup file behavior, completion behavior, or best practice, search the official Zsh docs before answering or editing shell configuration. Match the user's installed Zsh version when behavior differs, and cite any external guidance used.
+  - [Zsh documentation](https://zsh.sourceforge.io/Doc/)
+  - [Zsh FAQ](https://zsh.sourceforge.io/FAQ/)
 - Inspect `.zshenv`, `.zprofile`, `.zshrc`, plugin manager setup, completion setup, and PATH order before editing.
 - Put environment needed by all shells in `.zshenv` only if it is safe for every zsh invocation; keep interactive UI in `.zshrc`; login-only setup in `.zprofile`.
 - Avoid duplicate PATH entries; prefer array manipulation (`path=(...)`) and `typeset -U path PATH` when consistent with the file.

@@ -8,6 +8,14 @@ description: 29 production-ready scripts for iOS app testing, building, and auto
 
 Build, test, and automate iOS applications using accessibility-driven navigation and structured data instead of pixel coordinates.
 
+## External docs fallback
+
+If this skill's scripts and references do not cover a requested Simulator, XCTest, xcodebuild, or automation behavior, search the official Apple docs before advising or changing automation. Match the installed Xcode version when command behavior differs, and cite any external guidance used.
+
+- [Running your app in Simulator or on a device](https://developer.apple.com/documentation/xcode/running-your-app-in-simulator-or-on-a-device)
+- [Testing with Xcode](https://developer.apple.com/documentation/xcode/testing-your-apps-in-xcode)
+- [Xcode build scripts](https://developer.apple.com/documentation/xcode/running-custom-scripts-during-a-build)
+
 ## Quick Start
 
 ```bash

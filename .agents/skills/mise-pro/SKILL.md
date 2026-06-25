@@ -11,6 +11,14 @@ metadata:
 
 Use this skill for [mise](https://mise.jdx.dev/) configuration and workflows.
 
+## External docs fallback
+
+If this skill does not cover a requested mise setting, backend, task option, or best practice, search the official mise docs before answering or editing configuration. Match the installed mise version when behavior differs, and cite any external guidance used.
+
+- [mise documentation](https://mise.jdx.dev/)
+- [mise configuration](https://mise.jdx.dev/configuration.html)
+- [mise tasks](https://mise.jdx.dev/tasks/)
+
 ## Workflow
 
 1. Inspect existing `.mise.toml`, `mise.toml`, `.config/mise/config.toml`, `.tool-versions`, task files, and project docs before changing anything.

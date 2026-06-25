@@ -19,6 +19,14 @@ Review process:
 
 If doing partial work, load only the relevant reference files.
 
+## External docs fallback
+
+If this skill's references do not cover a requested Swift Testing API, migration path, diagnostic, or best practice, search the official Swift Testing and Swift docs before answering or editing code. Match the user's installed Swift/Xcode toolchain, and cite any external guidance used.
+
+- [Swift Testing documentation](https://developer.apple.com/documentation/testing)
+- [Swift Testing package documentation](https://swiftpackageindex.com/swiftlang/swift-testing/main/documentation/testing)
+- [Swift documentation](https://www.swift.org/documentation/)
+
 
 ## Core Instructions
 

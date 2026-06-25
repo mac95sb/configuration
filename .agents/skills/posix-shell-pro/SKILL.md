@@ -9,6 +9,10 @@ metadata:
 
 # POSIX Shell Pro
 
+- External docs fallback: if this skill does not cover a requested POSIX shell behavior, portability rule, or scripting best practice, search the POSIX specification and ShellCheck guidance before answering or editing scripts. Match the target shell declared by the shebang or project docs, and cite any external guidance used.
+  - [POSIX Shell Command Language](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html)
+  - [POSIX utilities](https://pubs.opengroup.org/onlinepubs/9699919799/utilities/contents.html)
+  - [ShellCheck wiki](https://www.shellcheck.net/wiki/)
 - Target `/bin/sh` portability unless the script shebang says bash/zsh/ksh. Do not use arrays, `[[ ]]`, process substitution, `pipefail`, or bash-only parameter expansion in POSIX scripts.
 - Start scripts with `set -eu` only after checking unset-variable and conditional behavior; use `set -f` only when disabling globbing is intended.
 - Quote variable expansions and command substitutions by default.

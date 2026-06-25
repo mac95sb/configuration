@@ -24,6 +24,14 @@ Review process:
 
 If doing a partial review, load only the relevant reference files.
 
+## External docs fallback
+
+If this skill's references do not cover a requested SwiftUI API, platform behavior, design pattern, or best practice, search the official Apple docs before answering or editing code. Match the user's SDK and deployment target, and cite any external guidance used.
+
+- [SwiftUI documentation](https://developer.apple.com/documentation/swiftui)
+- [Human Interface Guidelines](https://developer.apple.com/design/human-interface-guidelines/)
+- [Swift documentation](https://www.swift.org/documentation/)
+
 
 ## Core Instructions
 
