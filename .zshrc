@@ -1,4 +1,7 @@
 eval "$("$HOME/.local/bin/mise" activate zsh)"
+if command -v fnox >/dev/null 2>&1; then
+  eval "$(fnox activate zsh)"
+fi
 
 autoload -Uz compinit && compinit
 
