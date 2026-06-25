@@ -18,4 +18,5 @@ metadata:
 - When rectifying project notes against an implementation plan, convert rough TODO notes into explicit accepted decisions, update the plan where the decision changes sequencing or scope, and mark the original notes as addressed rather than leaving duplicate unresolved TODOs.
 - If the user references “suggested changes” without restating them, first inspect repo-local notes/TODO docs (for example `NOTES.md`, `TODO.md`, and the active plan) before asking for clarification; treat those notes as the likely source of requested edits.
 - When docs updates are paired with source changes, keep the plan and source code aligned in the same pass and verify with the project’s normal build/test command before reporting completion.
+- When editing agent instruction files such as `AGENTS.md`, distinguish reusable agent behavior from repository-specific operational detail. If asked to make instructions more general, remove hardcoded paths, tool inventories, and repo-only workflows while preserving broadly useful safety, context-gathering, editing, and validation guidance.
 - Run markdown lint/link checks if the project has them.

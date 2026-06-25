@@ -1,4 +1,9 @@
 {
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)"
+  },
   "agent": {
     "default_model": {
       "effort": "medium",
@@ -66,7 +71,7 @@
   "theme": {
     "dark": "Xcode Default Dark",
     "light": "Xcode Default Light",
-    "mode": "system",
+    "mode": "dark",
   },
   "title_bar": {
     "show_sign_in": false,
