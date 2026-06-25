@@ -16,7 +16,6 @@
 	prune = true
 
 [core]
-	editor = nvim
 	pager = less -FRX
 
 [gpg]
