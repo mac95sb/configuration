@@ -331,7 +331,7 @@ stt:
   enabled: true
   provider: local
   local:
-    model: base
+    model: small
     language: ''
   openai:
     model: whisper-1
@@ -420,7 +420,7 @@ discord:
   allow_any_attachment: false
   max_attachment_bytes: 33554432
   voice_fx:
-    enabled: false
+    enabled: true
     ambient_enabled: true
     ambient_path: ''
     ambient_gain: 0.18
