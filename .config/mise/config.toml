@@ -35,3 +35,21 @@ three_finger_drag = true
 [bootstrap.macos.defaults]
 NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true }
 "com.apple.WindowManager" = { EnableTiledWindowMargins = true, GloballyEnabled = true }
+
+[tools]
+# CLI tools
+gh = "latest"
+claude = "latest"
+"pipx:hermes-agent" = "latest"
+"github:mas-cli/mas" = "latest"
+
+# Apps (via brew-cask backend, requires mise v2026.6.6+)
+"brew-cask:codex" = "latest"
+"brew-cask:crossover" = "latest"
+"brew-cask:figma" = "latest"
+"brew-cask:font-sf-mono" = "latest"
+"brew-cask:font-sf-pro" = "latest"
+"brew-cask:mole-app" = "latest"
+"brew-cask:notion" = "latest"
+"brew-cask:orbstack" = "latest"
+"brew-cask:zed" = "latest"
