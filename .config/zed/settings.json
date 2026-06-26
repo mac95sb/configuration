@@ -39,7 +39,7 @@
       "milliseconds": 1000,
     },
   },
-  "buffer_font_family": "Liga SFMono Nerd Font",
+  "buffer_font_family": "SF Mono",
   "buffer_font_size": 11,
   "completion_menu_item_kind": "symbol",
   "diff_view_style": "unified",
