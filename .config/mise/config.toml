@@ -42,6 +42,7 @@ gh = "latest"
 claude = "latest"
 "pipx:hermes-agent" = "latest"
 "github:mas-cli/mas" = "latest"
+node = "latest"
 
 # Apps (via brew-cask backend, requires mise v2026.6.6+)
 "brew-cask:codex" = "latest"

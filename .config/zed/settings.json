@@ -10,9 +10,9 @@
   "agent_servers": {
     "claude-acp": {
       "default_config_options": {
-        "mode": "auto",
+        "mode": "auto"
       },
-      "type": "registry",
+      "type": "registry"
     },
     "hermes-agent": {
       "type": "custom",
@@ -69,6 +69,7 @@
     "mode": "system",
   },
   "title_bar": {
+    "show_user_picture": false,
     "show_sign_in": false,
   },
   "ui_font_family": "SF Pro Display",

@@ -34,6 +34,7 @@ If this skill does not cover a requested mise setting, backend, task option, or 
 - Avoid shell-specific task syntax unless the project declares that shell.
 - When replacing asdf/nvm/pyenv/rbenv/direnv flows, preserve behavior and document migration notes.
 - For dotfiles, keep bootstrapping idempotent and safe to re-run.
+- In Homebrew-based bootstrap docs, install `mise` through the Brewfile/Homebrew bundle rather than the curl installer when Homebrew is already part of the setup. After `eval "$(/opt/homebrew/bin/brew shellenv)"`, prefer simple `mise ...` commands over hardcoded `/opt/homebrew/bin/mise ...` paths unless the docs explicitly need to guard against another earlier `mise` on `PATH`.
 - For app state directories such as `~/.hermes`, prefer minimal file-level dotfile entries plus deny-by-default nested `.gitignore` files over symlinking/tracking the whole directory. See `references/hermes-minimal-dotfiles.md` for a concrete Hermes pattern.
 
 ## Review checklist

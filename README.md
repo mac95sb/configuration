@@ -3,15 +3,14 @@
 ## Setup
 
 ```sh
-mkdir -p ~/Developer
-git clone https://github.com/mac95sb/configuration ~/Developer/configuration
-cd ~/Developer/configuration
-curl https://mise.run | sh
-"$HOME/.local/bin/mise" trust
-"$HOME/.local/bin/mise" bootstrap --force-dotfiles
+DOTFILES="$HOME/Developer/configuration"
+mkdir -p "$(dirname "$DOTFILES")"
+git clone https://github.com/mac95sb/configuration "$DOTFILES"
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 eval "$(/opt/homebrew/bin/brew shellenv)"
-brew bundle
+brew bundle --file "$DOTFILES/Brewfile"
+mise -C "$DOTFILES" trust
+mise -C "$DOTFILES" bootstrap --force-dotfiles
 ```
 
 ## SSH key

@@ -1,2 +1,3 @@
 .DS_Store
 .agents/skills/.usage.json*
+.agents/skills/.system

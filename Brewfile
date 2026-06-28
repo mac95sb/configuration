@@ -1,3 +1,6 @@
+# Bootstrap tools (mise manages the rest)
+brew "mise"
+
 # Shell plugins (not supported as mise tools)
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
