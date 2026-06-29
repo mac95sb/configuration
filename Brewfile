@@ -1,11 +1,23 @@
-# Bootstrap tools (mise manages the rest)
+# Bootstrap tools
 brew "mise"
+brew "mas"
 
 # Shell plugins (not supported as mise tools)
 brew "zsh-autosuggestions"
 brew "zsh-syntax-highlighting"
 
-# App Store (requires mas CLI, installed via mise)
+# GUI Applications
+cask "codex"
+cask "crossover"
+cask "figma"
+cask "font-sf-mono-nerd-font-ligaturized"
+cask "font-sf-pro"
+cask "mole-app"
+cask "notion"
+cask "orbstack"
+cask "zed"
+
+# App Store (requires mas CLI, installed above)
 mas "Compressor",     id: 424390742
 mas "Final Cut Pro",  id: 424389933
 mas "Keynote",        id: 361285480
