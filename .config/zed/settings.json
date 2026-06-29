@@ -10,9 +10,9 @@
   "agent_servers": {
     "claude-acp": {
       "default_config_options": {
-        "mode": "auto"
+        "mode": "auto",
       },
-      "type": "registry"
+      "type": "registry",
     },
     "hermes-agent": {
       "type": "custom",
@@ -39,7 +39,7 @@
       "milliseconds": 1000,
     },
   },
-  "buffer_font_family": "SF Mono",
+  "buffer_font_family": "Liga SFMono Nerd Font",
   "buffer_font_size": 11,
   "completion_menu_item_kind": "symbol",
   "diff_view_style": "unified",
@@ -54,6 +54,7 @@
       "language_servers": ["!solargraph"],
     },
   },
+  "preferred_line_length": 120,
   "relative_line_numbers": "enabled",
   "tab_bar": {
     "show_nav_history_buttons": false,
