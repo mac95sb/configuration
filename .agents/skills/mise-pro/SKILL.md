@@ -35,6 +35,8 @@ If this skill does not cover a requested mise setting, backend, task option, or 
 - When replacing asdf/nvm/pyenv/rbenv/direnv flows, preserve behavior and document migration notes.
 - For dotfiles, keep bootstrapping idempotent and safe to re-run.
 - In Homebrew-based bootstrap docs, install `mise` through the Brewfile/Homebrew bundle rather than the curl installer when Homebrew is already part of the setup. After `eval "$(/opt/homebrew/bin/brew shellenv)"`, prefer simple `mise ...` commands over hardcoded `/opt/homebrew/bin/mise ...` paths unless the docs explicitly need to guard against another earlier `mise` on `PATH`.
+- When rebasing or merging a migration from Homebrew/asdf/nvm/etc. into mise, resolve package-manager conflicts by preserving the migration intent: keep Homebrew/Brewfile only for bootstrap packages, packages mise cannot manage, or App Store `mas` entries, and put CLI/app/runtime tools under `[tools]`. Union non-conflicting tool additions from both sides instead of choosing ours/theirs wholesale.
+- If shell activation was introduced before the installer path stabilized, avoid hardcoding only `~/.local/bin/mise`; prefer `command -v mise`, then known package-manager paths such as `/opt/homebrew/bin/mise`, then legacy fallbacks.
 - For app state directories such as `~/.hermes`, prefer minimal file-level dotfile entries plus deny-by-default nested `.gitignore` files over symlinking/tracking the whole directory. See `references/hermes-minimal-dotfiles.md` for a concrete Hermes pattern.
 
 ## Review checklist
