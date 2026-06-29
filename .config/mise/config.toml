@@ -33,12 +33,13 @@ tap_to_click = true
 three_finger_drag = true
 
 [bootstrap.macos.defaults]
-NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true }
+NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true, "com.apple.springing.delay" = 0.0, "com.apple.springing.enabled" = true }
 "com.apple.WindowManager" = { EnableTiledWindowMargins = true, GloballyEnabled = true }
 
 [tools]
 # CLI tools
 gh = "latest"
 claude = "latest"
+uv = "latest"
 "pipx:hermes-agent" = "latest"
 node = "latest"
