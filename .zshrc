@@ -1,14 +1,12 @@
-if command -v mise >/dev/null 2>&1; then
-  eval "$(mise activate zsh)"
-elif [[ -x /opt/homebrew/bin/mise ]]; then
-  eval "$(/opt/homebrew/bin/mise activate zsh)"
-elif [[ -x "$HOME/.local/bin/mise" ]]; then
-  eval "$("$HOME/.local/bin/mise" activate zsh)"
-fi
+eval "$(/opt/homebrew/bin/mise activate zsh)"
 
 autoload -Uz compinit && compinit
 
 setopt AUTO_CD HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_EXPIRE_DUPS_FIRST SHARE_HISTORY
+
+HISTFILE="$HOME/.zsh_history"
+HISTSIZE=50000
+SAVEHIST=50000
 
 path+=("$HOME/.local/bin")
 typeset -U path
@@ -19,7 +17,7 @@ plugins=(
 )
 
 for plugin in "${plugins[@]}"; do
-  [[ -r "$brew_share/$plugin" ]] && source "/opt/homebrew/share/$plugin"
+  [[ -r "/opt/homebrew/share/$plugin" ]] && source "/opt/homebrew/share/$plugin"
 done
 
 PROMPT='
