@@ -1,4 +1,9 @@
 {
+  "icon_theme": {
+    "mode": "dark",
+    "light": "Zed (Default)",
+    "dark": "Zed (Default)",
+  },
   "agent": {
     "default_model": {
       "effort": "medium",
@@ -8,6 +13,9 @@
     },
   },
   "agent_servers": {
+    "codex-acp": {
+      "type": "registry",
+    },
     "claude-acp": {
       "default_config_options": {
         "mode": "auto",
@@ -22,6 +30,7 @@
   },
   "auto_install_extensions": {
     "comment": true,
+    "everforest": true,
     "git-firefly": true,
     "html": true,
     "make": true,
@@ -65,8 +74,8 @@
     "git_status": true,
   },
   "theme": {
-    "dark": "Xcode Default Dark",
-    "light": "Xcode Default Light",
+    "dark": "macOS Classic Dark",
+    "light": "macOS Classic Light",
     "mode": "system",
   },
   "title_bar": {
