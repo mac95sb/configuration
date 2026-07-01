@@ -61,6 +61,11 @@ If this skill does not cover a requested FastAPI, SQLAlchemy, Alembic, Pydantic,
 - Keep secrets as `SecretStr`/`SecretBytes` where appropriate and avoid printing them in logs/tests.
 - Prefer explicit timezone-aware datetime handling and clear decimal/money representations.
 
+## Project-specific references
+
+- `references/pair-dev-database.md` — PAIR dev DB quirks: quoted `"ID"` columns, duplicate-email
+  users, teams entitlement requirements, and reliable psql-via-docker-exec patterns for seeding.
+
 ## Review checklist
 
 - API behavior: status codes, error shapes, authz/authn, pagination/filtering/sorting, idempotency.

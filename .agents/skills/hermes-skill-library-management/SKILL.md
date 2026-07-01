@@ -61,3 +61,4 @@ See `references/swift-and-polyglot-stack-bootstrap.md` for a concrete session-de
 - Do not save task progress, PR numbers, commit SHAs, or one-off outcomes in skills.
 - Do not turn environment-specific failures into durable negative rules.
 - Do not claim a skill is installed until `hermes skills list` or `skill_view` verifies it.
+- Keep skill creation and editing responses concise and action-oriented; do the change, confirm, and skip protocol theory or process explanation unless the user asks.

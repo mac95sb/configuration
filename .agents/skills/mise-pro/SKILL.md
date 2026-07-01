@@ -39,6 +39,22 @@ If this skill does not cover a requested mise setting, backend, task option, or 
 - If shell activation was introduced before the installer path stabilized, avoid hardcoding only `~/.local/bin/mise`; prefer `command -v mise`, then known package-manager paths such as `/opt/homebrew/bin/mise`, then legacy fallbacks.
 - For app state directories such as `~/.hermes`, prefer minimal file-level dotfile entries plus deny-by-default nested `.gitignore` files over symlinking/tracking the whole directory. See `references/hermes-minimal-dotfiles.md` for a concrete Hermes pattern.
 
+## Dotfiles bootstrap consistency
+
+When using `[dotfiles]` to symlink config files, keep the install-side in sync:
+- If a tool's config is tracked in `[dotfiles]` (e.g. `~/.config/ghostty/config`), its install entry (Brewfile cask, `[tools]` entry, etc.) must also exist. Missing the install side means a fresh machine gets the config symlink but not the app, causing silent drift.
+- After adding a dotfile entry, cross-check the Brewfile (or `[tools]`) for the corresponding package. Audit in both directions when reviewing.
+
+## Hermes config pitfall
+
+In `.hermes/config.yaml`, `model.base_url` must not be set when `model.provider` is `nous`. The `nous` provider routes through Nous-managed infrastructure; a stale `base_url` silently overrides that and routes traffic to the wrong endpoint. Clear it with:
+```
+hermes config set model.base_url ''
+```
+The agent cannot directly patch `.hermes/config.yaml` — it is security-gated. Always use `hermes config set` for Hermes config changes. Validate the resulting config with `hermes config check` before finishing.
+
 ## Review checklist
 
 - Correct file scope, PATH/tool activation order, version pinning, task reproducibility, platform portability, secret safety, and startup performance.
+- Dotfiles bootstrap consistency: every tracked `[dotfiles]` entry has a corresponding install entry (Brewfile/`[tools]`).
+- Hermes config: `model.base_url` is empty when `model.provider` is `nous`.
