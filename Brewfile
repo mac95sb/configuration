@@ -12,9 +12,11 @@ cask "crossover"
 cask "figma"
 cask "font-sf-mono-nerd-font-ligaturized"
 cask "font-sf-pro"
+cask "ghostty"
 cask "mole-app"
 cask "notion"
 cask "orbstack"
+cask "postico"
 cask "zed"
 
 # App Store (requires mas CLI, installed above)
