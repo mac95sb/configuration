@@ -74,9 +74,9 @@
     "git_status": true,
   },
   "theme": {
-    "dark": "macOS Classic Dark",
+    "dark": "Everforest Dark Hard (blur)",
     "light": "macOS Classic Light",
-    "mode": "system",
+    "mode": "dark",
   },
   "title_bar": {
     "show_user_picture": false,
