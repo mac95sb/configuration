@@ -17,6 +17,10 @@ Guidance for AI coding agents working in this environment.
   or mass file moves without explicit user approval.
 - Do not commit changes, create branches, push, reset, clean, or rewrite history
   unless explicitly asked.
+- Do not add tool attribution to commit messages or PR descriptions/comments (e.g.
+  "Generated with Claude Code", "Co-Authored-By: Claude", "Co-authored-by: Codex",
+  session links, or similar). Write commit messages and PR text as if authored
+  directly by the user.
 
 ## Working with a repository
 

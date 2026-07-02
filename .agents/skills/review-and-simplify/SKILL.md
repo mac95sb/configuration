@@ -24,7 +24,6 @@ Simplify recently changed code and check it against current best practices for t
    - `.gitconfig` / Git workflows — delegate to `git-pro`.
    - `mise.toml` / `.mise.toml` — delegate to `mise-pro`.
    - `.config/zed/settings.json` — delegate to `zed-pro`.
-   - `.hermes/config.yaml` — delegate to `mise-pro` for Hermes-specific config rules.
    - Markdown / dotfiles — follow concise Markdown and POSIX conventions; consult `markdown-pro` for doc formatting.
 
 3. **Simplify**

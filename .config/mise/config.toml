@@ -15,14 +15,7 @@ dotfiles.default_mode = "symlink"
 "~/.config/mise/config.toml" = {}
 "~/.config/zed/keymap.json" = {}
 "~/.config/zed/settings.json" = {}
-"~/.config/ghostty/config" = {}
-"~/.config/herdr/config.toml" = {}
 "~/.config/nvim" = {}
-"~/.hermes/AGENTS.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
-"~/.hermes/SOUL.md" = {}
-"~/.hermes/config.yaml" = {}
-"~/.hermes/memories/USER.md" = {}
-"~/.hermes/skills" = { source = "~/Developer/configuration/.agents/skills" }
 "~/.vimrc" = {}
 "~/.zshrc" = {}
 
@@ -40,11 +33,6 @@ NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true, "com.apple.s
 "com.apple.WindowManager" = { EnableTiledWindowMargins = true, GloballyEnabled = true }
 
 [tools]
-# CLI tools
-"pipx:hermes-agent" = { version = "latest", extras = "acp" }
 claude = "latest"
 gh = "latest"
-herdr = "latest"
 node = "latest"
-neovim = "latest"
-uv = "latest"

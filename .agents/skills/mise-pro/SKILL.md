@@ -37,24 +37,39 @@ If this skill does not cover a requested mise setting, backend, task option, or 
 - In Homebrew-based bootstrap docs, install `mise` through the Brewfile/Homebrew bundle rather than the curl installer when Homebrew is already part of the setup. After `eval "$(/opt/homebrew/bin/brew shellenv)"`, prefer simple `mise ...` commands over hardcoded `/opt/homebrew/bin/mise ...` paths unless the docs explicitly need to guard against another earlier `mise` on `PATH`.
 - When rebasing or merging a migration from Homebrew/asdf/nvm/etc. into mise, resolve package-manager conflicts by preserving the migration intent: keep Homebrew/Brewfile only for bootstrap packages, packages mise cannot manage, or App Store `mas` entries, and put CLI/app/runtime tools under `[tools]`. Union non-conflicting tool additions from both sides instead of choosing ours/theirs wholesale.
 - If shell activation was introduced before the installer path stabilized, avoid hardcoding only `~/.local/bin/mise`; prefer `command -v mise`, then known package-manager paths such as `/opt/homebrew/bin/mise`, then legacy fallbacks.
-- For app state directories such as `~/.hermes`, prefer minimal file-level dotfile entries plus deny-by-default nested `.gitignore` files over symlinking/tracking the whole directory. See `references/hermes-minimal-dotfiles.md` for a concrete Hermes pattern.
 
 ## Dotfiles bootstrap consistency
 
 When using `[dotfiles]` to symlink config files, keep the install-side in sync:
-- If a tool's config is tracked in `[dotfiles]` (e.g. `~/.config/ghostty/config`), its install entry (Brewfile cask, `[tools]` entry, etc.) must also exist. Missing the install side means a fresh machine gets the config symlink but not the app, causing silent drift.
+- If a tool's config is tracked in `[dotfiles]`, its install entry (Brewfile cask, `[tools]` entry, etc.) must also exist. Missing the install side means a fresh machine gets the config symlink but not the app, causing silent drift.
 - After adding a dotfile entry, cross-check the Brewfile (or `[tools]`) for the corresponding package. Audit in both directions when reviewing.
 
-## Hermes config pitfall
+## Docker/Alembic stale volume pitfall
 
-In `.hermes/config.yaml`, `model.base_url` must not be set when `model.provider` is `nous`. The `nous` provider routes through Nous-managed infrastructure; a stale `base_url` silently overrides that and routes traffic to the wrong endpoint. Clear it with:
+When a mise task starts Docker Compose and the alembic container fails with:
+`Can't locate revision identified by '<revision-id>'`
+the repository migrations are usually fine. The local Docker Postgres volume can contain stale `alembic_version` rows pointing to revisions that were renamed, removed, or never existed in the checked-out code.
+
+Wipe the local Postgres volume and rerun:
+```bash
+docker compose down -v
+mise install
 ```
-hermes config set model.base_url ''
-```
-The agent cannot directly patch `.hermes/config.yaml` — it is security-gated. Always use `hermes config set` for Hermes config changes. Validate the resulting config with `hermes config check` before finishing.
+If the volume must be preserved, start Postgres and delete the bad rows from every tenant DB's `alembic_version` table instead.
+
+## Teardown behavior
+
+The default `mise run teardown` should stop Compose and remove containers + build images without wiping Docker volumes. Pass `--volumes` to also remove volumes.
+
+This matters because later `mise install` / seeding will preserve any locally seeded data, permissions, or CMS-cached rows in the Postgres volume.
+
+## Seed retry pattern
+
+The backend loads CMS metadata asynchronously on startup in production-like flows, but local readiness checks only wait for the HTTP server. This means seed scripts can transiently fail with missing `CourseNode` data after `mise run dev` starts.
+
+Add bounded retry with backoff around seed commands instead of hard-failing on first attempt. For the project's `mise run seed`, retry `/tmp/seed_test_data.py` up to 10 times with 5s backoff.
 
 ## Review checklist
 
 - Correct file scope, PATH/tool activation order, version pinning, task reproducibility, platform portability, secret safety, and startup performance.
 - Dotfiles bootstrap consistency: every tracked `[dotfiles]` entry has a corresponding install entry (Brewfile/`[tools]`).
-- Hermes config: `model.base_url` is empty when `model.provider` is `nous`.

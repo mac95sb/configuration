@@ -1,9 +1,4 @@
 {
-  "icon_theme": {
-    "mode": "dark",
-    "light": "Zed (Default)",
-    "dark": "Zed (Default)",
-  },
   "agent": {
     "default_model": {
       "effort": "medium",
@@ -21,11 +16,6 @@
         "mode": "auto",
       },
       "type": "registry",
-    },
-    "hermes-agent": {
-      "type": "custom",
-      "command": "hermes",
-      "args": ["acp"],
     },
   },
   "auto_install_extensions": {
@@ -53,6 +43,7 @@
   "completion_menu_item_kind": "symbol",
   "diff_view_style": "unified",
   "git_panel": {
+    "tree_view": true,
     "default_width": 240,
   },
   "languages": {
@@ -89,4 +80,8 @@
     "use_system_clipboard": "never",
   },
   "vim_mode": true,
+  "which_key": {
+    "delay_ms": 300,
+    "enabled": true,
+  },
 }

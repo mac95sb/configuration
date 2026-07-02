@@ -90,3 +90,20 @@ ON CONFLICT DO NOTHING;
 ```
 
 Then create the license + assignment with the two-step pattern above.
+
+## CMS async startup race condition
+
+The backend seeds CMS metadata asynchronously during startup (`seed_site_data_async` → `cms_loader.populate_all_metadata()`). In dev/Docker flows, Docker's health check, `mise run dev`, and `mise run seed` may only wait for the HTTP server to return `200`, not for CMS metadata to arrive.
+
+Result: seed scripts can transiently fail with missing `CourseNode` rows, for example:
+```
+ERROR: CourseNode {id} not found — CMS data may differ.
+```
+
+**Fix pattern**:
+- Make seed commands retry with backoff rather than hard-failing on first attempt.
+- For local `mise run seed`, retry `/tmp/seed_test_data.py` up to 10 times with 5s backoff.
+- When debugging manually, check `CourseNode` directly if seed keeps failing:
+  ```sql
+  SELECT \"ID\", sys_id, title FROM course_node ORDER BY \"ID\" LIMIT 20;
+  ```

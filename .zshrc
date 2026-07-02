@@ -24,13 +24,3 @@ done
 PROMPT='
 %F{#6C91BF}%~%f
 %(?.%F{#a6dbff}.%F{#ff9e64})λ%f '
-
-kp() {
-  if [[ -z "$1" ]]; then
-    print -u2 "kp: usage: kp <port>"
-    return 1
-  fi
-  local pids
-  pids=$(lsof -ti :"$1") || { print -u2 "kp: no process on port $1"; return 1; }
-  print "$pids" | xargs kill -9
-}
