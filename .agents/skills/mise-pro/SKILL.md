@@ -34,15 +34,17 @@ If this skill does not cover a requested mise setting, backend, task option, or 
 - Avoid shell-specific task syntax unless the project declares that shell.
 - When replacing asdf/nvm/pyenv/rbenv/direnv flows, preserve behavior and document migration notes.
 - For dotfiles, keep bootstrapping idempotent and safe to re-run.
-- In Homebrew-based bootstrap docs, install `mise` through the Brewfile/Homebrew bundle rather than the curl installer when Homebrew is already part of the setup. After `eval "$(/opt/homebrew/bin/brew shellenv)"`, prefer simple `mise ...` commands over hardcoded `/opt/homebrew/bin/mise ...` paths unless the docs explicitly need to guard against another earlier `mise` on `PATH`.
-- When rebasing or merging a migration from Homebrew/asdf/nvm/etc. into mise, resolve package-manager conflicts by preserving the migration intent: keep Homebrew/Brewfile only for bootstrap packages, packages mise cannot manage, or App Store `mas` entries, and put CLI/app/runtime tools under `[tools]`. Union non-conflicting tool additions from both sides instead of choosing ours/theirs wholesale.
-- If shell activation was introduced before the installer path stabilized, avoid hardcoding only `~/.local/bin/mise`; prefer `command -v mise`, then known package-manager paths such as `/opt/homebrew/bin/mise`, then legacy fallbacks.
+- Since mise v2026.7.0, `[bootstrap.packages]` reimplements brew/brew-cask/apt/apk/dnf/pacman/mas natively (fetches formulae.brew.sh metadata, pours ghcr.io bottles, installs casks to `/Applications`) without requiring the `brew`/`mas` binaries to be present. Prefer this over a Brewfile for machine bootstrap: install mise itself via the curl installer (`curl https://mise.run | sh`), then declare formulae/casks/mas apps as `"brew:<formula>"`, `"brew-cask:<cask>"`, `"mas:<id>"` entries under `[bootstrap.packages]` and run `mise bootstrap packages apply`. Only fall back to an actual Brewfile for things this mechanism can't express (e.g. `brew services`, cask lifecycle scripts/completions, source-build DSLs it doesn't support).
+- `brew`/`brew-cask` entries install into the standard Homebrew prefix (`/opt/homebrew` on macOS arm64) and never overwrite files they didn't create — if real Homebrew already owns a formula/cask there, `apply` reports link conflicts or "multiple Caskroom versions found" instead of silently succeeding. Treat that as a signal to reconcile (uninstall the brew-managed copy or accept mise's) rather than a bug, and always dry-run (`mise bootstrap packages apply --dry-run`) before applying against a machine with pre-existing Homebrew state.
+- When migrating a Homebrew/asdf/nvm/etc. setup into mise, resolve conflicts by preserving migration intent: CLI/language runtimes go under `[tools]`; GUI apps, fonts, and system packages go under `[bootstrap.packages]`. Union non-conflicting additions from both sides instead of choosing ours/theirs wholesale.
+- `mise activate <shell>` only ever prepends its own data dir (`~/.local/bin` for a curl install) to `PATH` — verify with `env -i HOME="$HOME" PATH=/usr/bin mise activate zsh | head`. It does not add `/opt/homebrew/bin`/`sbin`, so only add those manually if a configured `[bootstrap.packages]` entry actually installs a `binary` cask artifact (check `formulae.brew.sh/api/cask/<name>.json` artifacts) — otherwise it's dead PATH weight left over from a Homebrew-era rc file.
+- `[bootstrap.mise_shell_activate]` cannot manage an rc file that `[dotfiles]` already tracks as a whole-file symlink target (e.g. `"~/.zshrc" = {}`) — `mise bootstrap mise-shell-activate apply` silently skips it (`mise bootstrap mise-shell-activate status -v` shows "skipped because `[dotfiles]` owns ~/.zshrc"). In that setup, hand-maintain the `eval "$(mise activate <shell>)"` line directly in the dotfile-tracked rc file instead of relying on the declarative block-insertion mechanism.
 
 ## Dotfiles bootstrap consistency
 
 When using `[dotfiles]` to symlink config files, keep the install-side in sync:
-- If a tool's config is tracked in `[dotfiles]`, its install entry (Brewfile cask, `[tools]` entry, etc.) must also exist. Missing the install side means a fresh machine gets the config symlink but not the app, causing silent drift.
-- After adding a dotfile entry, cross-check the Brewfile (or `[tools]`) for the corresponding package. Audit in both directions when reviewing.
+- If a tool's config is tracked in `[dotfiles]`, its install entry (`[bootstrap.packages]` cask/formula, `[tools]` entry, etc.) must also exist. Missing the install side means a fresh machine gets the config symlink but not the app, causing silent drift.
+- After adding a dotfile entry, cross-check `[bootstrap.packages]` (or `[tools]`) for the corresponding package. Audit in both directions when reviewing.
 
 ## Docker/Alembic stale volume pitfall
 
@@ -72,4 +74,4 @@ Add bounded retry with backoff around seed commands instead of hard-failing on f
 ## Review checklist
 
 - Correct file scope, PATH/tool activation order, version pinning, task reproducibility, platform portability, secret safety, and startup performance.
-- Dotfiles bootstrap consistency: every tracked `[dotfiles]` entry has a corresponding install entry (Brewfile/`[tools]`).
+- Dotfiles bootstrap consistency: every tracked `[dotfiles]` entry has a corresponding install entry (`[bootstrap.packages]`/`[tools]`).

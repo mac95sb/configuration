@@ -15,7 +15,6 @@ dotfiles.default_mode = "symlink"
 "~/.config/mise/config.toml" = {}
 "~/.config/zed/keymap.json" = {}
 "~/.config/zed/settings.json" = {}
-"~/.config/nvim" = {}
 "~/.vimrc" = {}
 "~/.zshrc" = {}
 
@@ -29,10 +28,16 @@ tap_to_click = true
 three_finger_drag = true
 
 [bootstrap.macos.defaults]
-NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true, "com.apple.springing.delay" = 0.0, "com.apple.springing.enabled" = true }
+NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true, "com.apple.springing.delay" = 0.1, "com.apple.springing.enabled" = true }
 "com.apple.WindowManager" = { EnableTiledWindowMargins = true, GloballyEnabled = true }
 
+[bootstrap.packages]
+"brew:zsh-autosuggestions" = "latest"
+"brew:zsh-syntax-highlighting" = "latest"
+"brew-cask:crossover" = "latest"
+"brew-cask:figma" = "latest"
+
 [tools]
-claude = "latest"
+"claude-code" = "latest"
+codex = "latest"
 gh = "latest"
-node = "latest"

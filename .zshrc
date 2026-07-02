@@ -1,5 +1,7 @@
-eval "$(/opt/homebrew/bin/brew shellenv)"
-eval "$(/opt/homebrew/bin/mise activate zsh)"
+path=("$HOME/.local/bin" $path)
+typeset -U path
+
+eval "$(mise activate zsh)"
 
 autoload -Uz compinit && compinit
 
@@ -8,9 +10,6 @@ setopt AUTO_CD HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_EXPIRE_DUPS_FIRST SHARE_H
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=50000
 SAVEHIST=50000
-
-path+=("$HOME/.local/bin")
-typeset -U path
 
 plugins=(
   zsh-autosuggestions/zsh-autosuggestions.zsh
