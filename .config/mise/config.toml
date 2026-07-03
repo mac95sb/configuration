@@ -42,6 +42,7 @@ NSGlobalDomain = {
 "brew:zsh-autosuggestions" = "latest"
 "brew:zsh-syntax-highlighting" = "latest"
 "brew-cask:crossover" = "latest"
+"brew-cask:zed" = "latest"
 
 [tools]
 "claude-code" = "latest"

@@ -1,9 +1,14 @@
 path=("$HOME/.local/bin" $path)
 typeset -U path
 
-eval "$(mise activate zsh)"
+command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
 
-autoload -Uz compinit && compinit
+autoload -Uz compinit
+if [[ -f ${ZDOTDIR:-$HOME}/.zcompdump ]] && [[ -z ${ZDOTDIR:-$HOME}/.zcompdump(#qN.mh+24) ]]; then
+    compinit -C
+else
+    compinit
+fi
 
 setopt AUTO_CD HIST_IGNORE_DUPS HIST_IGNORE_SPACE HIST_EXPIRE_DUPS_FIRST SHARE_HISTORY
 
