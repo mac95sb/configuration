@@ -28,14 +28,20 @@ tap_to_click = true
 three_finger_drag = true
 
 [bootstrap.macos.defaults]
-NSGlobalDomain = { AppleInterfaceStyleSwitchesAutomatically = true, "com.apple.springing.delay" = 0.1, "com.apple.springing.enabled" = true }
-"com.apple.WindowManager" = { EnableTiledWindowMargins = true, GloballyEnabled = true }
+NSGlobalDomain = {
+    AppleInterfaceStyleSwitchesAutomatically = true,
+    "com.apple.springing.delay" = 0.1,
+    "com.apple.springing.enabled" = true
+}
+"com.apple.WindowManager" = {
+    EnableTiledWindowMargins = true,
+    GloballyEnabled = true
+}
 
 [bootstrap.packages]
 "brew:zsh-autosuggestions" = "latest"
 "brew:zsh-syntax-highlighting" = "latest"
 "brew-cask:crossover" = "latest"
-"brew-cask:figma" = "latest"
 
 [tools]
 "claude-code" = "latest"
