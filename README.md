@@ -4,7 +4,7 @@
 
 ```sh
 DOTFILES="$HOME/Developer/configuration"
-if [[ -d "$DOTFILES/.git" ]]; then
+if [ -d "$DOTFILES/.git" ]; then
   echo "Dotfiles already cloned at $DOTFILES"
 else
   mkdir -p "$(dirname "$DOTFILES")"
