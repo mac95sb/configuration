@@ -1,20 +1,6 @@
 {
-  "agent": {
-    "default_model": {
-      "effort": "medium",
-      "enable_thinking": true,
-      "model": "gpt-5.5",
-      "provider": "openai-subscribed",
-    },
-  },
   "agent_servers": {
     "codex-acp": {
-      "type": "registry",
-    },
-    "claude-acp": {
-      "default_config_options": {
-        "mode": "auto",
-      },
       "type": "registry",
     },
   },
@@ -27,6 +13,7 @@
     "markdown-oxide": true,
     "package-swift-lsp": true,
     "pbxproj": true,
+    "pkl": true,
     "ruby": true,
     "swift": true,
     "toml": true,

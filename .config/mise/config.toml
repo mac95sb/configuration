@@ -40,9 +40,11 @@ NSGlobalDomain = {
 
 [tools]
 "claude-code" = "latest"
+azure-cli = "latest"
 codex = "latest"
 gh = "latest"
 mas = "latest"
+pkl = "latest"
 
 [bootstrap.packages]
 # Shell Helpers
@@ -50,8 +52,8 @@ mas = "latest"
 "brew:zsh-syntax-highlighting" = "latest"
 
 # Fonts
-"brew:font-sf-mono-nerd-font-ligaturized" = "latest"
-"brew:font-sf-pro" = "latest"
+"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
+"brew-cask:font-sf-pro" = "latest"
 
 # GUI Applications
 "brew-cask:figma" = "latest"
