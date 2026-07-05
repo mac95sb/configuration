@@ -38,10 +38,20 @@ NSGlobalDomain = {
     GloballyEnabled = true
 }
 
+[tools]
+"claude-code" = "latest"
+codex = "latest"
+gh = "latest"
+mas = "latest"
+
 [bootstrap.packages]
 # Shell Helpers
 "brew:zsh-autosuggestions" = "latest"
 "brew:zsh-syntax-highlighting" = "latest"
+
+# Fonts
+"brew:font-sf-mono-nerd-font-ligaturized" = "latest"
+"brew:font-sf-pro" = "latest"
 
 # GUI Applications
 "brew-cask:figma" = "latest"
@@ -62,9 +72,3 @@ NSGlobalDomain = {
 "mas:634159523" = "latest"  # MainStage
 "mas:1289583905" = "latest" # Pixelmator Pro
 "mas:1662217862" = "latest" # Wipr 2
-
-[tools]
-"claude-code" = "latest"
-codex = "latest"
-gh = "latest"
-mas = "latest"
