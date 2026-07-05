@@ -39,6 +39,10 @@ NSGlobalDomain = {
 }
 
 [bootstrap.packages]
+# Shell Helpers
+"brew:zsh-autosuggestions" = "latest"
+"brew:zsh-syntax-highlighting" = "latest"
+
 # GUI Applications
 "brew-cask:figma" = "latest"
 "brew-cask:notion" = "latest"
@@ -46,20 +50,16 @@ NSGlobalDomain = {
 "brew-cask:postico" = "latest"
 "brew-cask:zed" = "latest"
 
-# Shell Helpers
-"brew:zsh-autosuggestions" = "latest"
-"brew:zsh-syntax-highlighting" = "latest"
-
 # App Store Applications
-"mas:361285480" = "latest" # Keynote
-"mas:361304891" = "latest" # Numbers
-"mas:361309726" = "latest" # Pages
-"mas:424389933" = "latest" # Final Cut Pro
-"mas:424390742" = "latest" # Compressor
-"mas:434290957" = "latest" # Motion
-"mas:497799835" = "latest" # Xcode
-"mas:634148309" = "latest" # Logic Pro
-"mas:634159523" = "latest" # MainStage
+"mas:361285480" = "latest"  # Keynote
+"mas:361304891" = "latest"  # Numbers
+"mas:361309726" = "latest"  # Pages
+"mas:424389933" = "latest"  # Final Cut Pro
+"mas:424390742" = "latest"  # Compressor
+"mas:434290957" = "latest"  # Motion
+"mas:497799835" = "latest"  # Xcode
+"mas:634148309" = "latest"  # Logic Pro
+"mas:634159523" = "latest"  # MainStage
 "mas:1289583905" = "latest" # Pixelmator Pro
 "mas:1662217862" = "latest" # Wipr 2
 

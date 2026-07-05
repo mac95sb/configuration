@@ -46,12 +46,12 @@ Guidance for AI coding agents working in this environment.
 - Keep descriptions concise and actionable so agents can decide when to invoke a skill.
 - When a reusable workflow is discovered, record it as a skill rather than burying it
   in session-specific notes.
+- Link to various documentation when creating or updating skills to give the agent more context if the skill doesn't cover a particular use case.
 
 ## Editing guidelines
 
 - For shell scripts, use POSIX-compatible syntax unless the file is clearly intended
   for a specific shell.
-- Use shell-specific features only in files clearly scoped to that shell.
 - Preserve valid structured data formats such as JSON, TOML, YAML, and plist files.
 - Avoid removing user preferences or local configuration unless the user asks.
 - Keep dependency, package-manager, and tool-version changes intentional and limited

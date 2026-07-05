@@ -2,7 +2,5 @@
 *.swp
 *~
 .env
-.direnv
-.zed
-
-**/.claude/settings.local.json
+.zed/
+.claude/
