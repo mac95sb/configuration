@@ -4,3 +4,4 @@
 .env
 .zed/
 .claude/
+.agents/skills/.system/
