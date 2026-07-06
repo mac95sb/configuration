@@ -1,31 +1,7 @@
 [settings]
-experimental = true
-dotfiles.root = "~/Developer/configuration/"
 dotfiles.default_mode = "symlink"
-
-[dotfiles]
-"~/.agents/AGENTS.md" = {}
-"~/.agents/skills" = {}
-"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
-"~/.codex/skills" = { source = "~/Developer/configuration/.agents/skills" }
-"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
-"~/.claude/skills" = { source = "~/Developer/configuration/.agents/skills" }
-"~/.config/git/config" = {}
-"~/.config/git/ignore" = {}
-"~/.config/mise/config.toml" = {}
-"~/.config/zed/keymap.json" = {}
-"~/.config/zed/settings.json" = {}
-"~/.vimrc" = {}
-"~/.zshrc" = {}
-
-[bootstrap.macos.finder]
-preferred_view_style = "column"
-show_extensions_warning = false
-show_pathbar = true
-
-[bootstrap.macos.trackpad]
-tap_to_click = true
-three_finger_drag = true
+dotfiles.root = "~/Developer/configuration/"
+experimental = true
 
 [bootstrap.macos.defaults]
 NSGlobalDomain = {
@@ -38,30 +14,25 @@ NSGlobalDomain = {
     GloballyEnabled = true
 }
 
+[bootstrap.macos.finder]
+preferred_view_style = "column"
+show_extensions_warning = false
+show_pathbar = true
+
+[bootstrap.macos.trackpad]
+tap_to_click = true
+three_finger_drag = true
+
 [tools]
-"claude-code" = "latest"
+# CLI Tooling
 azure-cli = "latest"
+"claude-code" = "latest"
 codex = "latest"
 gh = "latest"
 mas = "latest"
 pkl = "latest"
 
 [bootstrap.packages]
-# Shell Helpers
-"brew:zsh-autosuggestions" = "latest"
-"brew:zsh-syntax-highlighting" = "latest"
-
-# Fonts
-"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
-"brew-cask:font-sf-pro" = "latest"
-
-# GUI Applications
-"brew-cask:figma" = "latest"
-"brew-cask:notion" = "latest"
-"brew-cask:orbstack" = "latest"
-"brew-cask:postico" = "latest"
-"brew-cask:zed" = "latest"
-
 # App Store Applications
 "mas:361285480" = "latest"  # Keynote
 "mas:361304891" = "latest"  # Numbers
@@ -74,3 +45,33 @@ pkl = "latest"
 "mas:634159523" = "latest"  # MainStage
 "mas:1289583905" = "latest" # Pixelmator Pro
 "mas:1662217862" = "latest" # Wipr 2
+
+# Fonts
+"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
+"brew-cask:font-sf-pro" = "latest"
+
+# GUI Applications
+"brew-cask:figma" = "latest"
+"brew-cask:notion" = "latest"
+"brew-cask:orbstack" = "latest"
+"brew-cask:postico" = "latest"
+"brew-cask:zed" = "latest"
+
+# Shell Helpers
+"brew:zsh-autosuggestions" = "latest"
+"brew:zsh-syntax-highlighting" = "latest"
+
+[dotfiles]
+"~/.agents/AGENTS.md" = {}
+"~/.agents/skills" = {}
+"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
+"~/.claude/skills" = { source = "~/Developer/configuration/.agents/skills" }
+"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
+"~/.codex/skills" = { source = "~/Developer/configuration/.agents/skills" }
+"~/.config/git/config" = {}
+"~/.config/git/ignore" = {}
+"~/.config/mise/config.toml" = {}
+"~/.config/zed/keymap.json" = {}
+"~/.config/zed/settings.json" = {}
+"~/.vimrc" = {}
+"~/.zshrc" = {}

@@ -1,7 +1,7 @@
-.DS_Store
 *.swp
 *~
+.DS_Store
+.agents/skills/.system/
+.claude/
 .env
 .zed/
-.claude/
-.agents/skills/.system/

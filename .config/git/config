@@ -1,10 +1,23 @@
-[user]
-	name = Mac
-	email = contact@maclong.dev
-	signingkey = ~/.ssh/id_ed25519
+[branch]
+	sort = -committerdate
+
+[commit]
+	gpgsign = true
+
+[core]
+	pager = less -FRX
+
+[fetch]
+	prune = true
+
+[gpg]
+	format = ssh
 
 [init]
 	defaultBranch = main
+
+[merge]
+	conflictstyle = zdiff3
 
 [pull]
 	rebase = true
@@ -12,26 +25,13 @@
 [push]
 	autoSetupRemote = true
 
-[fetch]
-	prune = true
-
-[core]
-	pager = less -FRX
-
-[gpg]
-	format = ssh
-
-[commit]
-	gpgsign = true
+[rerere]
+	enabled = true
 
 [tag]
 	gpgsign = true
 
-[branch]
-	sort = -committerdate
-
-[merge]
-	conflictstyle = zdiff3
-
-[rerere]
-	enabled = true
+[user]
+	email = contact@maclong.dev
+	name = Mac
+	signingkey = ~/.ssh/id_ed25519
