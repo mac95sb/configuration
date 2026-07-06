@@ -56,6 +56,17 @@
     "light": "Everforest Light Hard (blur)",
     "mode": "dark",
   },
+  "theme_overrides": {
+    "Everforest Dark Hard (blur)": {
+      "ghost_element.background": "#00000000",
+      "ghost_element.active": "#36413b",
+      "ghost_element.hover": "#36413b",
+      "ghost_element.selected": "#36413b",
+    },
+    "Everforest Light Hard (blur)": {
+      "ghost_element.background": "#00000000",
+    },
+  },
   "title_bar": {
     "show_sign_in": false,
     "show_user_picture": false,
