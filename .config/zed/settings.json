@@ -1,6 +1,9 @@
 {
   "agent_servers": {
     "codex-acp": {
+      "default_config_options": {
+        "mode": "agent",
+      },
       "type": "registry",
     },
   },
@@ -14,11 +17,9 @@
     "package-swift-lsp": true,
     "pbxproj": true,
     "pkl": true,
-    "ruby": true,
     "swift": true,
     "toml": true,
     "vue": true,
-    "xcode-themes": true,
   },
   "autosave": {
     "after_delay": {
@@ -32,14 +33,6 @@
   "git_panel": {
     "default_width": 240,
     "tree_view": true,
-  },
-  "languages": {
-    "Markdown": {
-      "soft_wrap": "bounded",
-    },
-    "Ruby": {
-      "language_servers": ["!solargraph"],
-    },
   },
   "preferred_line_length": 120,
   "relative_line_numbers": "enabled",
