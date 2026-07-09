@@ -3,8 +3,44 @@ dotfiles.default_mode = "symlink"
 dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
+[tools]
+# CLI tooling managed by mise.
+codex = "latest"
+gh = "latest"
+mas = "latest"
+pkl = "latest"
+
 [bootstrap.repos]
+"~/Developer/configuration" = { url = "https://github.com/mac95sb/configuration" }
 "~/Developer/score" = { url = "https://github.com/mac95sb/score" }
+
+[bootstrap.packages]
+# Fonts.
+"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
+"brew-cask:font-sf-pro" = "latest"
+
+# Developer tools.
+"brew-cask:orbstack" = "latest"
+"brew-cask:postico" = "latest"
+"brew-cask:zed" = "latest"
+"mas:497799835" = "latest"  # Xcode
+
+# Productivity and design.
+"brew-cask:figma" = "latest"
+"brew-cask:notion" = "latest"
+"mas:1289583905" = "latest" # Pixelmator Pro
+"mas:1662217862" = "latest" # Wipr 2
+"mas:361285480" = "latest"  # Keynote
+"mas:361304891" = "latest"  # Numbers
+"mas:361309726" = "latest"  # Pages
+
+# Media apps.
+"brew-cask:crossover" = "latest"
+"mas:424389933" = "latest"  # Final Cut Pro
+"mas:424390742" = "latest"  # Compressor
+"mas:434290957" = "latest"  # Motion
+"mas:634148309" = "latest"  # Logic Pro
+"mas:634159523" = "latest"  # MainStage
 
 [bootstrap.macos.defaults]
 NSGlobalDomain = {
@@ -26,49 +62,23 @@ show_pathbar = true
 tap_to_click = true
 three_finger_drag = true
 
-[tools]
-# CLI Tooling
-codex = "latest"
-gh = "latest"
-mas = "latest"
-pkl = "latest"
-
-[bootstrap.packages]
-# App Store Applications
-"mas:1289583905" = "latest" # Pixelmator Pro
-"mas:1662217862" = "latest" # Wipr 2
-"mas:361285480" = "latest"  # Keynote
-"mas:361304891" = "latest"  # Numbers
-"mas:361309726" = "latest"  # Pages
-"mas:424389933" = "latest"  # Final Cut Pro
-"mas:424390742" = "latest"  # Compressor
-"mas:434290957" = "latest"  # Motion
-"mas:497799835" = "latest"  # Xcode
-"mas:634148309" = "latest"  # Logic Pro
-"mas:634159523" = "latest"  # MainStage
-
-# Fonts
-"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
-"brew-cask:font-sf-pro" = "latest"
-
-# GUI Applications
-"brew-cask:crossover" = "latest"
-"brew-cask:figma" = "latest"
-"brew-cask:notion" = "latest"
-"brew-cask:orbstack" = "latest"
-"brew-cask:postico" = "latest"
-"brew-cask:zed" = "latest"
-
 [dotfiles]
+# Shared agent instructions and skills.
 "~/.agents/AGENTS.md" = {}
 "~/.agents/skills" = {}
+
+# Agent-specific aliases to the shared files above.
 "~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
 "~/.claude/skills" = { source = "~/Developer/configuration/.agents/skills" }
 "~/.codex/AGENTS.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
 "~/.codex/skills" = { source = "~/Developer/configuration/.agents/skills" }
+
+# Tool configuration.
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = {}
+
+# Shell and editor configuration.
 "~/.config/zed/keymap.json" = {}
 "~/.config/zed/settings.json" = {}
 "~/.config/zsh/.p10k.zsh" = {}
