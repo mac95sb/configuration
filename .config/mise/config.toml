@@ -28,7 +28,6 @@ three_finger_drag = true
 
 [tools]
 # CLI Tooling
-azure-cli = "latest"
 codex = "latest"
 gh = "latest"
 mas = "latest"
@@ -36,6 +35,8 @@ pkl = "latest"
 
 [bootstrap.packages]
 # App Store Applications
+"mas:1289583905" = "latest" # Pixelmator Pro
+"mas:1662217862" = "latest" # Wipr 2
 "mas:361285480" = "latest"  # Keynote
 "mas:361304891" = "latest"  # Numbers
 "mas:361309726" = "latest"  # Pages
@@ -45,8 +46,6 @@ pkl = "latest"
 "mas:497799835" = "latest"  # Xcode
 "mas:634148309" = "latest"  # Logic Pro
 "mas:634159523" = "latest"  # MainStage
-"mas:1289583905" = "latest" # Pixelmator Pro
-"mas:1662217862" = "latest" # Wipr 2
 
 # Fonts
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
