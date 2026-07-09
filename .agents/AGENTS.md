@@ -22,6 +22,9 @@ Guidance for AI coding agents working in this environment.
   session links, or similar). Write commit messages and PR text as if authored
   directly by the user.
 
+> [!NOTE] Self Improvement Notice
+> If you see an improvement that can be made to one of the skills or AGENTS.md file during regular usage or think of a new skill or note in AGENTS.md that can be added then you have permission to make the change in `"$HOME/Developer/configuration/.agents/{AGENTs.md,skills/}"` to improve the agent's behavior or add a new skill.
+
 ## Working with a repository
 
 - Identify the repository root and read any local agent or contributor instructions

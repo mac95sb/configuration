@@ -17,6 +17,7 @@
     "package-swift-lsp": true,
     "pbxproj": true,
     "pkl": true,
+    "sql": true,
     "swift": true,
     "toml": true,
     "vue": true,

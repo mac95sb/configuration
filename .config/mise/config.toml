@@ -3,6 +3,9 @@ dotfiles.default_mode = "symlink"
 dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
+[bootstrap.repos]
+"~/Developer/score" = { url = "https://github.com/mac95sb/score" }
+
 [bootstrap.macos.defaults]
 NSGlobalDomain = {
     AppleInterfaceStyleSwitchesAutomatically = true,
@@ -26,7 +29,6 @@ three_finger_drag = true
 [tools]
 # CLI Tooling
 azure-cli = "latest"
-"claude-code" = "latest"
 codex = "latest"
 gh = "latest"
 mas = "latest"
@@ -57,10 +59,6 @@ pkl = "latest"
 "brew-cask:postico" = "latest"
 "brew-cask:zed" = "latest"
 
-# Shell Helpers
-"brew:zsh-autosuggestions" = "latest"
-"brew:zsh-syntax-highlighting" = "latest"
-
 [dotfiles]
 "~/.agents/AGENTS.md" = {}
 "~/.agents/skills" = {}
@@ -73,5 +71,7 @@ pkl = "latest"
 "~/.config/mise/config.toml" = {}
 "~/.config/zed/keymap.json" = {}
 "~/.config/zed/settings.json" = {}
+"~/.config/zsh/.p10k.zsh" = {}
+"~/.config/zsh/.zshrc" = {}
 "~/.vimrc" = {}
-"~/.zshrc" = {}
+"~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
