@@ -52,9 +52,6 @@ z4h init || return
 path=("$HOME/.local/bin" "$HOME/bin" $path)
 typeset -U path PATH
 
-# Tooling.
-command -v mise >/dev/null 2>&1 && eval "$(mise activate zsh)"
-
 # History.
 HISTFILE="$HOME/.zsh_history"
 HISTSIZE=50000

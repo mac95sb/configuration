@@ -62,6 +62,9 @@ show_pathbar = true
 tap_to_click = true
 three_finger_drag = true
 
+[bootstrap.mise_shell_activate]
+zshrc = "activate"
+
 [dotfiles]
 # Shared agent instructions and skills.
 "~/.agents/AGENTS.md" = {}
