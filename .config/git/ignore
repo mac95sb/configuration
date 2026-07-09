@@ -2,6 +2,5 @@
 *~
 .DS_Store
 .agents/skills/.system/
-.claude/
 .env
 .zed/
