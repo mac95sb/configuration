@@ -49,14 +49,5 @@ fi
 z4h init || return
 
 # PATH.
-path=("$HOME/.local/bin" "$HOME/bin" $path)
+path=("$HOME/.local/bin" $path)
 typeset -U path PATH
-
-# History.
-HISTFILE="$HOME/.zsh_history"
-HISTSIZE=50000
-SAVEHIST=50000
-setopt AUTO_CD HIST_EXPIRE_DUPS_FIRST HIST_IGNORE_DUPS HIST_IGNORE_SPACE SHARE_HISTORY
-
-# Shell options.
-setopt GLOB_DOTS NO_AUTO_MENU
