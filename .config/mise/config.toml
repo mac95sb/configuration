@@ -16,31 +16,31 @@ pkl = "latest"
 
 [bootstrap.packages]
 # Fonts.
-"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
-"brew-cask:font-sf-pro" = "latest"
+#"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
+#"brew-cask:font-sf-pro" = "latest"
 
 # Developer tools.
-"brew-cask:orbstack" = "latest"
-"brew-cask:postico" = "latest"
-"brew-cask:zed" = "latest"
-"mas:497799835" = "latest"  # Xcode
+#"brew-cask:orbstack" = "latest"
+#"brew-cask:postico" = "latest"
+#"brew-cask:zed" = "latest"
+#"mas:497799835" = "latest"  # Xcode
 
 # Productivity and design.
-"brew-cask:figma" = "latest"
-"brew-cask:notion" = "latest"
-"mas:1289583905" = "latest" # Pixelmator Pro
-"mas:1662217862" = "latest" # Wipr 2
-"mas:361285480" = "latest"  # Keynote
-"mas:361304891" = "latest"  # Numbers
-"mas:361309726" = "latest"  # Pages
+#"brew-cask:figma" = "latest"
+#"brew-cask:notion" = "latest"
+#"mas:1289583905" = "latest" # Pixelmator Pro
+#"mas:1662217862" = "latest" # Wipr 2
+#"mas:361285480" = "latest"  # Keynote
+#"mas:361304891" = "latest"  # Numbers
+#"mas:361309726" = "latest"  # Pages
 
 # Media apps.
-"brew-cask:crossover" = "latest"
-"mas:424389933" = "latest"  # Final Cut Pro
-"mas:424390742" = "latest"  # Compressor
-"mas:434290957" = "latest"  # Motion
-"mas:634148309" = "latest"  # Logic Pro
-"mas:634159523" = "latest"  # MainStage
+#"brew-cask:crossover" = "latest"
+#"mas:424389933" = "latest"  # Final Cut Pro
+#"mas:424390742" = "latest"  # Compressor
+#"mas:434290957" = "latest"  # Motion
+#"mas:634148309" = "latest"  # Logic Pro
+#"mas:634159523" = "latest"  # MainStage
 
 [bootstrap.macos.defaults]
 NSGlobalDomain = {
