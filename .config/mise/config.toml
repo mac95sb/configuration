@@ -17,18 +17,16 @@ pkl = "latest"
 
 [bootstrap.packages]
 # Fonts.
-#"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
-#"brew-cask:font-sf-pro" = "latest"
+"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
+"brew-cask:font-sf-pro" = "latest"
 
 # Developer tools.
-#"brew-cask:orbstack" = "latest"
-#"brew-cask:postico" = "latest"
-#"brew-cask:zed" = "latest"
+"brew-cask:postico" = "latest"
+"brew-cask:zed" = "latest"
 #"mas:497799835" = "latest"  # Xcode
 
 # Productivity and design.
-#"brew-cask:figma" = "latest"
-#"brew-cask:notion" = "latest"
+"brew-cask:figma" = "latest"
 #"mas:1289583905" = "latest" # Pixelmator Pro
 #"mas:1662217862" = "latest" # Wipr 2
 #"mas:361285480" = "latest"  # Keynote
@@ -36,7 +34,7 @@ pkl = "latest"
 #"mas:361309726" = "latest"  # Pages
 
 # Media apps.
-#"brew-cask:crossover" = "latest"
+"brew-cask:crossover" = "latest"
 #"mas:424389933" = "latest"  # Final Cut Pro
 #"mas:424390742" = "latest"  # Compressor
 #"mas:434290957" = "latest"  # Motion
@@ -50,10 +48,6 @@ EnableTiledWindowMargins = true
 [bootstrap.macos.trackpad]
 tap_to_click = true
 three_finger_drag = true
-
-[tasks.bootstrap]
-description = "Apply macOS settings that require administrator access"
-run = "$HOME/Developer/configuration/scripts/macos-bootstrap.sh"
 
 [bootstrap.mise_shell_activate]
 zshrc = "activate"
