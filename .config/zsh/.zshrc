@@ -51,3 +51,5 @@ z4h init || return
 # PATH.
 path=("$HOME/.local/bin" $path)
 typeset -U path PATH
+
+eval "$(~/.local/bin/mise activate zsh)"

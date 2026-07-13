@@ -8,6 +8,8 @@ Guidance for AI coding agents working in this environment.
   and project conventions before editing.
 - Prefer small, focused changes that solve the requested problem without unrelated
   refactors or formatting churn.
+- Make only the minimum change needed for the request. Ask before adding related
+  features, documentation, automation, or cleanup that the user did not request.
 - Preserve user work. Check version-control status before broad edits and avoid
   overwriting unrelated local modifications.
 - Treat configuration, credentials, generated state, and automation entry points as

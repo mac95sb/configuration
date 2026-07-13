@@ -43,9 +43,17 @@ pkl = "latest"
 #"mas:634148309" = "latest"  # Logic Pro
 #"mas:634159523" = "latest"  # MainStage
 
+[bootstrap.macos.defaults."com.apple.WindowManager"]
+GloballyEnabled = true
+EnableTiledWindowMargins = true
+
 [bootstrap.macos.trackpad]
 tap_to_click = true
 three_finger_drag = true
+
+[tasks.bootstrap]
+description = "Apply macOS settings that require administrator access"
+run = "$HOME/Developer/configuration/scripts/macos-bootstrap.sh"
 
 [bootstrap.mise_shell_activate]
 zshrc = "activate"

@@ -12,7 +12,8 @@ else
 fi
 curl https://mise.run | sh
 "$HOME/.local/bin/mise" -C "$DOTFILES" trust
-"$HOME/.local/bin/mise" -C "$DOTFILES" bootstrap --yes --force-dotfiles
+"$HOME/.local/bin/mise" -C "$DOTFILES" install
+"$HOME/.local/bin/mise" -C "$DOTFILES" exec -- mise bootstrap --yes --force-dotfiles
 ```
 
 ## SSH key
