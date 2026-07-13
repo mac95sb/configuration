@@ -8,6 +8,7 @@ experimental = true
 codex = "latest"
 gh = "latest"
 mas = "latest"
+node = "latest"
 pkl = "latest"
 
 [bootstrap.repos]
@@ -41,21 +42,6 @@ pkl = "latest"
 #"mas:434290957" = "latest"  # Motion
 #"mas:634148309" = "latest"  # Logic Pro
 #"mas:634159523" = "latest"  # MainStage
-
-[bootstrap.macos.defaults]
-NSGlobalDomain = {
-    AppleInterfaceStyleSwitchesAutomatically = true,
-    "com.apple.springing.delay" = 0.1,
-    "com.apple.springing.enabled" = true
-}
-"com.apple.WindowManager" = {
-    EnableTiledWindowMargins = true,
-    GloballyEnabled = true
-}
-
-[bootstrap.macos.finder]
-show_extensions_warning = false
-show_pathbar = true
 
 [bootstrap.macos.trackpad]
 tap_to_click = true
