@@ -2,16 +2,18 @@
   "agent": {
     "default_model": {
       "provider": "PAIRAzure",
-      "model": "gpt-5.5",
+      "model": "gpt-5.6-tera",
       "enable_thinking": false
     },
     "favorite_models": [],
     "model_parameters": []
   },
+
   "language_models": {
     "openai_compatible": {
       "PAIRAzure": {
         "api_url": "https://pair-business-llms.openai.azure.com/openai/v1",
+        "api_key_environment_variable": "AZURE_OPENAI_API_KEY",
         "available_models": [
           {
             "name": "gpt-5.5",
@@ -28,18 +30,65 @@
               "max_tokens_parameter": false
             }
           },
+          {
+            "name": "gpt-5.6-sol",
+            "max_tokens": 200000,
+            "max_output_tokens": 32000,
+            "max_completion_tokens": 200000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": true,
+              "prompt_cache_key": false,
+              "chat_completions": false,
+              "interleaved_reasoning": false,
+              "max_tokens_parameter": false
+            }
+          },
+          {
+            "name": "gpt-5.6-luna",
+            "max_tokens": 200000,
+            "max_output_tokens": 32000,
+            "max_completion_tokens": 200000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": true,
+              "prompt_cache_key": false,
+              "chat_completions": false,
+              "interleaved_reasoning": false,
+              "max_tokens_parameter": false
+            }
+          },
+          {
+            "name": "gpt-5.6-tera",
+            "max_tokens": 200000,
+            "max_output_tokens": 32000,
+            "max_completion_tokens": 200000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": true,
+              "prompt_cache_key": false,
+              "chat_completions": false,
+              "interleaved_reasoning": false,
+              "max_tokens_parameter": false
+            }
+          }
         ]
       }
     }
   },
+
   "agent_servers": {
     "codex-acp": {
       "default_config_options": {
-        "mode": "agent",
+        "mode": "agent"
       },
-      "type": "registry",
-    },
+      "type": "registry"
+    }
   },
+
   "auto_install_extensions": {
     "comment": true,
     "everforest": true,
@@ -53,60 +102,73 @@
     "sql": true,
     "swift": true,
     "toml": true,
-    "vue": true,
+    "vue": true
   },
+
   "autosave": {
     "after_delay": {
-      "milliseconds": 1000,
-    },
+      "milliseconds": 1000
+    }
   },
+
   "buffer_font_family": "Liga SFMono Nerd Font",
   "buffer_font_size": 11,
   "completion_menu_item_kind": "symbol",
   "diff_view_style": "unified",
+
   "git_panel": {
     "default_width": 240,
-    "tree_view": true,
+    "tree_view": true
   },
+
   "preferred_line_length": 120,
   "relative_line_numbers": "enabled",
+
   "tab_bar": {
-    "show_nav_history_buttons": false,
+    "show_nav_history_buttons": false
   },
+
   "tabs": {
     "close_position": "left",
     "file_icons": true,
-    "git_status": true,
+    "git_status": true
   },
+
   "theme": {
     "dark": "Everforest Dark Hard (blur)",
     "light": "Everforest Light Hard (blur)",
-    "mode": "dark",
+    "mode": "dark"
   },
+
   "theme_overrides": {
     "Everforest Dark Hard (blur)": {
       "ghost_element.background": "#00000000",
       "ghost_element.active": "#36413b",
       "ghost_element.hover": "#36413b",
-      "ghost_element.selected": "#36413b",
+      "ghost_element.selected": "#36413b"
     },
     "Everforest Light Hard (blur)": {
-      "ghost_element.background": "#00000000",
-    },
+      "ghost_element.background": "#00000000"
+    }
   },
+
   "title_bar": {
     "show_sign_in": false,
-    "show_user_picture": false,
+    "show_user_picture": false
   },
+
   "ui_font_family": "SF Pro Display",
   "ui_font_size": 12,
+
   "vim": {
     "toggle_relative_line_numbers": true,
-    "use_system_clipboard": "never",
+    "use_system_clipboard": "never"
   },
+
   "vim_mode": true,
+
   "which_key": {
     "delay_ms": 300,
-    "enabled": true,
-  },
+    "enabled": true
+  }
 }
