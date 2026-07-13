@@ -54,7 +54,6 @@ NSGlobalDomain = {
 }
 
 [bootstrap.macos.finder]
-preferred_view_style = "column"
 show_extensions_warning = false
 show_pathbar = true
 
