@@ -4,16 +4,20 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
+azure-cli = { version = "2.88.0", uvx_args = "--prerelease=allow" }
 # CLI tooling managed by mise.
-codex = "latest"
 gh = "latest"
 mas = "latest"
 node = "latest"
 pkl = "latest"
+swift = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "https://github.com/mac95sb/configuration" }
+"~/Developer/orchestrator" = { url = "https://github.com/mac95sb/orchestrator" }
 "~/Developer/score" = { url = "https://github.com/mac95sb/score" }
+"~/Developer/scratchpad" = { url = "https://github.com/mac95sb/scratchpad" }
+"~/Developer/skills" = { url = "https://github.com/mac95sb/skills" }
 
 [bootstrap.packages]
 # Fonts.
@@ -21,12 +25,12 @@ pkl = "latest"
 "brew-cask:font-sf-pro" = "latest"
 
 # Developer tools.
+#"brew-cask:mole-app" = "latest"
 "brew-cask:postico" = "latest"
 "brew-cask:zed" = "latest"
-#"mas:497799835" = "latest"  # Xcode
+"mas:497799835" = "latest"  # Xcode
 
 # Productivity and design.
-"brew-cask:figma" = "latest"
 #"mas:1289583905" = "latest" # Pixelmator Pro
 #"mas:1662217862" = "latest" # Wipr 2
 #"mas:361285480" = "latest"  # Keynote
@@ -52,16 +56,30 @@ three_finger_drag = true
 [bootstrap.mise_shell_activate]
 zshrc = "activate"
 
-[dotfiles]
-# Shared agent instructions and skills.
-"~/.agents/AGENTS.md" = {}
-"~/.agents/skills" = {}
+[tasks.skills]
+description = "Install shared agent skills with skills.sh."
+run = """
+npx --yes skills add n0an/App-Intents-Agent-Skill --global --agent codex claude-code --skill app-intents --copy --yes
+npx --yes skills add AvdLee/Core-Data-Agent-Skill --global --agent codex claude-code --skill core-data-expert --copy --yes
+npx --yes skills add dadederk/iOS-Accessibility-Agent-Skill --global --agent codex claude-code --skill ios-accessibility --copy --yes
+npx --yes skills add jazzychad/ios-code-audit --global --agent codex claude-code --skill ios-code-audit --copy --yes
+npx --yes skills add conorluddy/ios-simulator-skill --global --agent codex claude-code --skill ios-simulator-skill --copy --yes
+npx --yes skills add efremidze/swift-architecture-skill --global --agent codex claude-code --skill swift-architecture-skill --copy --yes
+npx --yes skills add twostraws/Swift-Concurrency-Agent-Skill --global --agent codex claude-code --skill swift-concurrency-pro --copy --yes
+npx --yes skills add ivan-magda/swift-security-skill --global --agent codex claude-code --skill swift-security-expert --copy --yes
+npx --yes skills add twostraws/Swift-Testing-Agent-Skill --global --agent codex claude-code --skill swift-testing-pro --copy --yes
+npx --yes skills add twostraws/SwiftData-Agent-Skill --global --agent codex claude-code --skill swiftdata-pro --copy --yes
+npx --yes skills add twostraws/SwiftUI-Agent-Skill --global --agent codex claude-code --skill swiftui-pro --copy --yes
+npx --yes skills add mac95sb/skills --global --agent codex claude-code --skill '*' --copy --yes
+"""
 
-# Agent-specific aliases to the shared files above.
-"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
-"~/.claude/skills" = { source = "~/Developer/configuration/.agents/skills" }
-"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/.agents/AGENTS.md" }
-"~/.codex/skills" = { source = "~/Developer/configuration/.agents/skills" }
+[hooks]
+postinstall = { task = "skills" }
+
+[dotfiles]
+# Agent instructions.
+"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/AGENTS.md" }
+"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
 
 # Tool configuration.
 "~/.config/git/config" = {}
