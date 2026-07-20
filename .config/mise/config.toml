@@ -4,13 +4,13 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
-azure-cli = { version = "2.88.0", uvx_args = "--prerelease=allow" }
-# CLI tooling managed by mise.
+codex = "latest"
+claude = "latest"
 gh = "latest"
 mas = "latest"
-node = "latest"
 pkl = "latest"
 swift = "latest"
+node = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "https://github.com/mac95sb/configuration" }
@@ -39,6 +39,7 @@ swift = "latest"
 
 # Media apps.
 "brew-cask:crossover" = "latest"
+"brew-cask:ungoogled-chromium" = "latest"
 #"mas:424389933" = "latest"  # Final Cut Pro
 #"mas:424390742" = "latest"  # Compressor
 #"mas:434290957" = "latest"  # Motion
@@ -70,11 +71,9 @@ npx --yes skills add ivan-magda/swift-security-skill --global --agent codex clau
 npx --yes skills add twostraws/Swift-Testing-Agent-Skill --global --agent codex claude-code --skill swift-testing-pro --copy --yes
 npx --yes skills add twostraws/SwiftData-Agent-Skill --global --agent codex claude-code --skill swiftdata-pro --copy --yes
 npx --yes skills add twostraws/SwiftUI-Agent-Skill --global --agent codex claude-code --skill swiftui-pro --copy --yes
+npx --yes skills add denoland/skills --global --agent codex claude-code --skill deno-expert --copy --yes
 npx --yes skills add mac95sb/skills --global --agent codex claude-code --skill '*' --copy --yes
 """
-
-[hooks]
-postinstall = { task = "skills" }
 
 [dotfiles]
 # Agent instructions.

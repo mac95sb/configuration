@@ -7,4 +7,3 @@ export SHELL_SESSIONS_DISABLE=1
 if [ -f "$ZDOTDIR/.zshenv.local" ]; then
   . "$ZDOTDIR/.zshenv.local"
 fi
-

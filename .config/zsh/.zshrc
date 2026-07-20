@@ -17,6 +17,10 @@ zstyle ':z4h:autosuggestions' forward-char 'accept'
 # Don't recursively traverse directories when TAB-completing files.
 zstyle ':z4h:fzf-complete' recurse-dirs 'no'
 
+# Use the terminal's 16 ANSI colors instead of fzf's built-in 256-color
+# scheme, so fzf follows the current terminal theme (e.g. Zed's).
+export FZF_DEFAULT_OPTS='--color=16'
+
 # Disable automatic z4h SSH teleportation by default.
 zstyle ':z4h:ssh:*' enable 'no'
 

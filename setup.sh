@@ -38,6 +38,7 @@ fi
 
 "$mise" -C "$dotfiles" trust
 "$mise" -C "$dotfiles" install
+"$mise" -C "$dotfiles" run skills
 "$mise" -C "$dotfiles" exec -- mise bootstrap --yes --force-dotfiles
 
 sudo_file=/etc/pam.d/sudo_local
