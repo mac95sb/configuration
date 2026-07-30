@@ -9,13 +9,10 @@ gh = "latest"
 mas = "latest"
 node = "latest"
 "npm:agent-browser" = "latest"
-opencode = "latest"
 pkl = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "https://github.com/mac95sb/configuration" }
-"~/Developer/orchestrator" = { url = "https://github.com/mac95sb/ochestrator" }
-"~/Developer/score" = { url = "https://github.com/mac95sb/score" }
 "~/Developer/todo-example" = { url = "https://github.com/mac95sb/todo-example" }
 "~/Developer/skills" = { url = "https://github.com/mac95sb/skills" }
 
