@@ -80,6 +80,7 @@ npx --yes skills add denoland/skills --global --agent zed codex claude-code --sk
 npx --yes skills add claude-office-skills/skills --global --agent zed codex claude-code --skill '*' --copy --yes
 npx --yes skills add mac95sb/skills --global --agent zed codex claude-code --skill '*' --copy --yes
 npx --yes skills add ayghri/i-have-adhd --global --agent zed codex claude-code --skill i-have-adhd --copy --yes
+npx --yes skills add cloudflare/skills --global --agent zed codex claude-code --skill '*' --copy --yes
 for skills_dir in "$HOME/.agents/skills" "$HOME/.claude/skills"; do
   for skill_dir in "$skills_dir"/*; do
     [ -d "$skill_dir" ] || continue
