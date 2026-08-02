@@ -4,17 +4,19 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
-claude = "latest"
+"npm:agent-browser" = "latest"
 gh = "latest"
 mas = "latest"
-node = "latest"
-"npm:agent-browser" = "latest"
+opencode = "latest"
 pkl = "latest"
+wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
+node = "latest"
+go = "latest"
 
 [bootstrap.repos]
-"~/Developer/configuration" = { url = "https://github.com/mac95sb/configuration" }
-"~/Developer/todo-example" = { url = "https://github.com/mac95sb/todo-example" }
-"~/Developer/skills" = { url = "https://github.com/mac95sb/skills" }
+#"~/Developer/configuration" = { url = "https://github.com/mac95sb/configuration" }
+#"~/Developer/todo-example" = { url = "https://github.com/mac95sb/todo-example" }
+#"~/Developer/skills" = { url = "https://github.com/mac95sb/skills" }
 
 [bootstrap.packages]
 # Fonts.
@@ -24,13 +26,13 @@ pkl = "latest"
 # Developer tools & utilities.
 "brew-cask:mole-app" = "latest" # Mole
 "brew-cask:obscura-vpn" = "latest" # Obscura VPN
-"brew-cask:orbstack" = "latest" # OrbStack
+#"brew-cask:orbstack" = "latest" # OrbStack
 "brew-cask:postico" = "latest" # Postico
 "brew-cask:zed" = "latest" # Zed Editor
 "mas:497799835" = "latest"  # Xcode
 
 # Productivity & design.
-"mas:1289583905" = "latest" # Pixelmator Pro
+#"mas:1289583905" = "latest" # Pixelmator Pro
 "mas:1662217862" = "latest" # Wipr 2
 "mas:361285480" = "latest"  # Keynote
 "mas:361304891" = "latest"  # Numbers
@@ -57,57 +59,65 @@ preferred_view_style = "column"
 tap_to_click = true
 three_finger_drag = true
 
+[bootstrap.brew.taps]
+"alyraffauf/tap" = "https://github.com/alyraffauf/homebrew-tap.git"
+
 [tasks.skills]
 description = "Install shared agent skills with skills.sh."
 run = """
-npx --yes skills add n0an/App-Intents-Agent-Skill --global --agent zed --skill app-intents --copy --yes
-npx --yes skills add AvdLee/Core-Data-Agent-Skill --global --agent zed --skill core-data-expert --copy --yes
-npx --yes skills add dadederk/iOS-Accessibility-Agent-Skill --global --agent zed --skill ios-accessibility --copy --yes
-npx --yes skills add jazzychad/ios-code-audit --global --agent zed --skill ios-code-audit --copy --yes
-npx --yes skills add conorluddy/ios-simulator-skill --global --agent zed --skill ios-simulator-skill --copy --yes
-npx --yes skills add efremidze/swift-architecture-skill --global --agent zed --skill swift-architecture-skill --copy --yes
-npx --yes skills add twostraws/Swift-Concurrency-Agent-Skill --global --agent zed --skill swift-concurrency-pro --copy --yes
-npx --yes skills add ivan-magda/swift-security-skill --global --agent zed --skill swift-security-expert --copy --yes
-npx --yes skills add twostraws/Swift-Testing-Agent-Skill --global --agent zed --skill swift-testing-pro --copy --yes
-npx --yes skills add twostraws/SwiftData-Agent-Skill --global --agent zed --skill swiftdata-pro --copy --yes
-npx --yes skills add twostraws/SwiftUI-Agent-Skill --global --agent zed --skill swiftui-pro --copy --yes
-npx --yes skills add denoland/skills --global --agent zed --skill deno --copy --yes
-npx --yes skills add claude-office-skills/skills --global --agent zed --skill '*' --copy --yes
-npx --yes skills add mac95sb/skills --global --agent zed --skill '*' --copy --yes
-for skill_dir in "$HOME"/.agents/skills/*; do
-  [ -d "$skill_dir" ] || continue
+npx --yes skills add n0an/App-Intents-Agent-Skill --global --agent zed codex claude-code --skill app-intents --copy --yes
+npx --yes skills add AvdLee/Core-Data-Agent-Skill --global --agent zed codex claude-code --skill core-data-expert --copy --yes
+npx --yes skills add dadederk/iOS-Accessibility-Agent-Skill --global --agent zed codex claude-code --skill ios-accessibility --copy --yes
+npx --yes skills add jazzychad/ios-code-audit --global --agent zed codex claude-code --skill ios-code-audit --copy --yes
+npx --yes skills add conorluddy/ios-simulator-skill --global --agent zed codex claude-code --skill ios-simulator-skill --copy --yes
+npx --yes skills add efremidze/swift-architecture-skill --global --agent zed codex claude-code --skill swift-architecture-skill --copy --yes
+npx --yes skills add twostraws/Swift-Concurrency-Agent-Skill --global --agent zed codex claude-code --skill swift-concurrency-pro --copy --yes
+npx --yes skills add ivan-magda/swift-security-skill --global --agent zed codex claude-code --skill swift-security-expert --copy --yes
+npx --yes skills add twostraws/Swift-Testing-Agent-Skill --global --agent zed codex claude-code --skill swift-testing-pro --copy --yes
+npx --yes skills add twostraws/SwiftData-Agent-Skill --global --agent zed codex claude-code --skill swiftdata-pro --copy --yes
+npx --yes skills add twostraws/SwiftUI-Agent-Skill --global --agent zed codex claude-code --skill swiftui-pro --copy --yes
+npx --yes skills add denoland/skills --global --agent zed codex claude-code --skill deno --copy --yes
+npx --yes skills add claude-office-skills/skills --global --agent zed codex claude-code --skill '*' --copy --yes
+npx --yes skills add mac95sb/skills --global --agent zed codex claude-code --skill '*' --copy --yes
+npx --yes skills add ayghri/i-have-adhd --global --agent zed codex claude-code --skill i-have-adhd --copy --yes
+for skills_dir in "$HOME/.agents/skills" "$HOME/.claude/skills"; do
+  for skill_dir in "$skills_dir"/*; do
+    [ -d "$skill_dir" ] || continue
 
-  skill_name=${skill_dir##*/}
-  normalized_name=$(printf '%s\n' "$skill_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//')
-  [ -n "$normalized_name" ] || continue
+    skill_name=${skill_dir##*/}
+    normalized_name=$(printf '%s\n' "$skill_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//')
+    [ -n "$normalized_name" ] || continue
 
-  normalized_dir=${skill_dir%/*}/$normalized_name
-  if [ "$skill_dir" != "$normalized_dir" ]; then
-    rm -rf "$normalized_dir"
-    mv "$skill_dir" "$normalized_dir"
-  fi
+    normalized_dir=${skill_dir%/*}/$normalized_name
+    if [ "$skill_dir" != "$normalized_dir" ]; then
+      rm -rf "$normalized_dir"
+      mv "$skill_dir" "$normalized_dir"
+    fi
 
-  skill_file=$normalized_dir/SKILL.md
-  [ -f "$skill_file" ] || continue
-  tmp_file=${skill_file}.tmp
+    skill_file=$normalized_dir/SKILL.md
+    [ -f "$skill_file" ] || continue
+    tmp_file=${skill_file}.tmp
 
-  awk -v skill_name="$normalized_name" '
-    NR == 1 && $0 == "---" { in_frontmatter = 1 }
-    in_frontmatter && NR > 1 && $0 == "---" { in_frontmatter = 0 }
-    in_frontmatter && !renamed && /^name:/ {
-      print "name: " skill_name
-      renamed = 1
-      next
-    }
-    { print }
-  ' "$skill_file" > "$tmp_file" && mv "$tmp_file" "$skill_file"
-  [ ! -f "$tmp_file" ] || rm -f "$tmp_file"
+    awk -v skill_name="$normalized_name" '
+      NR == 1 && $0 == "---" { in_frontmatter = 1 }
+      in_frontmatter && NR > 1 && $0 == "---" { in_frontmatter = 0 }
+      in_frontmatter && !renamed && /^name:/ {
+        print "name: " skill_name
+        renamed = 1
+        next
+      }
+      { print }
+    ' "$skill_file" > "$tmp_file" && mv "$tmp_file" "$skill_file"
+    [ ! -f "$tmp_file" ] || rm -f "$tmp_file"
+  done
 done
 """
 
 [dotfiles]
 # Agent instructions.
 "~/.agents/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
+"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
+"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/AGENTS.md" }
 
 # Tool configuration.
 "~/.config/git/config" = {}
