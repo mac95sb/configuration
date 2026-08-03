@@ -8,38 +8,31 @@ gh = "latest"
 go = "latest"
 mas = "latest"
 node = "latest"
-opencode = "latest"
 pkl = "latest"
 wrangler = "latest"
 
 [bootstrap.repos]
-"~/Developer/configuration" = { url = "https://github.com/mac95sb/configuration" }
-"~/Developer/skills" = { url = "https://github.com/mac95sb/skills" }
+"~/Developer/configuration" = { url = "git@tangled.org:maclong.dev/configuration" }
+"~/Developer/portfolio" = { url = "git@tangled.org:maclong.dev/portfolio" }
+"~/Developer/skills" = { url = "git@tangled.org:maclong.dev/skills" }
 
 [bootstrap.packages]
-# Fonts.
-"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest"
-"brew-cask:font-sf-pro" = "latest"
-
-# Developer tools & utilities.
+"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
+"brew-cask:font-sf-pro" = "latest" # SF Pro
+"brew-cask:crossover" = "latest" # Crossover
 "brew-cask:mole-app" = "latest" # Mole
 "brew-cask:obscura-vpn" = "latest" # Obscura VPN
 "brew-cask:postico" = "latest" # Postico
 "brew-cask:zed" = "latest" # Zed Editor
-"mas:497799835" = "latest"  # Xcode
-
-# Productivity & design.
 "mas:1289583905" = "latest" # Pixelmator Pro
 "mas:1662217862" = "latest" # Wipr 2
 "mas:361285480" = "latest"  # Keynote
 "mas:361304891" = "latest"  # Numbers
 "mas:361309726" = "latest"  # Pages
-
-# Media & entertainment.
-"brew-cask:crossover" = "latest" # Crossover
 "mas:424389933" = "latest"  # Final Cut Pro
 "mas:424390742" = "latest"  # Compressor
 "mas:434290957" = "latest"  # Motion
+"mas:497799835" = "latest"  # Xcode
 "mas:634148309" = "latest"  # Logic Pro
 "mas:634159523" = "latest"  # MainStage
 
@@ -75,7 +68,14 @@ for entry in \
   'claude-office-skills/skills:*' \
   'mac95sb/skills:*' \
   'ayghri/i-have-adhd:i-have-adhd' \
-  'cloudflare/skills:*'
+  'cloudflare/skills:*' \
+  'github/awesome-copilot:commit-message-storyteller' \
+  'github/awesome-copilot:conventional-branch' \
+  'github/awesome-copilot:git-flow-branch-creator' \
+  'github/awesome-copilot:github-release' \
+  'github/awesome-copilot:make-repo-contribution' \
+  'fastapi/fastapi:fastapi' \
+  'antfu/skills:vue'
 do
   repo=${entry%%:*}
   skill=${entry#*:}

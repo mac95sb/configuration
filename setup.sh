@@ -17,6 +17,12 @@ if [ ! -f "$ssh_key" ]; then
   ssh-keygen -t ed25519 -C 'contact@maclong.dev' -f "$ssh_key"
 fi
 
+printf '%s\n' "Add this SSH key to https://tangled.org:"
+cat "$ssh_key.pub"
+until printf '%s' "Press enter once the key has been added..." && read -r _ && ssh -T git@tangled.org; do
+  printf '%s\n' "SSH check against tangled.org failed, please try again."
+done
+
 dotfiles=$HOME/Developer/configuration
 
 if [ -d "$dotfiles/.git" ]; then
