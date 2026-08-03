@@ -4,14 +4,13 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
-"npm:agent-browser" = "latest"
 gh = "latest"
+go = "latest"
 mas = "latest"
+node = "latest"
 opencode = "latest"
 pkl = "latest"
-wrangler = { version = "latest", allow_builds = ["esbuild", "sharp", "workerd"] }
-node = "latest"
-go = "latest"
+wrangler = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "https://github.com/mac95sb/configuration" }
@@ -25,7 +24,6 @@ go = "latest"
 # Developer tools & utilities.
 "brew-cask:mole-app" = "latest" # Mole
 "brew-cask:obscura-vpn" = "latest" # Obscura VPN
-"brew-cask:orbstack" = "latest" # OrbStack
 "brew-cask:postico" = "latest" # Postico
 "brew-cask:zed" = "latest" # Zed Editor
 "mas:497799835" = "latest"  # Xcode
@@ -57,9 +55,6 @@ preferred_view_style = "column"
 [bootstrap.macos.trackpad]
 tap_to_click = true
 three_finger_drag = true
-
-[bootstrap.brew.taps]
-"alyraffauf/tap" = "https://github.com/alyraffauf/homebrew-tap.git"
 
 [tasks.skills]
 description = "Install shared agent skills with skills.sh."
