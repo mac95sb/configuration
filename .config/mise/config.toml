@@ -8,7 +8,6 @@ gh = "latest"
 go = "latest"
 mas = "latest"
 node = "latest"
-opencode = "latest"
 pkl = "latest"
 wrangler = "latest"
 
@@ -130,7 +129,7 @@ done
 # Shell and editor configuration.
 "~/.config/zed/keymap.json" = {}
 "~/.config/zed/settings.json" = {}
-#"~/.config/zsh/.p10k.zsh" = {}
-#"~/.config/zsh/.zshrc" = {}
+"~/.config/zsh/.p10k.zsh" = {}
+"~/.config/zsh/.zshrc" = {}
 "~/.vimrc" = {}
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
