@@ -66,7 +66,6 @@ for entry in \
   'twostraws/SwiftUI-Agent-Skill:swiftui-pro' \
   'denoland/skills:deno' \
   'claude-office-skills/skills:*' \
-  'mac95sb/skills:*' \
   'ayghri/i-have-adhd:i-have-adhd' \
   'cloudflare/skills:*' \
   'github/awesome-copilot:commit-message-storyteller' \
@@ -81,6 +80,8 @@ do
   skill=${entry#*:}
   npx --yes skills add "$repo" --global --agent zed codex claude-code --skill "$skill" --copy --yes
 done
+
+npx --yes skills add "$HOME/Developer/skills" --global --agent zed codex claude-code --copy --yes
 
 for skills_dir in "$HOME/.agents/skills" "$HOME/.claude/skills"; do
   for skill_dir in "$skills_dir"/*; do
