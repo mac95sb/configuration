@@ -6,8 +6,10 @@ experimental = true
 [tools]
 gh = "latest"
 go = "latest"
+herdr = "latest"
 java = "latest" # Required for pkl language server
 mas = "latest"
+neovim = "latest"
 node = "latest"
 "npm:@mariozechner/pi-coding-agent" = "latest"
 pkl = "latest"
