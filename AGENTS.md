@@ -25,7 +25,7 @@ Guidance for AI coding agents working in this environment.
   directly by the user.
 
 > [!NOTE] Self Improvement Notice
-> If you see an improvement that can be made to one of the skills or AGENTS.md file during regular usage or think of a new skill or note in AGENTS.md that can be added then you have permission to make the change in `"$HOME/Developer/configuration/.agents/{AGENTs.md,skills/}"` to improve the agent's behavior or add a new skill.
+> If you see an improvement that can be made to one of the skills or AGENTS.md file during regular usage or think of a new skill or note in AGENTS.md that can be added then you have permission to make the change in `"$HOME/Developer/skills/"` and `"$HOME/Developer/configuration/AGENTS.md` to improve the agent's behavior or improve/add a skill.
 
 ## Working with a repository
 
@@ -42,7 +42,7 @@ Guidance for AI coding agents working in this environment.
 ## Agent skill management
 
 - Keep shared skills compatible with Zed's skill format:
-  - Each skill must be a direct child of a `skills/` directory.
+  - Each skill must be a direct child of a `~/Developer/skills/` directory.
   - Each skill directory must contain `SKILL.md`.
   - `SKILL.md` must start with YAML frontmatter containing `name` and `description`.
   - The frontmatter `name` should match the containing directory name.
@@ -61,6 +61,7 @@ Guidance for AI coding agents working in this environment.
 - Avoid removing user preferences or local configuration unless the user asks.
 - Keep dependency, package-manager, and tool-version changes intentional and limited
   to what the task requires.
+- Follow language best practices wherever possible.
 
 ## Validation checklist
 

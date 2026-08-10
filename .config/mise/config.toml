@@ -6,6 +6,7 @@ experimental = true
 [tools]
 gh = "latest"
 go = "latest"
+java = "latest" # Required for pkl language server
 mas = "latest"
 node = "latest"
 pkl = "latest"
@@ -23,7 +24,7 @@ wrangler = "latest"
 "brew-cask:mole-app" = "latest" # Mole
 "brew-cask:obscura-vpn" = "latest" # Obscura VPN
 "brew-cask:postico" = "latest" # Postico
-"brew-cask:zed" = "latest" # Zed Editor
+"brew-cask:zed" = "latest" # Zed
 "mas:1289583905" = "latest" # Pixelmator Pro
 "mas:1662217862" = "latest" # Wipr 2
 "mas:361285480" = "latest"  # Keynote
