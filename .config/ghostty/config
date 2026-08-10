@@ -1,0 +1,8 @@
+# Keep Ghostty aligned with the Zed editor configuration.
+font-family = Liga SFMono Nerd Font
+font-size = 12
+
+theme = dark:Xcode Default Darker,light:Xcode Default Light
+window-theme = auto
+macos-titlebar-style = transparent
+shell-integration-features = cursor,sudo,title

@@ -56,3 +56,6 @@ typeset -U path PATH
 setopt HIST_IGNORE_ALL_DUPS
 
 eval "$(~/.local/bin/mise activate zsh)"
+
+# Start a Herdr workspace with NeoVim, pi, and a shell arranged for the current project.
+alias hdev='herdr-dev'
