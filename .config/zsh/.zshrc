@@ -14,12 +14,6 @@ zstyle ':z4h:' prompt-at-bottom 'no'
 # Right-arrow key accepts the whole command autosuggestion.
 zstyle ':z4h:autosuggestions' forward-char 'accept'
 
-# Don't recursively traverse directories when TAB-completing files.
-zstyle ':z4h:fzf-complete' recurse-dirs 'no'
-
-# Use the terminal's colors for fzf
-export FZF_DEFAULT_OPTS='--color=16'
-
 # Use the Powerlevel10k config
 typeset -g POWERLEVEL9K_CONFIG_FILE="${ZDOTDIR:-$HOME}/.p10k.zsh"
 
@@ -56,6 +50,3 @@ typeset -U path PATH
 setopt HIST_IGNORE_ALL_DUPS
 
 eval "$(~/.local/bin/mise activate zsh)"
-
-# Start a Herdr workspace with NeoVim, pi, and a shell arranged for the current project.
-alias hdev='herdr-dev'

@@ -4,14 +4,13 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
+claude = "latest"
+codex = "latest"
 gh = "latest"
 go = "latest"
-herdr = "latest"
 java = "latest" # Required for pkl language server
 mas = "latest"
-neovim = "latest"
 node = "latest"
-"npm:@mariozechner/pi-coding-agent" = "latest"
 pkl = "latest"
 wrangler = "latest"
 
@@ -21,14 +20,9 @@ wrangler = "latest"
 "~/Developer/skills" = { url = "git@tangled.org:maclong.dev/skills" }
 
 [bootstrap.packages]
-"brew:herdr" = "latest" # Persistent terminal workspace runtime
-"brew:jq" = "latest" # Parses Herdr workspace and pane identifiers
-"brew:neovim" = "latest" # Terminal editor
-"brew:ripgrep" = "latest" # Neovim search support
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
 "brew-cask:font-sf-pro" = "latest" # SF Pro
 "brew-cask:crossover" = "latest" # Crossover
-"brew-cask:ghostty" = "latest" # Terminal emulator
 "brew-cask:mole-app" = "latest" # Mole
 "brew-cask:obscura-vpn" = "latest" # Obscura VPN
 "brew-cask:postico" = "latest" # Postico
@@ -132,19 +126,13 @@ done
 "~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/AGENTS.md" }
 
 # Tool configuration.
-"~/.config/ghostty/config" = {}
-"~/.config/ghostty/themes/Xcode Default Darker" = {}
-"~/.config/ghostty/themes/Xcode Default Light" = {}
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = {}
-"~/.config/nvim/init.lua" = {}
-"~/.local/bin/herdr-dev" = {}
 
 # Shell and editor configuration.
 "~/.config/zed/keymap.json" = {}
 "~/.config/zed/settings.json" = {}
 "~/.config/zsh/.p10k.zsh" = {}
 "~/.config/zsh/.zshrc" = {}
-"~/.vimrc" = {}
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }

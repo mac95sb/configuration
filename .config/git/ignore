@@ -4,3 +4,5 @@
 .agents/skills/.system/
 .env
 .zed/
+
+**/.claude/settings.local.json
