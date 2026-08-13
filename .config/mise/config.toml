@@ -4,21 +4,14 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
-claude = "latest"
-codex = "latest"
 gh = "latest"
-go = "latest"
-java = "latest" # Required for pkl language server
 mas = "latest"
-node = "latest"
-pi = "latest"
-pkl = "latest"
-wrangler = "latest"
 
 [bootstrap.repos]
-"~/Developer/configuration" = { url = "git@tangled.org:maclong.dev/configuration" }
-"~/Developer/portfolio" = { url = "git@tangled.org:maclong.dev/portfolio" }
-"~/Developer/skills" = { url = "git@tangled.org:maclong.dev/skills" }
+"~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
+"~/Developer/portfolio" = { url = "git@github.com:mac95sb/portfolio.git" }
+"~/Developer/robin" = { url = "git@github.com:mac95sb/portfolio.git" }
+"~/Developer/skills" = { url = "git@github.com:mac95sb/skills.git" }
 
 [bootstrap.packages]
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
@@ -69,7 +62,6 @@ for entry in \
   'twostraws/SwiftData-Agent-Skill:swiftdata-pro' \
   'twostraws/SwiftUI-Agent-Skill:swiftui-pro' \
   'denoland/skills:deno' \
-  'claude-office-skills/skills:*' \
   'ayghri/i-have-adhd:i-have-adhd' \
   'cloudflare/skills:*' \
   'github/awesome-copilot:commit-message-storyteller' \
@@ -82,12 +74,12 @@ for entry in \
 do
   repo=${entry%%:*}
   skill=${entry#*:}
-  npx --yes skills add "$repo" --global --agent zed codex claude-code --skill "$skill" --copy --yes
+  npx --yes skills add "$repo" --global --agent zed --skill "$skill" --copy --yes
 done
 
-npx --yes skills add "$HOME/Developer/skills" --global --agent zed codex claude-code --copy --yes
+npx --yes skills add "$HOME/Developer/skills" --global --agent zed --copy --yes
 
-for skills_dir in "$HOME/.agents/skills" "$HOME/.claude/skills"; do
+for skills_dir in "$HOME/.agents/skills"; do
   for skill_dir in "$skills_dir"/*; do
     [ -d "$skill_dir" ] || continue
 
@@ -123,8 +115,6 @@ done
 [dotfiles]
 # Agent instructions.
 "~/.agents/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
-"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
-"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/AGENTS.md" }
 "~/.pi/agent/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
 
 # Tool configuration.

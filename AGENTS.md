@@ -19,10 +19,9 @@ Guidance for AI coding agents working in this environment.
   or mass file moves without explicit user approval.
 - Do not commit changes, create branches, push, reset, clean, or rewrite history
   unless explicitly asked.
-- Do not add tool attribution to commit messages or PR descriptions/comments (e.g.
-  "Generated with Claude Code", "Co-Authored-By: Claude", "Co-authored-by: Codex",
-  session links, or similar). Write commit messages and PR text as if authored
-  directly by the user.
+- Do not add tool attribution, co-author metadata, or session links to commit
+  messages or PR descriptions/comments. Write them as if authored directly by the
+  user.
 
 > [!NOTE] Self Improvement Notice
 > If you see an improvement that can be made to one of the skills or AGENTS.md file during regular usage or think of a new skill or note in AGENTS.md that can be added then you have permission to make the change in `"$HOME/Developer/skills/"` and `"$HOME/Developer/configuration/AGENTS.md` to improve the agent's behavior or improve/add a skill.
