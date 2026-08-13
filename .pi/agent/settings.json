@@ -1,0 +1,6 @@
+{
+  "defaultProvider": "chutes",
+  "defaultModel": "moonshotai/Kimi-K2.6-TEE",
+  "defaultThinkingLevel": "medium",
+  "theme": "light"
+}

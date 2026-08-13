@@ -11,6 +11,7 @@ go = "latest"
 java = "latest" # Required for pkl language server
 mas = "latest"
 node = "latest"
+pi = "latest"
 pkl = "latest"
 wrangler = "latest"
 
@@ -124,11 +125,14 @@ done
 "~/.agents/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
 "~/.codex/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
 "~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/AGENTS.md" }
+"~/.pi/agent/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
 
 # Tool configuration.
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = {}
+"~/.pi/agent/models.json" = {}
+"~/.pi/agent/settings.json" = {}
 
 # Shell and editor configuration.
 "~/.config/zed/keymap.json" = {}

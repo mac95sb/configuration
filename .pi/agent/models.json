@@ -1,0 +1,67 @@
+{
+  "providers": {
+    "chutes": {
+      "baseUrl": "https://llm.chutes.ai/v1",
+      "api": "openai-completions",
+      "apiKey": "$CHUTES_API_KEY",
+      "models": [
+        {
+          "id": "deepseek-ai/DeepSeek-V4-Flash-0731-TEE",
+          "name": "DeepSeek V4 Flash 0731",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 1048576,
+          "maxTokens": 131072
+        },
+        {
+          "id": "Qwen/Qwen3-32B-TEE",
+          "name": "Qwen3 32B",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 40960,
+          "maxTokens": 40960
+        },
+        {
+          "id": "zai-org/GLM-5.1-TEE",
+          "name": "GLM 5.1",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 202752,
+          "maxTokens": 65535
+        },
+        {
+          "id": "moonshotai/Kimi-K2.6-TEE",
+          "name": "Kimi K2.6",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 262144,
+          "maxTokens": 65535
+        },
+        {
+          "id": "deepseek-ai/DeepSeek-V3.2-TEE",
+          "name": "DeepSeek V3.2",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 65536
+        },
+        {
+          "id": "zai-org/GLM-5.2-TEE",
+          "name": "GLM 5.2",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 1048576,
+          "maxTokens": 65535
+        },
+        {
+          "id": "moonshotai/Kimi-K3-TEE",
+          "name": "Kimi K3",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 1048576,
+          "maxTokens": 65535
+        }
+      ]
+    }
+  }
+}
