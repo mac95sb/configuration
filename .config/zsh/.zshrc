@@ -47,6 +47,6 @@ path=("$HOME/.local/bin" $path)
 typeset -U path PATH
 
 # Options.
-setopt HIST_IGNORE_ALL_DUPS
+setopt HIST_IGNORE_ALL_DUPS INTERACTIVE_COMMENTS
 
 eval "$(~/.local/bin/mise activate zsh)"

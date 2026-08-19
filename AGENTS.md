@@ -4,6 +4,7 @@ Guidance for AI coding agents working in this environment.
 
 ## Operating principles
 
+- Always enable the `/i-have-adhd` skill at the start of each session.
 - Start by understanding the current context. Inspect relevant files, recent changes,
   and project conventions before editing.
 - Prefer small, focused changes that solve the requested problem without unrelated
@@ -17,6 +18,9 @@ Guidance for AI coding agents working in this environment.
   tracked files.
 - Do not run destructive commands, package installs, bootstrap scripts, migrations,
   or mass file moves without explicit user approval.
+- Beware of interactive pagers when running commands (`git log`, `git diff`, `man`,
+  etc.) — agents can get stuck in them. Use non-interactive flags such as
+  `git --no-pager` or set `PAGER=cat` in the environment.
 - Do not commit changes, create branches, push, reset, clean, or rewrite history
   unless explicitly asked.
 - Do not add tool attribution, co-author metadata, or session links to commit

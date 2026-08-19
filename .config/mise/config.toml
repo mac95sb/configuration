@@ -10,7 +10,7 @@ mas = "latest"
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
 "~/Developer/portfolio" = { url = "git@github.com:mac95sb/portfolio.git" }
-"~/Developer/robin" = { url = "git@github.com:mac95sb/portfolio.git" }
+"~/Developer/robin" = { url = "git@github.com:mac95sb/robin.git" }
 "~/Developer/skills" = { url = "git@github.com:mac95sb/skills.git" }
 
 [bootstrap.packages]
@@ -18,8 +18,6 @@ mas = "latest"
 "brew-cask:font-sf-pro" = "latest" # SF Pro
 "brew-cask:crossover" = "latest" # Crossover
 "brew-cask:mole-app" = "latest" # Mole
-"brew-cask:obscura-vpn" = "latest" # Obscura VPN
-"brew-cask:postico" = "latest" # Postico
 "brew-cask:zed" = "latest" # Zed
 "mas:1289583905" = "latest" # Pixelmator Pro
 "mas:1662217862" = "latest" # Wipr 2
@@ -70,14 +68,15 @@ for entry in \
   'github/awesome-copilot:github-release' \
   'github/awesome-copilot:make-repo-contribution' \
   'fastapi/fastapi:fastapi' \
-  'antfu/skills:vue'
+  'antfu/skills:vue' \
+  'op7418/humanizer-zh:humanizer-zh'
 do
   repo=${entry%%:*}
   skill=${entry#*:}
-  npx --yes skills add "$repo" --global --agent zed --skill "$skill" --copy --yes
+  npx --yes skills add "$repo" --global --agent zed claude --skill "$skill" --copy --yes
 done
 
-npx --yes skills add "$HOME/Developer/skills" --global --agent zed --copy --yes
+npx --yes skills add "$HOME/Developer/skills" --global --agent zed claude --copy --yes
 
 for skills_dir in "$HOME/.agents/skills"; do
   for skill_dir in "$skills_dir"/*; do
@@ -115,14 +114,12 @@ done
 [dotfiles]
 # Agent instructions.
 "~/.agents/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
-"~/.pi/agent/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
+"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/AGENTS.md" }
 
 # Tool configuration.
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = {}
-"~/.pi/agent/models.json" = {}
-"~/.pi/agent/settings.json" = {}
 
 # Shell and editor configuration.
 "~/.config/zed/keymap.json" = {}
