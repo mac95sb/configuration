@@ -54,8 +54,6 @@ three_finger_drag = true
 "~/.config/mise/config.toml" = {}
 
 # Shell and editor configuration.
-"~/.config/zed/keymap.json" = {}
-"~/.config/zed/settings.json" = {}
 "~/.config/zsh/.p10k.zsh" = {}
 "~/.config/zsh/.zshrc" = {}
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }

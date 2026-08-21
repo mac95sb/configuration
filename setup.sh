@@ -40,7 +40,6 @@ fi
 "$mise" -C "$dotfiles" trust
 "$mise" -C "$dotfiles" install
 "$mise" -C "$dotfiles" exec -- mise bootstrap --yes --force-dotfiles
-"$mise" -C "$dotfiles" run skills
 
 if [ "$(uname -s)" = "Darwin" ]; then
   sudo_file=/etc/pam.d/sudo_local

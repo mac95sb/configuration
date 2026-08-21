@@ -44,7 +44,7 @@ Guidance for AI coding agents working in this environment.
 
 ## Agent skill management
 
-- Keep shared skills compatible with Zed's skill format:
+- Keep shared skills compatible with the standard skill format:
   - Each skill must be a direct child of a `~/Developer/skills/` directory.
   - Each skill directory must contain `SKILL.md`.
   - `SKILL.md` must start with YAML frontmatter containing `name` and `description`.
