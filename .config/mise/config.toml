@@ -11,25 +11,24 @@ mas = "latest"
 "~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
 "~/Developer/portfolio" = { url = "git@github.com:mac95sb/portfolio.git" }
 "~/Developer/robin" = { url = "git@github.com:mac95sb/robin.git" }
-"~/Developer/skills" = { url = "git@github.com:mac95sb/skills.git" }
 
 [bootstrap.packages]
+"brew-cask:claude" = "latest" # Claude
+"brew-cask:crossover" = "latest" # Crossover
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
 "brew-cask:font-sf-pro" = "latest" # SF Pro
-"brew-cask:crossover" = "latest" # Crossover
 "brew-cask:mole-app" = "latest" # Mole
-"brew-cask:zed" = "latest" # Zed
-"mas:1289583905" = "latest" # Pixelmator Pro
-"mas:1662217862" = "latest" # Wipr 2
-"mas:361285480" = "latest"  # Keynote
-"mas:361304891" = "latest"  # Numbers
-"mas:361309726" = "latest"  # Pages
-"mas:424389933" = "latest"  # Final Cut Pro
 "mas:424390742" = "latest"  # Compressor
-"mas:434290957" = "latest"  # Motion
-"mas:497799835" = "latest"  # Xcode
+"mas:424389933" = "latest"  # Final Cut Pro
+"mas:361285480" = "latest"  # Keynote
 "mas:634148309" = "latest"  # Logic Pro
 "mas:634159523" = "latest"  # MainStage
+"mas:434290957" = "latest"  # Motion
+"mas:361304891" = "latest"  # Numbers
+"mas:361309726" = "latest"  # Pages
+"mas:1289583905" = "latest" # Pixelmator Pro
+"mas:1662217862" = "latest" # Wipr 2
+"mas:497799835" = "latest"  # Xcode
 
 [bootstrap.macos.defaults."com.apple.WindowManager"]
 GloballyEnabled = true
@@ -43,73 +42,6 @@ preferred_view_style = "column"
 [bootstrap.macos.trackpad]
 tap_to_click = true
 three_finger_drag = true
-
-[tasks.skills]
-description = "Install shared agent skills with skills.sh."
-run = """
-for entry in \
-  'n0an/App-Intents-Agent-Skill:app-intents' \
-  'AvdLee/Core-Data-Agent-Skill:core-data-expert' \
-  'dadederk/iOS-Accessibility-Agent-Skill:ios-accessibility' \
-  'jazzychad/ios-code-audit:ios-code-audit' \
-  'conorluddy/ios-simulator-skill:ios-simulator-skill' \
-  'efremidze/swift-architecture-skill:swift-architecture-skill' \
-  'twostraws/Swift-Concurrency-Agent-Skill:swift-concurrency-pro' \
-  'ivan-magda/swift-security-skill:swift-security-expert' \
-  'twostraws/Swift-Testing-Agent-Skill:swift-testing-pro' \
-  'twostraws/SwiftData-Agent-Skill:swiftdata-pro' \
-  'twostraws/SwiftUI-Agent-Skill:swiftui-pro' \
-  'denoland/skills:deno' \
-  'ayghri/i-have-adhd:i-have-adhd' \
-  'cloudflare/skills:*' \
-  'github/awesome-copilot:commit-message-storyteller' \
-  'github/awesome-copilot:conventional-branch' \
-  'github/awesome-copilot:git-flow-branch-creator' \
-  'github/awesome-copilot:github-release' \
-  'github/awesome-copilot:make-repo-contribution' \
-  'fastapi/fastapi:fastapi' \
-  'antfu/skills:vue' \
-  'op7418/humanizer-zh:humanizer-zh'
-do
-  repo=${entry%%:*}
-  skill=${entry#*:}
-  npx --yes skills add "$repo" --global --agent zed claude --skill "$skill" --copy --yes
-done
-
-npx --yes skills add "$HOME/Developer/skills" --global --agent zed claude --copy --yes
-
-for skills_dir in "$HOME/.agents/skills"; do
-  for skill_dir in "$skills_dir"/*; do
-    [ -d "$skill_dir" ] || continue
-
-    skill_name=${skill_dir##*/}
-    normalized_name=$(printf '%s\n' "$skill_name" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9][^a-z0-9]*/-/g; s/^-//; s/-$//')
-    [ -n "$normalized_name" ] || continue
-
-    normalized_dir=${skill_dir%/*}/$normalized_name
-    if [ "$skill_dir" != "$normalized_dir" ]; then
-      rm -rf "$normalized_dir"
-      mv "$skill_dir" "$normalized_dir"
-    fi
-
-    skill_file=$normalized_dir/SKILL.md
-    [ -f "$skill_file" ] || continue
-    tmp_file=${skill_file}.tmp
-
-    awk -v skill_name="$normalized_name" '
-      NR == 1 && $0 == "---" { in_frontmatter = 1 }
-      in_frontmatter && NR > 1 && $0 == "---" { in_frontmatter = 0 }
-      in_frontmatter && !renamed && /^name:/ {
-        print "name: " skill_name
-        renamed = 1
-        next
-      }
-      { print }
-    ' "$skill_file" > "$tmp_file" && mv "$tmp_file" "$skill_file"
-    [ ! -f "$tmp_file" ] || rm -f "$tmp_file"
-  done
-done
-"""
 
 [dotfiles]
 # Agent instructions.
