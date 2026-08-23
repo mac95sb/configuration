@@ -87,6 +87,7 @@ fi
 [tasks."daemon:install"]
 description = "Point pitchfork's global config at this repo and register it to start on boot"
 run = """
+sudo install -d -m 755 -o root -g wheel /etc/pitchfork
 sudo ln -sf /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
 sudo pitchfork boot enable
 """
