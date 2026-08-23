@@ -26,7 +26,6 @@
     pyenv                   # python environment (pyenv)
     nodenv                  # node.js version from nodenv
     nvm                     # node.js version from nvm
-    nodeenv                 # node.js environment (nodeenv)
     node_version            # node.js version
     package                 # name@version from package.json
     rbenv                   # ruby version from rbenv
@@ -262,10 +261,6 @@
   typeset -g POWERLEVEL9K_NVM_FOREGROUND=2
   typeset -g POWERLEVEL9K_NVM_PROMPT_ALWAYS_SHOW=false
   typeset -g POWERLEVEL9K_NVM_SHOW_SYSTEM=true
-
-  typeset -g POWERLEVEL9K_NODEENV_FOREGROUND=2
-  typeset -g POWERLEVEL9K_NODEENV_SHOW_NODE_VERSION=false
-  typeset -g POWERLEVEL9K_NODEENV_{LEFT,RIGHT}_DELIMITER=
 
   typeset -g POWERLEVEL9K_NODE_VERSION_FOREGROUND=2
   typeset -g POWERLEVEL9K_NODE_VERSION_PROJECT_ONLY=true
