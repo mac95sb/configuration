@@ -1,28 +1,42 @@
 amends "package://github.com/jdx/hk/releases/download/v1.56.1/hk@1.56.1#/Config.pkl"
+
 import "package://github.com/jdx/hk/releases/download/v1.56.1/hk@1.56.1#/Builtins.pkl"
 
+exclude = List(".config/zsh/.p10k.zsh")
+
 local linters = new Mapping<String, Step> {
-    ["shellcheck"] = Builtins.shellcheck
-    ["shfmt"] = Builtins.shfmt
-    ["taplo"] = Builtins.taplo
-    ["taplo-format"] = Builtins.taplo_format
-    ["mise"] = Builtins.mise
-    ["pkl-format"] = Builtins.pkl_format
-    ["detect-private-key"] = Builtins.detect_private_key
-    ["check-merge-conflict"] = Builtins.check_merge_conflict
-    ["trailing-whitespace"] = Builtins.trailing_whitespace
+  ["shellcheck"] = Builtins.shellcheck
+  ["shfmt"] = (Builtins.shfmt) {
+    check = "shfmt -i 2 -d --apply-ignore {{files}}"
+    fix = "shfmt -i 2 -w --apply-ignore {{files}}"
+  }
+  ["taplo"] = Builtins.taplo
+  ["taplo-format"] = Builtins.taplo_format
+  ["mise"] = Builtins.mise
+  ["pkl-format"] = Builtins.pkl_format
+  ["detect-private-key"] = Builtins.detect_private_key
+  ["check-merge-conflict"] = Builtins.check_merge_conflict
+  ["trailing-whitespace"] = Builtins.trailing_whitespace
+  ["caddy-validate"] {
+    glob = List("Caddyfile")
+    check = "caddy validate --config Caddyfile"
+  }
 }
 
 hooks {
-    ["pre-commit"] {
-        fix = true
-        stash = "git"
-        steps = linters
-    }
-    ["pre-push"] {
-        steps = linters
-    }
-    ["check"] {
-        steps = linters
-    }
+  ["pre-commit"] {
+    fix = true
+    stash = "git"
+    steps = linters
+  }
+  ["pre-push"] {
+    steps = linters
+  }
+  ["check"] {
+    steps = linters
+  }
+  ["fix"] {
+    fix = true
+    steps = linters
+  }
 }

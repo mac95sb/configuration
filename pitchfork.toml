@@ -1,0 +1,7 @@
+[daemons.caddy]
+user = "svc_caddy"
+run = "fnox exec --profile caddy -- caddy run --config Caddyfile"
+
+[daemons.cloudflared]
+user = "svc_caddy"
+run = "fnox exec --profile caddy -- cloudflared tunnel run"

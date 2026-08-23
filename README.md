@@ -27,7 +27,13 @@ curl -fsSL https://raw.githubusercontent.com/mac95sb/configuration/main/setup.sh
   service, resolved at exec time via `fnox exec --profile <name>`.
 - `hk.pkl` — the quality gate for this repo (git hooks + `mise run
   check`/`fix`). Catches things like a malformed `pitchfork.toml` or an
-  accidentally-unencrypted secret before they land in git.
+  accidentally-unencrypted secret before they land in git, plus
+  `caddy validate` against `Caddyfile`.
+- `Caddyfile` — reverse proxy config. Public ingress is a Cloudflare
+  Tunnel, which terminates TLS at Cloudflare's edge and forwards to
+  Caddy over plain HTTP locally — Caddy doesn't do its own ACME for
+  publicly-reachable sites here, since port 80 is never publicly
+  reachable to begin with.
 
 ## Secrets
 
@@ -52,6 +58,17 @@ Passwords on any device signed into the account, independent of the host
 that died.
 
 Put both printed public keys into `fnox.toml`'s `recipients` list.
+
+## Service accounts
+
+macOS has no declarative equivalent to `mise bootstrap accounts` (that
+command is Linux-only). Each `[daemons.x]` entry's `user =` account is
+created with a one-time `sudo sysadminctl -addUser ... -roleAccount` call
+instead:
+
+```sh
+mise run accounts:install
+```
 
 ## Supervisor
 

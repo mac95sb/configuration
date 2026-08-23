@@ -13,6 +13,9 @@ hk = "latest"
 shellcheck = "latest"
 shfmt = "latest"
 taplo = "latest"
+pkl = "latest"
+caddy = "latest"
+cloudflared = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
@@ -20,22 +23,22 @@ taplo = "latest"
 "~/Developer/robin" = { url = "git@github.com:mac95sb/robin.git" }
 
 [bootstrap.packages]
-"brew-cask:claude" = "latest" # Claude
-"brew-cask:crossover" = "latest" # Crossover
+"brew-cask:claude" = "latest"                             # Claude
+"brew-cask:crossover" = "latest"                          # Crossover
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
-"brew-cask:font-sf-pro" = "latest" # SF Pro
-"brew-cask:mole-app" = "latest" # Mole
-"mas:424390742" = "latest"  # Compressor
-"mas:424389933" = "latest"  # Final Cut Pro
-"mas:361285480" = "latest"  # Keynote
-"mas:634148309" = "latest"  # Logic Pro
-"mas:634159523" = "latest"  # MainStage
-"mas:434290957" = "latest"  # Motion
-"mas:361304891" = "latest"  # Numbers
-"mas:361309726" = "latest"  # Pages
-"mas:1289583905" = "latest" # Pixelmator Pro
-"mas:1662217862" = "latest" # Wipr 2
-"mas:497799835" = "latest"  # Xcode
+"brew-cask:font-sf-pro" = "latest"                        # SF Pro
+"brew-cask:mole-app" = "latest"                           # Mole
+"mas:424390742" = "latest"                                # Compressor
+"mas:424389933" = "latest"                                # Final Cut Pro
+"mas:361285480" = "latest"                                # Keynote
+"mas:634148309" = "latest"                                # Logic Pro
+"mas:634159523" = "latest"                                # MainStage
+"mas:434290957" = "latest"                                # Motion
+"mas:361304891" = "latest"                                # Numbers
+"mas:361309726" = "latest"                                # Pages
+"mas:1289583905" = "latest"                               # Pixelmator Pro
+"mas:1662217862" = "latest"                               # Wipr 2
+"mas:497799835" = "latest"                                # Xcode
 
 [bootstrap.macos.defaults."com.apple.WindowManager"]
 GloballyEnabled = true
@@ -72,6 +75,14 @@ run = "hk check"
 [tasks.fix]
 description = "Run hk's quality gate with fixes applied"
 run = "hk fix"
+
+[tasks."accounts:install"]
+description = "Create service accounts for pitchfork-managed daemons"
+run = """
+if ! dscl . -read /Users/svc_caddy >/dev/null 2>&1; then
+  sudo sysadminctl -addUser svc_caddy -fullName "Caddy service account" -shell /usr/bin/false -roleAccount
+fi
+"""
 
 [tasks."daemon:install"]
 description = "Register pitchfork to start on boot"
