@@ -1,0 +1,6 @@
+[providers.age]
+type = "age"
+recipients = [
+  "age1REPLACE_WITH_OPERATIONAL_PUBKEY",
+  "age1REPLACE_WITH_ESCROW_PUBKEY",
+]

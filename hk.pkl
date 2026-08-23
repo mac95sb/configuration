@@ -1,0 +1,28 @@
+amends "package://github.com/jdx/hk/releases/download/v1.56.1/hk@1.56.1#/Config.pkl"
+import "package://github.com/jdx/hk/releases/download/v1.56.1/hk@1.56.1#/Builtins.pkl"
+
+local linters = new Mapping<String, Step> {
+    ["shellcheck"] = Builtins.shellcheck
+    ["shfmt"] = Builtins.shfmt
+    ["taplo"] = Builtins.taplo
+    ["taplo-format"] = Builtins.taplo_format
+    ["mise"] = Builtins.mise
+    ["pkl-format"] = Builtins.pkl_format
+    ["detect-private-key"] = Builtins.detect_private_key
+    ["check-merge-conflict"] = Builtins.check_merge_conflict
+    ["trailing-whitespace"] = Builtins.trailing_whitespace
+}
+
+hooks {
+    ["pre-commit"] {
+        fix = true
+        stash = "git"
+        steps = linters
+    }
+    ["pre-push"] {
+        steps = linters
+    }
+    ["check"] {
+        steps = linters
+    }
+}

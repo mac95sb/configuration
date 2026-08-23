@@ -6,6 +6,13 @@ experimental = true
 [tools]
 gh = "latest"
 mas = "latest"
+pitchfork = "latest"
+fnox = "latest"
+age = "latest"
+hk = "latest"
+shellcheck = "latest"
+shfmt = "latest"
+taplo = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
@@ -51,9 +58,25 @@ three_finger_drag = true
 # Tool configuration.
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
-"~/.config/mise/config.toml" = {}
+"~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
 
 # Shell and editor configuration.
 "~/.config/zsh/.p10k.zsh" = {}
 "~/.config/zsh/.zshrc" = {}
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
+
+[tasks.check]
+description = "Run hk's quality gate"
+run = "hk check"
+
+[tasks.fix]
+description = "Run hk's quality gate with fixes applied"
+run = "hk fix"
+
+[tasks."daemon:install"]
+description = "Register pitchfork to start on boot"
+run = "sudo pitchfork boot enable"
+
+[tasks."daemon:reload"]
+description = "Restart all daemons after editing pitchfork.toml"
+run = "pitchfork restart --all-local"
