@@ -79,7 +79,9 @@ run = "hk fix"
 [tasks."accounts:install"]
 description = "Create service accounts for pitchfork-managed daemons and put them in the fnox group"
 run = """
-dseditgroup -o read fnox >/dev/null 2>&1 || sudo dseditgroup -o create fnox
+if ! dscl . -read /Groups/fnox >/dev/null 2>&1; then
+  sudo dseditgroup -o create fnox
+fi
 if ! dscl . -read /Users/svc_caddy >/dev/null 2>&1; then
   sudo sysadminctl -addUser svc_caddy -fullName "Caddy service account" -shell /usr/bin/false -roleAccount
 fi
