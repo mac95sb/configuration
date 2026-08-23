@@ -15,12 +15,16 @@ curl -fsSL https://raw.githubusercontent.com/mac95sb/configuration/main/setup.sh
   provisions a new machine.
 - `mise.toml` — one mise config for the whole system: dotfiles bootstrap
   and task entry points alike.
-- `pitchfork.toml` — server daemons. `sudo pitchfork boot enable`
-  registers pitchfork's own root LaunchDaemon; every service is then a
-  `[daemons.x]` entry here with its own `user =`, rather than a separate
-  plist per service. Don't use pitchfork's `auto = ["start", "stop"]` on
-  any of them — that's a directory-triggered dev-workstation feature, not
-  a fit for a daemon that should just start once and stay running.
+- `pitchfork.toml` — server daemons. Symlinked to `/etc/pitchfork/config.toml`
+  by `mise run daemon:install`, so it's pitchfork's *global* config, not a
+  project-local one — project configs only activate via `pitchfork project
+  enter`/interactive sessions, they don't start at boot. Every service is a
+  `[daemons.x]` entry with its own `user =` and `boot_start = true`, rather
+  than a separate plist per service. `settings.supervisor.user` keeps the
+  root-run supervisor's state/sockets under a real user's home instead of
+  root's. Don't use pitchfork's `auto = ["start", "stop"]` on any daemon —
+  that's a directory-triggered dev-workstation feature, not a fit for one
+  that should just start once and stay running.
 - `fnox.toml` — server secrets, encrypted. Safe to commit: every value is
   encrypted to two age recipients (operational key, root-readable on
   disk; escrow key, held only in Apple Passwords). One profile per

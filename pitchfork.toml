@@ -1,7 +1,14 @@
+[settings.supervisor]
+user = "mac"
+
 [daemons.caddy]
 user = "svc_caddy"
+dir = "/Users/mac/Developer/configuration"
+boot_start = true
 run = "fnox exec --profile caddy -- caddy run --config Caddyfile"
 
 [daemons.cloudflared]
 user = "svc_caddy"
+dir = "/Users/mac/Developer/configuration"
+boot_start = true
 run = "fnox exec --profile caddy -- cloudflared tunnel run"

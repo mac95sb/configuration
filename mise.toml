@@ -85,9 +85,12 @@ fi
 """
 
 [tasks."daemon:install"]
-description = "Register pitchfork to start on boot"
-run = "sudo pitchfork boot enable"
+description = "Point pitchfork's global config at this repo and register it to start on boot"
+run = """
+sudo ln -sf /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
+sudo pitchfork boot enable
+"""
 
 [tasks."daemon:reload"]
 description = "Restart all daemons after editing pitchfork.toml"
-run = "pitchfork restart --all-local"
+run = "pitchfork restart --all-global"
