@@ -44,14 +44,26 @@ curl -fsSL https://raw.githubusercontent.com/mac95sb/configuration/main/setup.sh
 Generate both age keypairs before `fnox.toml` does anything real:
 
 ```sh
-age-keygen -o /etc/fnox/operational.key   # root-readable, referenced by FNOX_AGE_KEY_FILE
+age-keygen -o /etc/fnox/operational.key   # goes into /etc/fnox, see below
 age-keygen                                # never saved to disk — see below
 ```
 
 `/etc/fnox/` keeps the operational key off any user's home directory and
 out of anything else on the host that might get backed up or synced
-unencrypted; create it root-owned with `sudo install -d -m 700 -o root -g wheel /etc/fnox`
-and lock the key itself down with `sudo chmod 400 /etc/fnox/operational.key`.
+unencrypted. `fnox.toml`'s `key_file` points straight at it, so nothing
+needs `FNOX_AGE_KEY_FILE` set at runtime. Every `[daemons.x]` entry that
+calls `fnox exec` runs as its own service account (not root), so the key
+can't be root-only 400 — it's owned by a shared `fnox` group instead,
+readable only by accounts actually in that group:
+
+```sh
+sudo dseditgroup -o create fnox
+sudo install -d -m 750 -o root -g fnox /etc/fnox
+sudo install -o root -g fnox -m 440 /path/to/generated/operational.key /etc/fnox/operational.key
+```
+
+`mise run accounts:install` adds each service account to the `fnox`
+group as it's created.
 
 The escrow key's private half goes into Apple Passwords instead of a
 file — not for day-to-day decryption (that's the operational key's job),
