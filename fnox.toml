@@ -1,6 +1,6 @@
 [providers.age]
 type = "age"
 recipients = [
-  "age1REPLACE_WITH_OPERATIONAL_PUBKEY",
-  "age1REPLACE_WITH_ESCROW_PUBKEY",
+  "age1drx37m0j265wg7vfwz3t4dfxt9feze3r9qvuys74sd8uny3y2f8slzz75x", # operational
+  "age1k2ml2h66ala9a4cq9mpwn5hvx3sylk87kmvq05tpk4cxz3ghwptshfhh4z", # escrow
 ]
