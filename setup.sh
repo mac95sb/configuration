@@ -29,7 +29,7 @@ if [ -d "$dotfiles/.git" ]; then
   printf '%s\n' "Dotfiles already cloned at $dotfiles"
 else
   mkdir -p "$(dirname "$dotfiles")"
-  git clone https://github.com/mac95sb/configuration "$dotfiles"
+  git clone git@github.com:mac95sb/configuration.git "$dotfiles"
 fi
 
 mise=$HOME/.local/bin/mise
@@ -55,18 +55,21 @@ if [ "$(uname -s)" = "Darwin" ]; then
 
   defaults write com.apple.dock persistent-apps -array
 
-  for app_path in \
-    '/System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/' \
-    '/System/Applications/Messages.app/' \
-    '/System/Applications/Mail.app/' \
-    '/System/Applications/Calendar.app/' \
-    '/System/Applications/Reminders.app/' \
-    '/System/Applications/Notes.app/' \
-    '/System/Applications/Books.app/' \
-    '/System/Applications/Music.app/'
-  do
-    defaults write com.apple.dock persistent-apps -array-add \
+  dock_apps='
+/System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/
+/System/Applications/Messages.app/
+/System/Applications/Mail.app/
+/System/Applications/Calendar.app/
+/System/Applications/Reminders.app/
+/System/Applications/Notes.app/
+/System/Applications/Books.app/
+/System/Applications/Music.app/
+'
+  set --
+  for app_path in $dock_apps; do
+    set -- "$@" \
       "{ \"tile-data\" = { \"file-data\" = { \"_CFURLString\" = \"file://$app_path\"; \"_CFURLStringType\" = 15; }; }; \"tile-type\" = \"file-tile\"; }"
   done
+  defaults write com.apple.dock persistent-apps -array-add "$@"
   killall Dock || :
 fi
