@@ -56,7 +56,13 @@ folded into the script, since several of them are genuinely manual
   piece of the observability stack (Prometheus, Grafana Alloy, Loki,
   Blackbox, Grafana) — smallest and most independent, so it's first up.
   Runs under its own shared `svc_observability` account, same pattern
-  as `svc_caddy`.
+  as `svc_caddy`. Only declares probe modules, not targets — Blackbox
+  itself just listens on `127.0.0.1:9115` for probe requests; the actual
+  target comes from whatever scrapes it.
+- `prometheus.yml` — scrape config. Scrapes itself and Blackbox's
+  `http_2xx` probe against `status.maclong.dev` — this is what actually
+  makes Blackbox probe anything. 90-day retention, `127.0.0.1`-only,
+  data under `svc_observability`'s own home directory.
 
 ## Secrets
 

@@ -17,4 +17,10 @@ run = "/usr/local/bin/cloudflared --config cloudflared.yml tunnel run"
 user = "svc_observability"
 dir = "/Users/mac/Developer/configuration"
 boot_start = true
-run = "/usr/local/bin/blackbox_exporter --config.file=blackbox.yml"
+run = "/usr/local/bin/blackbox_exporter --config.file=blackbox.yml --web.listen-address=127.0.0.1:9115"
+
+[daemons.prometheus]
+user = "svc_observability"
+dir = "/Users/mac/Developer/configuration"
+boot_start = true
+run = "/usr/local/bin/prometheus --config.file=prometheus.yml --storage.tsdb.path=/Users/svc_observability/prometheus-data --storage.tsdb.retention.time=90d --web.listen-address=127.0.0.1:9090"

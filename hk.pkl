@@ -29,6 +29,10 @@ local linters = new Mapping<String, Step> {
     glob = List("blackbox.yml")
     check = "blackbox_exporter --config.file=blackbox.yml --config.check"
   }
+  ["prometheus-validate"] {
+    glob = List("prometheus.yml")
+    check = "promtool check config prometheus.yml"
+  }
 }
 
 hooks {

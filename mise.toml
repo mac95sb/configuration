@@ -17,6 +17,7 @@ pkl = "latest"
 caddy = "latest"
 cloudflared = "latest"
 "github:prometheus/blackbox_exporter" = "latest"
+"aqua:prometheus/prometheus" = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
@@ -98,7 +99,7 @@ description = "Point pitchfork's global config at this repo, expose binaries ser
 run = """
 sudo install -d -m 755 -o root -g wheel /etc/pitchfork
 sudo ln -sf /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
-for bin in fnox caddy cloudflared blackbox_exporter; do
+for bin in fnox caddy cloudflared blackbox_exporter prometheus; do
   sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
 done
 sudo chmod o+x /Users/mac
