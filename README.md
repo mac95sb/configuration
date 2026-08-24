@@ -11,6 +11,7 @@ Not exhaustive — just what's in this repo or immediately next.
 ```mermaid
 flowchart TB
     User(["Browser / curl"])
+    You(["You, on the tailnet"])
 
     subgraph CF["Cloudflare (external)"]
         DNS["DNS\nstatus.maclong.dev"]
@@ -31,7 +32,7 @@ flowchart TB
             Prometheus["Prometheus\n:9090"]
             Alloy["Alloy\ncollector + scrubber"]
             Loki["Loki\n:3100"]
-            Grafana["Grafana\n(Tailscale-reached)"]:::planned
+            Grafana["Grafana\n:3000"]
         end
 
         subgraph SvcForgejo["svc_forgejo"]
@@ -39,6 +40,7 @@ flowchart TB
         end
 
         Fnox[("fnox\n/etc/fnox")]
+        Tailscaled["tailscaled\nserve → :3000"]
     end
 
     User -->|HTTPS| DNS --> Edge -->|tunnel| Cloudflared
@@ -46,9 +48,10 @@ flowchart TB
     Caddy -->|JSON logs| CaddyLog -->|tail, scrub| Alloy
     Alloy -->|push| Loki
     Prometheus -->|scrape /probe| Blackbox -->|probes| DNS
-    Grafana -.->|query| Prometheus
-    Grafana -.->|query| Loki
+    Grafana -->|query| Prometheus
+    Grafana -->|query| Loki
     Fnox -.->|SCRUB_SALT| Alloy
+    You -->|HTTPS, tailnet-only| Tailscaled -->|plain HTTP| Grafana
 
     classDef planned stroke-dasharray: 5 5
 ```
@@ -129,6 +132,13 @@ folded into the script, since several of them are genuinely manual
   salt comes from fnox as `SCRUB_SALT`, injected as an environment
   variable and referenced via River's `sys.env()` — never written to
   `config.alloy` itself.
+- `grafana.ini` / `provisioning/datasources/` — visualization, the one
+  deliberate exception to no-GUI. Prometheus and Loki provisioned as
+  datasources automatically, no manual dashboard setup. `127.0.0.1`-only
+  like everything else here — reached over Tailscale (see Grafana
+  below), not exposed via the Cloudflare Tunnel. No mise-managed macOS
+  build exists, so it's installed via `brew:grafana` in
+  `[bootstrap.packages]` instead of `[tools]`.
 
 ## Secrets
 
@@ -224,6 +234,23 @@ On a rebuild, the tunnel ID changes (a fresh `tunnel create`, since
 locally-managed tunnel credentials can't be regenerated for an existing
 tunnel) — repeat the steps above with the new ID.
 
+## Grafana
+
+Reached over Tailscale instead of the Cloudflare Tunnel — it's for you,
+not the public internet, and the real internal network doesn't exist
+yet to do this properly. Install and log into Tailscale (GUI, `open -a
+Tailscale` — the one deliberate GUI dependency in this whole setup,
+since `tailscaled`'s open-source CLI build doesn't ship macOS binaries),
+then, once, expose Grafana:
+
+```sh
+tailscale serve --bg --https=443 localhost:3000
+```
+
+Persists across reboots and `tailscaled` restarts on its own — not a
+pitchfork daemon, just a one-time command. Check the resulting hostname
+with `tailscale serve status`.
+
 ## Supervisor
 
 ```sh
@@ -233,10 +260,11 @@ mise run daemon:reload    # after editing pitchfork.toml
 
 `daemon:install` also does three things service accounts need but mise
 has no declarative way to express: symlinks each daemon's binary into
-`/usr/local/bin`, since service accounts have no mise shims in `PATH`
-and can't traverse into `/Users/mac` to reach mise's own install paths
-anyway; grants bare traverse-only access (`o+x`, no read) to
-`/Users/mac` itself, so service accounts can reach the repo below it
-without exposing anything else in the home directory; and creates
-`/var/log/caddy` (owned `svc_caddy:observability`, 750) for Caddy's
-access log.
+`/usr/local/bin` (mise-managed ones via `mise which`; Grafana explicitly,
+since it's a Homebrew formula, not a mise tool), since service accounts
+have no mise shims in `PATH` and can't traverse into `/Users/mac` to
+reach mise's own install paths anyway; grants bare traverse-only access
+(`o+x`, no read) to `/Users/mac` itself, so service accounts can reach
+the repo below it without exposing anything else in the home directory;
+and creates `/var/log/caddy` (owned `svc_caddy:observability`, 750) for
+Caddy's access log.
