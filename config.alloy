@@ -11,9 +11,29 @@ loki.process "caddy" {
 	// Rewrites the stored log line itself, not just an extracted copy —
 	// the plaintext IP never reaches disk. Same input always produces
 	// the same token (trace correlation intact) without the salt.
+	// `.Value` is the matched capture group's own text, not a named
+	// field — a named group only matters for exposing it elsewhere.
 	stage.replace {
-		expression = "\"remote_ip\":\"(?P<client_ip>[^\"]+)\""
-		replace    = "\"remote_ip\":\"{{ Hash .client_ip \"" + sys.env("SCRUB_SALT") + "\" }}\""
+		expression = "\"remote_ip\":\"(?P<v>[^\"]+)\""
+		replace    = "{{ Hash .Value \"" + sys.env("SCRUB_SALT") + "\" }}"
+	}
+
+	stage.replace {
+		expression = "\"client_ip\":\"(?P<v>[^\"]+)\""
+		replace    = "{{ Hash .Value \"" + sys.env("SCRUB_SALT") + "\" }}"
+	}
+
+	// Caddy's default access log dumps every request header verbatim,
+	// including these two — Cloudflare's own forwarded-client-IP
+	// headers survive even though the connection-level IP is scrubbed.
+	stage.replace {
+		expression = "\"Cf-Connecting-Ip\":\\[\"(?P<v>[^\"]+)\"\\]"
+		replace    = "{{ Hash .Value \"" + sys.env("SCRUB_SALT") + "\" }}"
+	}
+
+	stage.replace {
+		expression = "\"X-Forwarded-For\":\\[\"(?P<v>[^\"]+)\"\\]"
+		replace    = "{{ Hash .Value \"" + sys.env("SCRUB_SALT") + "\" }}"
 	}
 }
 
