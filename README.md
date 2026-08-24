@@ -9,6 +9,13 @@ configuration.
 curl -fsSL https://raw.githubusercontent.com/mac95sb/configuration/main/setup.sh | sh
 ```
 
+Answering "yes" to "Is this the home server?" also generates the
+Cloudflare tunnel credentials. Everything else server-specific —
+secrets, service accounts, the tunnel's DNS route, the supervisor —
+stays as separate, independently re-runnable steps below rather than
+folded into the script, since several of them are genuinely manual
+(pasting a key into Apple Passwords, confirming a dashboard value).
+
 ## Layout
 
 - `.config/` — dotfiles: shell, git, and the mise bootstrap config that
@@ -48,11 +55,14 @@ curl -fsSL https://raw.githubusercontent.com/mac95sb/configuration/main/setup.sh
 
 ## Secrets
 
-Generate both age keypairs before `fnox.toml` does anything real:
+Generate both age keypairs before `fnox.toml` does anything real.
+`/etc/fnox` doesn't exist yet and isn't writable by a plain user anyway,
+so the operational key is generated to a temporary file first and moved
+into place with `sudo`:
 
 ```sh
-age-keygen -o /etc/fnox/operational.key   # goes into /etc/fnox, see below
-age-keygen                                # never saved to disk — see below
+age-keygen -o ~/operational.key   # temporary; moved into place below
+age-keygen                        # escrow — never saved to disk, see below
 ```
 
 `/etc/fnox/` keeps the operational key off any user's home directory and
@@ -66,7 +76,8 @@ readable only by accounts actually in that group:
 ```sh
 sudo dseditgroup -o create fnox
 sudo install -d -m 750 -o root -g fnox /etc/fnox
-sudo install -o root -g fnox -m 440 /path/to/generated/operational.key /etc/fnox/operational.key
+sudo install -o root -g fnox -m 440 ~/operational.key /etc/fnox/operational.key
+rm ~/operational.key
 ```
 
 `mise run accounts:install` adds each service account to the `fnox`
