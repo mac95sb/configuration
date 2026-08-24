@@ -3,6 +3,56 @@
 Personal macOS development environment configuration and home server
 configuration.
 
+## Architecture
+
+Solid boxes are live today; dashed ones are planned but not built yet.
+Not exhaustive — just what's in this repo or immediately next.
+
+```mermaid
+flowchart TB
+    User(["Browser / curl"])
+
+    subgraph CF["Cloudflare (external)"]
+        DNS["DNS\nstatus.maclong.dev"]
+        Edge["Tunnel edge\nTLS termination"]
+        DMS["Worker + Cron + KV\ndead-man's-switch"]:::planned
+    end
+
+    subgraph Host["MacBook Pro — pitchfork supervisor (root)"]
+        subgraph SvcCaddy["svc_caddy"]
+            Cloudflared["cloudflared\ntunnel connector"]
+            Caddy["Caddy\n:8080"]
+        end
+
+        CaddyLog[("/var/log/caddy/\naccess.log")]
+
+        subgraph SvcObservability["svc_observability"]
+            Blackbox["Blackbox exporter\n:9115"]
+            Prometheus["Prometheus\n:9090"]
+            Alloy["Alloy\ncollector + scrubber"]
+            Loki["Loki\n:3100"]
+            Grafana["Grafana\n(Tailscale-reached)"]:::planned
+        end
+
+        subgraph SvcForgejo["svc_forgejo"]
+            Forgejo["Forgejo + act_runner"]:::planned
+        end
+
+        Fnox[("fnox\n/etc/fnox")]
+    end
+
+    User -->|HTTPS| DNS --> Edge -->|tunnel| Cloudflared
+    Cloudflared -->|plain HTTP| Caddy
+    Caddy -->|JSON logs| CaddyLog -->|tail, scrub| Alloy
+    Alloy -->|push| Loki
+    Prometheus -->|scrape /probe| Blackbox -->|probes| DNS
+    Grafana -.->|query| Prometheus
+    Grafana -.->|query| Loki
+    Fnox -.->|SCRUB_SALT| Alloy
+
+    classDef planned stroke-dasharray: 5 5
+```
+
 ## Install
 
 ```sh
@@ -40,14 +90,20 @@ folded into the script, since several of them are genuinely manual
   cloudflared) just runs directly, no fnox wrapper.
 - `hk.pkl` — the quality gate for this repo (git hooks + `mise run
   check`/`fix`). Catches things like a malformed `pitchfork.toml` or an
-  accidentally-unencrypted secret before they land in git, plus
-  `caddy validate` against `Caddyfile` and `cloudflared tunnel ingress
-  validate` against `cloudflared.yml`.
+  accidentally-unencrypted secret before they land in git, plus a
+  `validate`/`check` step for each service config (`caddy`,
+  `cloudflared`, `blackbox_exporter`, `promtool`, `loki`, `alloy`).
+  `caddy validate` actually provisions the config (opens the log file,
+  not just parses syntax), so it depends on `/var/log/caddy` existing —
+  same class of dependency as the gate already having on `mise install`
+  having pulled the validator binaries in the first place.
 - `Caddyfile` — reverse proxy config. Public ingress is a Cloudflare
   Tunnel, which terminates TLS at Cloudflare's edge and forwards to
   Caddy over plain HTTP locally — Caddy doesn't do its own ACME for
   publicly-reachable sites here, since port 80 is never publicly
-  reachable to begin with.
+  reachable to begin with. Logs JSON access logs to `/var/log/caddy/`,
+  owned by `svc_caddy` with group read for `svc_observability` — Alloy
+  tails it from there.
 - `cloudflared.yml` — the tunnel's ingress rules (hostname → local
   port), declarative and safe to commit — no secrets in it. The actual
   secret is the tunnel's credentials file, which `setup.sh` generates
@@ -63,6 +119,16 @@ folded into the script, since several of them are genuinely manual
   `http_2xx` probe against `status.maclong.dev` — this is what actually
   makes Blackbox probe anything. 90-day retention, `127.0.0.1`-only,
   data under `svc_observability`'s own home directory.
+- `loki-config.yaml` — log storage. Single-binary mode, filesystem
+  backend, 90-day retention, `127.0.0.1`-only.
+- `config.alloy` — collection and scrubbing. Tails Caddy's access log
+  and rewrites the client IP *in the stored log line itself* — a
+  keyed/salted SHA3-256 hash (Alloy's `Hash` template function), not a
+  plain hash or truncation, so the plaintext IP never reaches disk but
+  the same IP always produces the same token (correlation intact). The
+  salt comes from fnox as `SCRUB_SALT`, injected as an environment
+  variable and referenced via River's `sys.env()` — never written to
+  `config.alloy` itself.
 
 ## Secrets
 
@@ -103,6 +169,13 @@ Passwords on any device signed into the account, independent of the host
 that died.
 
 Put both printed public keys into `fnox.toml`'s `recipients` list.
+
+A second group, `observability`, is separate on purpose — it's not
+about secrets at all, it's cross-service *log* read access (Caddy's
+access log is owned by `svc_caddy`; Alloy, running as
+`svc_observability`, needs group-read on it). Reusing `fnox` for that
+would be a semantic mismatch — group membership should say what it's
+actually for.
 
 ## Service accounts
 
@@ -158,11 +231,12 @@ mise run daemon:install   # registers pitchfork to start on boot
 mise run daemon:reload    # after editing pitchfork.toml
 ```
 
-`daemon:install` also does two things service accounts need but mise
-has no declarative way to express: symlinks each daemon's binary
-(`fnox`, `caddy`, `cloudflared`) into `/usr/local/bin`, since service
-accounts have no mise shims in `PATH` and can't traverse into
-`/Users/mac` to reach mise's own install paths anyway; and grants
-bare traverse-only access (`o+x`, no read) to `/Users/mac` itself, so
-service accounts can reach the repo below it without exposing anything
-else in the home directory.
+`daemon:install` also does three things service accounts need but mise
+has no declarative way to express: symlinks each daemon's binary into
+`/usr/local/bin`, since service accounts have no mise shims in `PATH`
+and can't traverse into `/Users/mac` to reach mise's own install paths
+anyway; grants bare traverse-only access (`o+x`, no read) to
+`/Users/mac` itself, so service accounts can reach the repo below it
+without exposing anything else in the home directory; and creates
+`/var/log/caddy` (owned `svc_caddy:observability`, 750) for Caddy's
+access log.

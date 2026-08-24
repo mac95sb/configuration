@@ -24,3 +24,16 @@ user = "svc_observability"
 dir = "/Users/mac/Developer/configuration"
 boot_start = true
 run = "/usr/local/bin/prometheus --config.file=prometheus.yml --storage.tsdb.path=/Users/svc_observability/prometheus-data --storage.tsdb.retention.time=90d --web.listen-address=127.0.0.1:9090"
+
+[daemons.loki]
+user = "svc_observability"
+dir = "/Users/mac/Developer/configuration"
+boot_start = true
+run = "/usr/local/bin/loki -config.file=loki-config.yaml"
+
+[daemons.alloy]
+user = "svc_observability"
+dir = "/Users/mac/Developer/configuration"
+boot_start = true
+depends = ["loki"]
+run = "/usr/local/bin/fnox exec --profile observability -- /usr/local/bin/alloy run config.alloy --server.http.listen-addr=127.0.0.1:12345"

@@ -1,0 +1,24 @@
+loki.source.file "caddy" {
+	targets = [
+		{__path__ = "/var/log/caddy/access.log"},
+	]
+	forward_to = [loki.process.caddy.receiver]
+}
+
+loki.process "caddy" {
+	forward_to = [loki.write.local.receiver]
+
+	// Rewrites the stored log line itself, not just an extracted copy —
+	// the plaintext IP never reaches disk. Same input always produces
+	// the same token (trace correlation intact) without the salt.
+	stage.replace {
+		expression = "\"remote_ip\":\"(?P<client_ip>[^\"]+)\""
+		replace    = "\"remote_ip\":\"{{ Hash .client_ip \"" + sys.env("SCRUB_SALT") + "\" }}\""
+	}
+}
+
+loki.write "local" {
+	endpoint {
+		url = "http://127.0.0.1:3100/loki/api/v1/push"
+	}
+}

@@ -5,3 +5,10 @@ recipients = [
   "age1drx37m0j265wg7vfwz3t4dfxt9feze3r9qvuys74sd8uny3y2f8slzz75x", # operational
   "age1k2ml2h66ala9a4cq9mpwn5hvx3sylk87kmvq05tpk4cxz3ghwptshfhh4z", # escrow
 ]
+
+[profiles]
+
+[profiles.observability]
+
+[profiles.observability.secrets]
+SCRUB_SALT = { provider = "age", value = "YWdlLWVuY3J5cHRpb24ub3JnL3YxCi0+IFgyNTUxOSBlZ0dtWmRyNHJMVU1kSkwwQTEvV3ZqSm51b2d1V2dDd3RaKzlkS3JuRmhRClRXTVZPcHdQWFNDaFRGL1NORTd4TkcwZHNGL1lQekFqY21aVTE3Y3h6TEUKLT4gWDI1NTE5IDRGVTVQeG5iMFJEM3RYRTNYdk9zNWRvQk9PeEpBdkFYWnpBVzFDZWoyZ0UKTkZKTzQvVVludHMzR0JyNUtJNUtDOForbGM0YWJyNE0xVDBaOEZxZnR0OAotPiByO0QjKmBJLWdyZWFzZSAxNX47dCAsSVJWCnVBQVZnRXdRWVQyZXVRCi0tLSBZRGRuUGtuQTNtYmpxc1JId3JoUTB3NjFXd1BZNHovUC9BakdkbE1BNitzCrJus2De2YisKspF6X7FzusQZm52XKukwdFWOpXhj5OtZ3KdzhQh4iSZtmea+vtK1VnM98Nh8eEWyCcxWFZ0nQMeCi0vBss0jLB88dk=" }

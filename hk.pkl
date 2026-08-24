@@ -33,6 +33,14 @@ local linters = new Mapping<String, Step> {
     glob = List("prometheus.yml")
     check = "promtool check config prometheus.yml"
   }
+  ["loki-validate"] {
+    glob = List("loki-config.yaml")
+    check = "loki -config.file=loki-config.yaml -verify-config"
+  }
+  ["alloy-validate"] {
+    glob = List("config.alloy")
+    check = "alloy validate config.alloy"
+  }
 }
 
 hooks {
