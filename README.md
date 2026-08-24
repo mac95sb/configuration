@@ -14,7 +14,7 @@ flowchart TB
     You(["You, on the tailnet"])
 
     subgraph CF["Cloudflare (external)"]
-        DNS["DNS\nstatus.maclong.dev"]
+        DNS["DNS\nstatus/git.maclong.dev"]
         Edge["Tunnel edge\nTLS termination"]
         DMS["Worker + Cron + KV\ndead-man's-switch"]:::planned
     end
@@ -36,7 +36,8 @@ flowchart TB
         end
 
         subgraph SvcForgejo["svc_forgejo"]
-            Forgejo["Forgejo + act_runner"]:::planned
+            Forgejo["Forgejo\n:3030"]
+            ActRunner["act_runner"]:::planned
         end
 
         Fnox[("fnox\n/etc/fnox")]
@@ -44,7 +45,8 @@ flowchart TB
     end
 
     User -->|HTTPS| DNS --> Edge -->|tunnel| Cloudflared
-    Cloudflared -->|plain HTTP| Caddy
+    Cloudflared -->|plain HTTP, host-routed| Caddy
+    Caddy -->|reverse_proxy| Forgejo
     Caddy -->|JSON logs| CaddyLog -->|tail, scrub| Alloy
     Alloy -->|push| Loki
     Prometheus -->|scrape /probe| Blackbox -->|probes| DNS
@@ -104,13 +106,19 @@ folded into the script, since several of them are genuinely manual
   Tunnel, which terminates TLS at Cloudflare's edge and forwards to
   Caddy over plain HTTP locally — Caddy doesn't do its own ACME for
   publicly-reachable sites here, since port 80 is never publicly
-  reachable to begin with. Logs JSON access logs to `/var/log/caddy/`,
-  owned by `svc_caddy` with group read for `svc_observability` — Alloy
-  tails it from there.
+  reachable to begin with. Every hostname shares one bound port
+  (`:8080`) and is dispatched by Caddy's own Host-header matching —
+  `<hostname>:8080 { ... }` rather than a bare `:8080 { ... }` — so
+  adding a new public service means one more site block, not a new
+  port or a new tunnel listener. Logs JSON access logs to
+  `/var/log/caddy/`, owned by `svc_caddy` with group read for
+  `svc_observability` — Alloy tails it from there.
 - `cloudflared.yml` — the tunnel's ingress rules (hostname → local
-  port), declarative and safe to commit — no secrets in it. The actual
-  secret is the tunnel's credentials file, which `setup.sh` generates
-  (see Tunnel below) and isn't tracked in git.
+  port), declarative and safe to commit — no secrets in it. Every
+  hostname routes to the same `http://localhost:8080`; Caddy does the
+  actual per-hostname dispatch, not the tunnel. The real secret is the
+  tunnel's credentials file, which `setup.sh` generates (see Tunnel
+  below) and isn't tracked in git.
 - `blackbox.yml` — uptime-probe modules for Blackbox exporter. First
   piece of the observability stack (Prometheus, Grafana Alloy, Loki,
   Blackbox, Grafana) — smallest and most independent, so it's first up.
@@ -139,6 +147,14 @@ folded into the script, since several of them are genuinely manual
   below), not exposed via the Cloudflare Tunnel. No mise-managed macOS
   build exists, so it's installed via `brew:grafana` in
   `[bootstrap.packages]` instead of `[tools]`.
+- `app.ini` — Forgejo. Public, unlike the rest of the observability
+  stack — behind Caddy/the tunnel at `git.maclong.dev`, since the point
+  is showcasing projects, not hiding them. `INSTALL_LOCK = true` and no
+  `SECURITY`/`SECRET_KEY` or `INTERNAL_TOKEN` in the file at all — both
+  injected via `fnox exec --profile forgejo`, same pattern as Alloy's
+  salt. `DISABLE_REGISTRATION = true`: one admin account, created via
+  CLI (see Forgejo below), not public signup. No mise-managed macOS
+  build either (source-only releases) — `brew:forgejo`.
 
 ## Secrets
 
@@ -251,6 +267,27 @@ Persists across reboots and `tailscaled` restarts on its own — not a
 pitchfork daemon, just a one-time command. Check the resulting hostname
 with `tailscale serve status`.
 
+## Forgejo
+
+Public, via the same DNS-route step as the Tunnel section:
+
+```sh
+cloudflared tunnel route dns home-caddy git.maclong.dev
+```
+
+`INSTALL_LOCK = true` in `app.ini` skips the web setup wizard entirely
+— nothing to click through, but it also means the admin account has to
+be created by hand, once, after the daemon is running:
+
+```sh
+sudo -u svc_forgejo /usr/local/bin/forgejo admin user create \
+  --work-path /Users/svc_forgejo/forgejo-data --config app.ini \
+  --username <you> --email <you>@maclong.dev --password '<temp>' --admin
+```
+
+Change the password on first login. `DISABLE_REGISTRATION = true`
+keeps it to that one account — no public signup.
+
 ## Supervisor
 
 ```sh
@@ -260,8 +297,9 @@ mise run daemon:reload    # after editing pitchfork.toml
 
 `daemon:install` also does three things service accounts need but mise
 has no declarative way to express: symlinks each daemon's binary into
-`/usr/local/bin` (mise-managed ones via `mise which`; Grafana explicitly,
-since it's a Homebrew formula, not a mise tool), since service accounts
+`/usr/local/bin` (mise-managed ones via `mise which`; Grafana and
+Forgejo explicitly, since they're Homebrew formulae, not mise tools),
+since service accounts
 have no mise shims in `PATH` and can't traverse into `/Users/mac` to
 reach mise's own install paths anyway; grants bare traverse-only access
 (`o+x`, no read) to `/Users/mac` itself, so service accounts can reach

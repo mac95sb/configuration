@@ -4,4 +4,6 @@ credentials-file: /etc/cloudflared/e9004156-a253-463c-8cec-5ba58b5600b6.json
 ingress:
   - hostname: status.maclong.dev
     service: http://localhost:8080
+  - hostname: git.maclong.dev
+    service: http://localhost:8080
   - service: http_status:404

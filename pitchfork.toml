@@ -44,3 +44,9 @@ dir = "/Users/mac/Developer/configuration"
 boot_start = true
 depends = ["prometheus", "loki"]
 run = "/usr/local/bin/grafana server --config=grafana.ini --homepath=/opt/homebrew/opt/grafana/share/grafana --packaging=brew cfg:default.paths.logs=/Users/svc_observability/grafana-logs cfg:default.paths.data=/Users/svc_observability/grafana-data cfg:default.paths.plugins=/Users/svc_observability/grafana-plugins"
+
+[daemons.forgejo]
+user = "svc_forgejo"
+dir = "/Users/mac/Developer/configuration"
+boot_start = true
+run = "/usr/local/bin/fnox exec --profile forgejo -- /usr/local/bin/forgejo web --work-path /Users/svc_forgejo/forgejo-data --config app.ini"

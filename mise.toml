@@ -34,6 +34,7 @@ cloudflared = "latest"
 "brew-cask:mole-app" = "latest"                           # Mole
 "brew-cask:tailscale-app" = "latest"                      # Tailscale
 "brew:grafana" = "latest"                                 # Grafana (no mise-managed macOS build)
+"brew:forgejo" = "latest"                                 # Forgejo (source-only mise release)
 "mas:424390742" = "latest"                                # Compressor
 "mas:424389933" = "latest"                                # Final Cut Pro
 "mas:361285480" = "latest"                                # Keynote
@@ -97,9 +98,13 @@ fi
 if ! dscl . -read /Users/svc_observability >/dev/null 2>&1; then
   sudo sysadminctl -addUser svc_observability -fullName "Observability service account" -shell /usr/bin/false -roleAccount
 fi
+if ! dscl . -read /Users/svc_forgejo >/dev/null 2>&1; then
+  sudo sysadminctl -addUser svc_forgejo -fullName "Forgejo service account" -shell /usr/bin/false -roleAccount
+fi
 sudo dseditgroup -o edit -a svc_caddy -t user fnox
 sudo dseditgroup -o edit -a svc_observability -t user fnox
 sudo dseditgroup -o edit -a svc_observability -t user observability
+sudo dseditgroup -o edit -a svc_forgejo -t user fnox
 """
 
 [tasks."daemon:install"]
@@ -111,6 +116,7 @@ for bin in fnox caddy cloudflared blackbox_exporter prometheus loki alloy; do
   sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
 done
 sudo ln -sf /opt/homebrew/bin/grafana /usr/local/bin/grafana
+sudo ln -sf /opt/homebrew/bin/forgejo /usr/local/bin/forgejo
 sudo chmod o+x /Users/mac
 sudo install -d -m 750 -o svc_caddy -g observability /var/log/caddy
 sudo pitchfork boot enable
