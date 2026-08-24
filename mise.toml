@@ -32,6 +32,7 @@ cloudflared = "latest"
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
 "brew-cask:font-sf-pro" = "latest"                        # SF Pro
 "brew-cask:mole-app" = "latest"                           # Mole
+"brew-cask:tailscale-app" = "latest"                      # Tailscale
 "mas:424390742" = "latest"                                # Compressor
 "mas:424389933" = "latest"                                # Final Cut Pro
 "mas:361285480" = "latest"                                # Keynote
