@@ -21,6 +21,10 @@ local linters = new Mapping<String, Step> {
     glob = List("Caddyfile")
     check = "caddy validate --config Caddyfile"
   }
+  ["cloudflared-validate"] {
+    glob = List("cloudflared.yml")
+    check = "cloudflared --config cloudflared.yml tunnel ingress validate"
+  }
 }
 
 hooks {

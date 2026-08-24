@@ -41,6 +41,16 @@ fi
 "$mise" -C "$dotfiles" install
 "$mise" -C "$dotfiles" exec -- mise bootstrap --yes --force-dotfiles
 
+printf '%s' "Is this the home server? [y/N] "
+read -r is_server
+if [ "$is_server" = "y" ] || [ "$is_server" = "Y" ]; then
+  cloudflared_creds=$HOME/.cloudflared
+  if ! find "$cloudflared_creds" -name '*.json' -print -quit 2>/dev/null | grep -q .; then
+    "$mise" -C "$dotfiles" exec -- cloudflared tunnel login
+    "$mise" -C "$dotfiles" exec -- cloudflared tunnel create home-caddy
+  fi
+fi
+
 if [ "$(uname -s)" = "Darwin" ]; then
   sudo_file=/etc/pam.d/sudo_local
   sudo_template=/etc/pam.d/sudo_local.template

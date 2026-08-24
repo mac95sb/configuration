@@ -5,10 +5,10 @@ user = "mac"
 user = "svc_caddy"
 dir = "/Users/mac/Developer/configuration"
 boot_start = true
-run = "/usr/local/bin/fnox exec --profile caddy -- /usr/local/bin/caddy run --config Caddyfile"
+run = "/usr/local/bin/caddy run --config Caddyfile"
 
 [daemons.cloudflared]
 user = "svc_caddy"
 dir = "/Users/mac/Developer/configuration"
 boot_start = true
-run = "/usr/local/bin/fnox exec --profile caddy -- /usr/local/bin/cloudflared tunnel run"
+run = "/usr/local/bin/cloudflared --config cloudflared.yml tunnel run"
