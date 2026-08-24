@@ -36,4 +36,4 @@ user = "svc_observability"
 dir = "/Users/mac/Developer/configuration"
 boot_start = true
 depends = ["loki"]
-run = "/usr/local/bin/fnox exec --profile observability -- /usr/local/bin/alloy run config.alloy --server.http.listen-addr=127.0.0.1:12345"
+run = "/usr/local/bin/fnox exec --profile observability -- /usr/local/bin/alloy run config.alloy --storage.path=/Users/svc_observability/alloy-data --server.http.listen-addr=127.0.0.1:12345"
