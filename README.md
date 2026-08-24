@@ -19,6 +19,10 @@ flowchart TB
         DMS["Worker + Cron + KV\ndead-man's-switch"]:::planned
     end
 
+    subgraph GH["GitHub (external)"]
+        Mirror["mac95sb/configuration\nmac95sb/robin"]
+    end
+
     subgraph Host["MacBook Pro — pitchfork supervisor (root)"]
         subgraph SvcCaddy["svc_caddy"]
             Cloudflared["cloudflared\ntunnel connector"]
@@ -47,6 +51,7 @@ flowchart TB
     User -->|HTTPS| DNS --> Edge -->|tunnel| Cloudflared
     Cloudflared -->|plain HTTP, host-routed| Caddy
     Caddy -->|reverse_proxy| Forgejo
+    Forgejo -->|push-mirror| Mirror
     Caddy -->|JSON logs| CaddyLog -->|tail, scrub| Alloy
     Alloy -->|push| Loki
     Prometheus -->|scrape /probe| Blackbox -->|probes| DNS
@@ -150,11 +155,21 @@ folded into the script, since several of them are genuinely manual
 - `app.ini` — Forgejo. Public, unlike the rest of the observability
   stack — behind Caddy/the tunnel at `git.maclong.dev`, since the point
   is showcasing projects, not hiding them. `INSTALL_LOCK = true` and no
-  `SECURITY`/`SECRET_KEY` or `INTERNAL_TOKEN` in the file at all — both
-  injected via `fnox exec --profile forgejo`, same pattern as Alloy's
-  salt. `DISABLE_REGISTRATION = true`: one admin account, created via
-  CLI (see Forgejo below), not public signup. No mise-managed macOS
-  build either (source-only releases) — `brew:forgejo`.
+  `SECRET_KEY`/`INTERNAL_TOKEN` in the tracked file at all — this is a
+  template, not the live config (see `forgejo-start.sh` below).
+  `DISABLE_REGISTRATION = true`: one admin account, created via CLI (see
+  Forgejo below), not public signup. No mise-managed macOS build either
+  (source-only releases) — `brew:forgejo`.
+- `forgejo-start.sh` — Forgejo's daemon entrypoint. The `forgejo` binary
+  has no built-in way to read secrets from the environment (that's a
+  separate `environment-to-ini` tool bundled only in Forgejo's Docker
+  images, not in the Homebrew build), so `fnox exec --profile forgejo`
+  can't inject `SECRET_KEY`/`INTERNAL_TOKEN` directly like it does
+  `SCRUB_SALT` for Alloy. This script copies the tracked `app.ini`
+  template into `svc_forgejo`'s writable work-path, appends both
+  secrets from the `fnox exec` environment under `[security]`, then
+  execs `forgejo web` against that copy — keeping fnox as the source of
+  truth without needing Forgejo to understand it natively.
 
 ## Secrets
 
@@ -275,18 +290,51 @@ Public, via the same DNS-route step as the Tunnel section:
 cloudflared tunnel route dns home-caddy git.maclong.dev
 ```
 
+`svc_forgejo` is a Directory-Services account, not an `/etc/passwd`
+one, and Go's fallback home-directory lookup on macOS only knows how to
+read `/etc/passwd` — so without an explicit `HOME`, Forgejo's SSH
+module fails to start with "cannot get home directory" even though the
+account genuinely has one. `pitchfork.toml`'s `[daemons.forgejo]` sets
+`env = { HOME = "/Users/svc_forgejo" }` to work around it.
+
 `INSTALL_LOCK = true` in `app.ini` skips the web setup wizard entirely
 — nothing to click through, but it also means the admin account has to
-be created by hand, once, after the daemon is running:
+be created by hand, once, after the daemon is running (which is when
+`forgejo-start.sh` will have already generated the live config with
+real secrets in it):
 
 ```sh
 sudo -u svc_forgejo /usr/local/bin/forgejo admin user create \
-  --work-path /Users/svc_forgejo/forgejo-data --config app.ini \
-  --username <you> --email <you>@maclong.dev --password '<temp>' --admin
+  --work-path /Users/svc_forgejo/forgejo-data \
+  --config /Users/svc_forgejo/forgejo-data/app.ini \
+  --username YOUR_USERNAME --email YOUR_EMAIL --password YOUR_PASSWORD --admin
 ```
 
 Change the password on first login. `DISABLE_REGISTRATION = true`
 keeps it to that one account — no public signup.
+
+## Mirrors
+
+`configuration` and `robin` are the two repos migrated so far — Forgejo
+is primary for both, GitHub is a live mirror, not the other way round.
+Push existing history to a fresh, empty repo created in the Forgejo UI
+first, then swap remotes so day-to-day `git push`/`git pull` talk to
+Forgejo by default:
+
+```sh
+git remote add forgejo https://git.maclong.dev/mac/<repo>.git
+git push forgejo --all
+git push forgejo --tags
+git remote rename origin github
+git remote rename forgejo origin
+```
+
+GitHub stays current automatically via Forgejo's own push mirror (repo
+Settings → Repository → Push Mirrors on Forgejo, target
+`https://github.com/mac95sb/<repo>.git` with a GitHub PAT scoped to
+`repo`) — no manual dual-pushing. Each GitHub repo's description also
+points back to the Forgejo original as canonical, so anyone landing on
+the mirror knows where the real one lives.
 
 ## Supervisor
 

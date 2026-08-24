@@ -49,4 +49,5 @@ run = "/usr/local/bin/grafana server --config=grafana.ini --homepath=/opt/homebr
 user = "svc_forgejo"
 dir = "/Users/mac/Developer/configuration"
 boot_start = true
-run = "/usr/local/bin/fnox exec --profile forgejo -- /usr/local/bin/forgejo web --work-path /Users/svc_forgejo/forgejo-data --config app.ini"
+env = { HOME = "/Users/svc_forgejo" }
+run = "/usr/local/bin/fnox exec --profile forgejo -- /Users/mac/Developer/configuration/forgejo-start.sh"

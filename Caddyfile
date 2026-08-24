@@ -1,4 +1,8 @@
-status.maclong.dev:8080 {
+{
+	auto_https off
+}
+
+http://status.maclong.dev:8080 {
 	log {
 		output file /var/log/caddy/access.log {
 			mode 0640
@@ -7,7 +11,7 @@ status.maclong.dev:8080 {
 	respond "ok"
 }
 
-git.maclong.dev:8080 {
+http://git.maclong.dev:8080 {
 	log {
 		output file /var/log/caddy/access.log {
 			mode 0640
