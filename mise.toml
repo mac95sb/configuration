@@ -16,6 +16,7 @@ taplo = "latest"
 pkl = "latest"
 caddy = "latest"
 cloudflared = "latest"
+"github:prometheus/blackbox_exporter" = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
@@ -85,7 +86,11 @@ fi
 if ! dscl . -read /Users/svc_caddy >/dev/null 2>&1; then
   sudo sysadminctl -addUser svc_caddy -fullName "Caddy service account" -shell /usr/bin/false -roleAccount
 fi
+if ! dscl . -read /Users/svc_observability >/dev/null 2>&1; then
+  sudo sysadminctl -addUser svc_observability -fullName "Observability service account" -shell /usr/bin/false -roleAccount
+fi
 sudo dseditgroup -o edit -a svc_caddy -t user fnox
+sudo dseditgroup -o edit -a svc_observability -t user fnox
 """
 
 [tasks."daemon:install"]
@@ -93,7 +98,7 @@ description = "Point pitchfork's global config at this repo, expose binaries ser
 run = """
 sudo install -d -m 755 -o root -g wheel /etc/pitchfork
 sudo ln -sf /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
-for bin in fnox caddy cloudflared; do
+for bin in fnox caddy cloudflared blackbox_exporter; do
   sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
 done
 sudo chmod o+x /Users/mac

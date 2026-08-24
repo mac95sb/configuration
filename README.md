@@ -52,6 +52,11 @@ folded into the script, since several of them are genuinely manual
   port), declarative and safe to commit — no secrets in it. The actual
   secret is the tunnel's credentials file, which `setup.sh` generates
   (see Tunnel below) and isn't tracked in git.
+- `blackbox.yml` — uptime-probe modules for Blackbox exporter. First
+  piece of the observability stack (Prometheus, Grafana Alloy, Loki,
+  Blackbox, Grafana) — smallest and most independent, so it's first up.
+  Runs under its own shared `svc_observability` account, same pattern
+  as `svc_caddy`.
 
 ## Secrets
 
@@ -102,6 +107,16 @@ instead:
 
 ```sh
 mise run accounts:install
+```
+
+`-roleAccount` gives each one a real home directory and UID but no
+password and no login capability — they won't show up in the login
+window. Whether they appear in System Settings → Users & Groups depends
+on UID range and isn't worth relying on either way; list them directly
+instead:
+
+```sh
+dscl . -list /Users | grep '^svc_'
 ```
 
 ## Tunnel

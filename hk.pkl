@@ -25,6 +25,10 @@ local linters = new Mapping<String, Step> {
     glob = List("cloudflared.yml")
     check = "cloudflared --config cloudflared.yml tunnel ingress validate"
   }
+  ["blackbox-validate"] {
+    glob = List("blackbox.yml")
+    check = "blackbox_exporter --config.file=blackbox.yml --config.check"
+  }
 }
 
 hooks {
