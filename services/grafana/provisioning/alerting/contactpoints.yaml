@@ -1,0 +1,24 @@
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: ntfy
+    receivers:
+      - uid: ntfy_push
+        type: webhook
+        disableResolveMessage: false
+        settings:
+          # Injected by fnox at daemon start; the topic URL is a capability and
+          # is not committed. See [profiles.grafana] in fnox.toml.
+          url: $NTFY_URL
+          httpMethod: POST
+          headers:
+            Title: Homelab alert
+            Tags: rotating_light
+          # ntfy renders a plain-text body as the notification message. Without
+          # this the phone shows Grafana's raw webhook JSON.
+          payload:
+            template: |
+              {{ .Status }}: {{ .CommonLabels.alertname }}
+              {{ range .Alerts }}{{ .Annotations.summary }}
+              {{ end }}

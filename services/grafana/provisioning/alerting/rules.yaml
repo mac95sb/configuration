@@ -1,0 +1,121 @@
+apiVersion: 1
+
+# Grafana's file provisioning is additive: deleting a rule from this file leaves
+# it live in Grafana. Removing one means adding a `deleteRules:` entry for its
+# uid, restarting, and then dropping that entry again.
+
+groups:
+  - orgId: 1
+    name: infrastructure
+    folder: Alerts
+    interval: 1m
+    rules:
+      - uid: endpoint_down
+        title: Public endpoint unreachable
+        condition: threshold
+        for: 5m
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "{{ $labels.instance }} has failed its probe for 5 minutes."
+        labels:
+          severity: critical
+        data:
+          - refId: probe
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: probe
+              expr: min by (instance) (probe_success)
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: probe
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+
+      - uid: scrape_target_down
+        title: Scrape target down
+        condition: threshold
+        for: 5m
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "Prometheus cannot scrape {{ $labels.job }} on {{ $labels.instance }}."
+        labels:
+          severity: critical
+        data:
+          - refId: target
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: target
+              expr: min by (job, instance) (up)
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: target
+              conditions:
+                - evaluator: { type: lt, params: [1] }
+
+      # This is the alert that would have caught the Loki ring failure: the
+      # daemon was up and healthy while silently discarding every log line.
+      - uid: log_ingestion_failing
+        title: Log ingestion is dropping entries
+        condition: threshold
+        for: 10m
+        noDataState: OK
+        execErrState: Alerting
+        annotations:
+          summary: "Alloy is failing to write logs to Loki; log data is being lost."
+        labels:
+          severity: critical
+        data:
+          - refId: drops
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: drops
+              expr: sum (increase(loki_write_dropped_entries_total[10m]))
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: drops
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+
+      - uid: disk_space_low
+        title: Root filesystem is running out of space
+        condition: threshold
+        for: 15m
+        noDataState: OK
+        execErrState: Alerting
+        annotations:
+          summary: "Less than 10% free on {{ $labels.mountpoint }}; observability retention is 90d."
+        labels:
+          severity: warning
+        data:
+          - refId: free
+            relativeTimeRange: { from: 900, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: free
+              expr: min by (mountpoint) (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: free
+              conditions:
+                - evaluator: { type: lt, params: [0.1] }

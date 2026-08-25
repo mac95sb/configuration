@@ -16,6 +16,7 @@ fnox = "1.31.1"
 "github:grafana/loki" = "3.7.6"
 "github:prometheus/blackbox_exporter" = "0.28.0"
 pitchfork = "2.20.0"
+"ubi:prometheus/node_exporter" = "1.12.1"
 
 # User tools track latest. Nothing depends on their exact version, so a plain
 # `mise upgrade` moves these and leaves the pinned service tools alone.
@@ -26,6 +27,7 @@ pkl = "latest"
 shellcheck = "latest"
 shfmt = "latest"
 taplo = "latest"
+github-cli = "latest"
 
 [hooks]
 # A pinned service tool only moves on `mise upgrade --bump`, and when it does the
@@ -34,7 +36,7 @@ taplo = "latest"
 # install on a password prompt.
 postinstall = """
 case "$MISE_INSTALLED_TOOLS" in
-  *alloy*|*blackbox_exporter*|*caddy*|*cloudflared*|*fnox*|*loki*|*pitchfork*|*prometheus*) ;;
+  *alloy*|*blackbox_exporter*|*caddy*|*cloudflared*|*fnox*|*loki*|*node_exporter*|*pitchfork*|*prometheus*) ;;
   *) exit 0 ;;
 esac
 if sudo -n true 2>/dev/null; then
@@ -148,7 +150,7 @@ sudo /usr/libexec/PlistBuddy -c 'Add :KeepAlive bool true' "$plist" 2>/dev/null 
 [tasks."daemon:relink"]
 description = "Repoint /usr/local/bin at the current service binaries after a version change"
 run = """
-for bin in alloy blackbox_exporter caddy cloudflared fnox loki pitchfork prometheus; do
+for bin in alloy blackbox_exporter caddy cloudflared fnox loki node_exporter pitchfork prometheus; do
   sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
 done
 sudo ln -sf /opt/homebrew/bin/forgejo /usr/local/bin/forgejo

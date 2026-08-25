@@ -2,10 +2,29 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
+  # Service health. Each observability component scrapes itself so a failure in
+  # the pipeline is visible rather than silent.
   - job_name: "prometheus"
     static_configs:
-      - targets: ["localhost:9090"]
+      - targets: ["127.0.0.1:9090"]
 
+  - job_name: "node"
+    static_configs:
+      - targets: ["127.0.0.1:9101"]
+
+  - job_name: "alloy"
+    static_configs:
+      - targets: ["127.0.0.1:12345"]
+
+  - job_name: "loki"
+    static_configs:
+      - targets: ["127.0.0.1:3100"]
+
+  - job_name: "blackbox"
+    static_configs:
+      - targets: ["127.0.0.1:9115"]
+
+  # External reachability, probed the whole way round through Cloudflare.
   - job_name: "blackbox_http"
     metrics_path: /probe
     params:
@@ -13,10 +32,26 @@ scrape_configs:
     static_configs:
       - targets:
           - https://status.maclong.dev
+          - https://git.maclong.dev
     relabel_configs:
       - source_labels: [__address__]
         target_label: __param_target
       - source_labels: [__param_target]
         target_label: instance
       - target_label: __address__
-        replacement: localhost:9115
+        replacement: 127.0.0.1:9115
+
+  - job_name: "blackbox_http_access"
+    metrics_path: /probe
+    params:
+      module: [http_2xx_or_redirect]
+    static_configs:
+      - targets:
+          - https://dashboard.maclong.dev
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 127.0.0.1:9115

@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: infrastructure
+    orgId: 1
+    folder: Infrastructure
+    type: file
+    disableDeletion: true
+    allowUiUpdates: false
+    options:
+      path: /Users/mac/Developer/configuration/services/grafana/provisioning/dashboards
+      foldersFromFilesStructure: false
