@@ -3,8 +3,13 @@ auth_enabled: false
 server:
   http_listen_address: 127.0.0.1
   http_listen_port: 3100
+  grpc_listen_address: 127.0.0.1
+  grpc_listen_port: 9095
 
 common:
+  # Without this the ingester registers its LAN address in the ring and the
+  # distributor's gRPC dial to it times out, dropping every write.
+  instance_addr: 127.0.0.1
   path_prefix: /Users/svc_observability/loki-data
   storage:
     filesystem:
@@ -27,3 +32,9 @@ schema_config:
 
 limits_config:
   retention_period: 90d
+
+# retention_period alone is inert; the compactor is what enforces it.
+compactor:
+  working_directory: /Users/svc_observability/loki-data/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
