@@ -27,9 +27,6 @@ Guidance for AI coding agents working in this environment.
   messages or PR descriptions/comments. Write them as if authored directly by the
   user.
 
-> [!NOTE] Self Improvement Notice
-> If you see an improvement that can be made to one of the skills or AGENTS.md file during regular usage or think of a new skill or note in AGENTS.md that can be added then you have permission to make the change in `"$HOME/Developer/skills/"` and `"$HOME/Developer/configuration/AGENTS.md` to improve the agent's behavior or improve/add a skill.
-
 ## Working with a repository
 
 - Identify the repository root and read any local agent or contributor instructions
@@ -41,39 +38,3 @@ Guidance for AI coding agents working in this environment.
 - Keep Markdown and developer documentation concise, task-oriented, and easy to scan.
 - Use the narrowest safe tool for the change: targeted edits for existing files and
   full-file writes only for new files or deliberate rewrites.
-
-## Agent skill management
-
-- Keep shared skills compatible with the standard skill format:
-  - Each skill must be a direct child of a `~/Developer/skills/` directory.
-  - Each skill directory must contain `SKILL.md`.
-  - `SKILL.md` must start with YAML frontmatter containing `name` and `description`.
-  - The frontmatter `name` should match the containing directory name.
-- Avoid nested duplicate package copies such as `*/skills/<same-skill>/`.
-- Keep detailed references, scripts, and templates inside the owning skill directory.
-- Keep descriptions concise and actionable so agents can decide when to invoke a skill.
-- When a reusable workflow is discovered, record it as a skill rather than burying it
-  in session-specific notes.
-- Link to various documentation when creating or updating skills to give the agent more context if the skill doesn't cover a particular use case.
-
-## Editing guidelines
-
-- For shell scripts, use POSIX-compatible syntax unless the file is clearly intended
-  for a specific shell.
-- Preserve valid structured data formats such as JSON, TOML, YAML, and plist files.
-- Avoid removing user preferences or local configuration unless the user asks.
-- Keep dependency, package-manager, and tool-version changes intentional and limited
-  to what the task requires.
-- Follow language best practices wherever possible.
-
-## Validation checklist
-
-Use the narrowest validation appropriate for the change:
-
-- Documentation: inspect the rendered structure or run the project's Markdown checks
-  if available.
-- Shell scripts: run the relevant shell syntax check when applicable.
-- Structured configuration: parse or lint the touched files with the relevant tool.
-- Skills: verify each changed `SKILL.md` has valid frontmatter and a matching `name`.
-- Source changes: run the relevant formatter, linter, type check, test, or build.
-- Git changes: inspect the diff and status before summarizing.

@@ -4,22 +4,21 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
-gh = "latest"
+age = "latest"
+"aqua:prometheus/prometheus" = "latest"
+caddy = "latest"
+cloudflared = "latest"
+fnox = "latest"
+"github:grafana/alloy" = "latest"
+"github:grafana/loki" = "latest"
+"github:prometheus/blackbox_exporter" = "latest"
+hk = "latest"
 mas = "latest"
 pitchfork = "latest"
-fnox = "latest"
-age = "latest"
-hk = "latest"
+pkl = "latest"
 shellcheck = "latest"
 shfmt = "latest"
 taplo = "latest"
-pkl = "latest"
-caddy = "latest"
-cloudflared = "latest"
-"github:prometheus/blackbox_exporter" = "latest"
-"aqua:prometheus/prometheus" = "latest"
-"github:grafana/loki" = "latest"
-"github:grafana/alloy" = "latest"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
@@ -32,39 +31,34 @@ cloudflared = "latest"
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
 "brew-cask:font-sf-pro" = "latest"                        # SF Pro
 "brew-cask:mole-app" = "latest"                           # Mole
-"brew-cask:tailscale-app" = "latest"                      # Tailscale
-"brew:grafana" = "latest"                                 # Grafana (no mise-managed macOS build)
-"brew:forgejo" = "latest"                                 # Forgejo (source-only mise release)
-"mas:424390742" = "latest"                                # Compressor
-"mas:424389933" = "latest"                                # Final Cut Pro
-"mas:361285480" = "latest"                                # Keynote
-"mas:634148309" = "latest"                                # Logic Pro
-"mas:634159523" = "latest"                                # MainStage
-"mas:434290957" = "latest"                                # Motion
-"mas:361304891" = "latest"                                # Numbers
-"mas:361309726" = "latest"                                # Pages
+"brew:forgejo" = "latest"                                 # Forgejo
+"brew:grafana" = "latest"                                 # Grafana
 "mas:1289583905" = "latest"                               # Pixelmator Pro
 "mas:1662217862" = "latest"                               # Wipr 2
+"mas:361285480" = "latest"                                # Keynote
+"mas:361304891" = "latest"                                # Numbers
+"mas:361309726" = "latest"                                # Pages
+"mas:424389933" = "latest"                                # Final Cut Pro
+"mas:424390742" = "latest"                                # Compressor
+"mas:434290957" = "latest"                                # Motion
 "mas:497799835" = "latest"                                # Xcode
+"mas:634148309" = "latest"                                # Logic Pro
+"mas:634159523" = "latest"                                # MainStage
 
 [bootstrap.macos.defaults."com.apple.WindowManager"]
-GloballyEnabled = true
 EnableTiledWindowMargins = true
+GloballyEnabled = true
 
 [bootstrap.macos.finder]
+preferred_view_style = "column"
 show_all_files = true
 show_pathbar = true
-preferred_view_style = "column"
 
 [bootstrap.macos.trackpad]
 tap_to_click = true
 three_finger_drag = true
 
 [dotfiles]
-# Agent instructions.
-"~/.agents/AGENTS.md" = { source = "~/Developer/configuration/AGENTS.md" }
-"~/.claude/CLAUDE.md" = { source = "~/Developer/configuration/AGENTS.md" }
-
 # Tool configuration.
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
@@ -75,16 +69,8 @@ three_finger_drag = true
 "~/.config/zsh/.zshrc" = {}
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
 
-[tasks.check]
-description = "Run hk's quality gate"
-run = "hk check"
-
-[tasks.fix]
-description = "Run hk's quality gate with fixes applied"
-run = "hk fix"
-
 [tasks."accounts:install"]
-description = "Create service accounts for pitchfork-managed daemons and put them in the fnox/observability groups"
+description = "Create service accounts and their required access groups"
 run = """
 if ! dscl . -read /Groups/fnox >/dev/null 2>&1; then
   sudo dseditgroup -o create fnox
@@ -95,24 +81,30 @@ fi
 if ! dscl . -read /Users/svc_caddy >/dev/null 2>&1; then
   sudo sysadminctl -addUser svc_caddy -fullName "Caddy service account" -shell /usr/bin/false -roleAccount
 fi
-if ! dscl . -read /Users/svc_observability >/dev/null 2>&1; then
-  sudo sysadminctl -addUser svc_observability -fullName "Observability service account" -shell /usr/bin/false -roleAccount
+if ! dscl . -read /Users/svc_cloudflared >/dev/null 2>&1; then
+  sudo sysadminctl -addUser svc_cloudflared -fullName "Cloudflared service account" -shell /usr/bin/false -roleAccount
 fi
 if ! dscl . -read /Users/svc_forgejo >/dev/null 2>&1; then
   sudo sysadminctl -addUser svc_forgejo -fullName "Forgejo service account" -shell /usr/bin/false -roleAccount
 fi
-sudo dseditgroup -o edit -a svc_caddy -t user fnox
+if ! dscl . -read /Users/svc_observability >/dev/null 2>&1; then
+  sudo sysadminctl -addUser svc_observability -fullName "Observability service account" -shell /usr/bin/false -roleAccount
+fi
+sudo dseditgroup -o edit -a svc_forgejo -t user fnox
 sudo dseditgroup -o edit -a svc_observability -t user fnox
 sudo dseditgroup -o edit -a svc_observability -t user observability
-sudo dseditgroup -o edit -a svc_forgejo -t user fnox
 """
+
+[tasks.check]
+description = "Run hk's quality gate"
+run = "hk check"
 
 [tasks."daemon:install"]
 description = "Point pitchfork's global config at this repo, expose binaries service accounts need, and register boot start"
 run = """
 sudo install -d -m 755 -o root -g wheel /etc/pitchfork
 sudo ln -sf /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
-for bin in fnox caddy cloudflared blackbox_exporter prometheus loki alloy; do
+for bin in alloy blackbox_exporter caddy cloudflared fnox loki prometheus; do
   sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
 done
 sudo ln -sf /opt/homebrew/bin/grafana /usr/local/bin/grafana
@@ -125,3 +117,7 @@ sudo pitchfork boot enable
 [tasks."daemon:reload"]
 description = "Restart all daemons after editing pitchfork.toml"
 run = "pitchfork restart --all-global"
+
+[tasks.fix]
+description = "Run hk's quality gate with fixes applied"
+run = "hk fix"

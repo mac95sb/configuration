@@ -1,0 +1,26 @@
+:8080 {
+	log {
+		output file {$CADDY_ACCESS_LOG:/var/log/caddy/access.log} {
+			mode 0640
+		}
+	}
+
+	@dashboard host dashboard.maclong.dev
+	handle @dashboard {
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	@git host git.maclong.dev
+	handle @git {
+		reverse_proxy 127.0.0.1:3030
+	}
+
+	@status host status.maclong.dev
+	handle @status {
+		respond "ok"
+	}
+
+	handle {
+		respond 404
+	}
+}

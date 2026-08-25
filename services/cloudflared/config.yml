@@ -6,4 +6,6 @@ ingress:
     service: http://localhost:8080
   - hostname: git.maclong.dev
     service: http://localhost:8080
+  - hostname: dashboard.maclong.dev
+    service: http://localhost:8080
   - service: http_status:404

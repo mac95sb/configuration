@@ -18,28 +18,29 @@ local linters = new Mapping<String, Step> {
   ["check-merge-conflict"] = Builtins.check_merge_conflict
   ["trailing-whitespace"] = Builtins.trailing_whitespace
   ["caddy-validate"] {
-    glob = List("Caddyfile")
-    check = "caddy validate --config Caddyfile"
+    glob = List("services/caddy/Caddyfile")
+    check =
+      "validation_log=$(mktemp \"${TMPDIR:-/tmp}/caddy-validate.XXXXXX\") && trap 'rm -f \"$validation_log\"' EXIT && CADDY_ACCESS_LOG=\"$validation_log\" caddy validate --config services/caddy/Caddyfile"
   }
   ["cloudflared-validate"] {
-    glob = List("cloudflared.yml")
-    check = "cloudflared --config cloudflared.yml tunnel ingress validate"
+    glob = List("services/cloudflared/config.yml")
+    check = "cloudflared --config services/cloudflared/config.yml tunnel ingress validate"
   }
   ["blackbox-validate"] {
-    glob = List("blackbox.yml")
-    check = "blackbox_exporter --config.file=blackbox.yml --config.check"
+    glob = List("services/blackbox/config.yml")
+    check = "blackbox_exporter --config.file=services/blackbox/config.yml --config.check"
   }
   ["prometheus-validate"] {
-    glob = List("prometheus.yml")
-    check = "promtool check config prometheus.yml"
+    glob = List("services/prometheus/config.yml")
+    check = "promtool check config services/prometheus/config.yml"
   }
   ["loki-validate"] {
-    glob = List("loki-config.yaml")
-    check = "loki -config.file=loki-config.yaml -verify-config"
+    glob = List("services/loki/config.yml")
+    check = "loki -config.file=services/loki/config.yml -verify-config"
   }
   ["alloy-validate"] {
-    glob = List("config.alloy")
-    check = "alloy validate config.alloy"
+    glob = List("services/alloy/config.alloy")
+    check = "alloy validate services/alloy/config.alloy"
   }
 }
 
