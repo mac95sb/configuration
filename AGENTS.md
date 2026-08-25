@@ -4,7 +4,7 @@ Guidance for AI coding agents working in this environment.
 
 ## Operating principles
 
-- Always enable the `/i-have-adhd` skill at the start of each session.
+- Respond to the user in plain language following [ISO-24495-1:2023](https://www.iso.org/standard/78907.html), do not do your reasoning in this plain language only responses to the user should be written this way.
 - Start by understanding the current context. Inspect relevant files, recent changes,
   and project conventions before editing.
 - Prefer small, focused changes that solve the requested problem without unrelated
