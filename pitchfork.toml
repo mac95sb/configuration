@@ -10,7 +10,7 @@ run = "/usr/local/bin/caddy run --config /Users/mac/Developer/configuration/serv
 [daemons.cloudflared]
 user = "svc_cloudflared"
 boot_start = true
-run = "/usr/local/bin/cloudflared --config /Users/mac/Developer/configuration/services/cloudflared/config.yml tunnel run"
+run = "/Users/mac/Developer/configuration/services/cloudflared/start.sh"
 
 [daemons.node_exporter]
 user = "svc_observability"
