@@ -4,21 +4,45 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
+# Service tools are pinned. Daemons reach these through /usr/local/bin symlinks
+# that resolve to a versioned install path, so an unattended version change
+# orphans them. Move these deliberately with `mise upgrade --bump`, which also
+# rewrites the pins below; `mise run daemon:relink` then repoints the symlinks.
+"aqua:prometheus/prometheus" = "3.14.0"
+caddy = "2.11.4"
+cloudflared = "2026.7.3"
+fnox = "1.31.1"
+"github:grafana/alloy" = "1.18.1"
+"github:grafana/loki" = "3.7.6"
+"github:prometheus/blackbox_exporter" = "0.28.0"
+pitchfork = "2.20.0"
+
+# User tools track latest. Nothing depends on their exact version, so a plain
+# `mise upgrade` moves these and leaves the pinned service tools alone.
 age = "latest"
-"aqua:prometheus/prometheus" = "latest"
-caddy = "latest"
-cloudflared = "latest"
-fnox = "latest"
-"github:grafana/alloy" = "latest"
-"github:grafana/loki" = "latest"
-"github:prometheus/blackbox_exporter" = "latest"
 hk = "latest"
 mas = "latest"
-pitchfork = "latest"
 pkl = "latest"
 shellcheck = "latest"
 shfmt = "latest"
 taplo = "latest"
+
+[hooks]
+# A pinned service tool only moves on `mise upgrade --bump`, and when it does the
+# /usr/local/bin symlinks still point at the old versioned path. Relink straight
+# away when sudo is already available; otherwise say so rather than blocking the
+# install on a password prompt.
+postinstall = """
+case "$MISE_INSTALLED_TOOLS" in
+  *alloy*|*blackbox_exporter*|*caddy*|*cloudflared*|*fnox*|*loki*|*pitchfork*|*prometheus*) ;;
+  *) exit 0 ;;
+esac
+if sudo -n true 2>/dev/null; then
+  mise run daemon:relink
+else
+  printf 'mise: a service tool changed version - run `mise run daemon:relink`\n' >&2
+fi
+"""
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
@@ -31,19 +55,22 @@ taplo = "latest"
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
 "brew-cask:font-sf-pro" = "latest"                        # SF Pro
 "brew-cask:mole-app" = "latest"                           # Mole
-"brew:forgejo" = "latest"                                 # Forgejo
-"brew:grafana" = "latest"                                 # Grafana
-"mas:1289583905" = "latest"                               # Pixelmator Pro
-"mas:1662217862" = "latest"                               # Wipr 2
-"mas:361285480" = "latest"                                # Keynote
-"mas:361304891" = "latest"                                # Numbers
-"mas:361309726" = "latest"                                # Pages
-"mas:424389933" = "latest"                                # Final Cut Pro
-"mas:424390742" = "latest"                                # Compressor
-"mas:434290957" = "latest"                                # Motion
-"mas:497799835" = "latest"                                # Xcode
-"mas:634148309" = "latest"                                # Logic Pro
-"mas:634159523" = "latest"                                # MainStage
+# Forgejo and Grafana are service binaries but Homebrew has no version pinning,
+# so they cannot join the pinned block in [tools]. Their /usr/local/bin symlinks
+# point at stable Homebrew paths, so a version change does not orphan them.
+"brew:forgejo" = "latest"   # Forgejo
+"brew:grafana" = "latest"   # Grafana
+"mas:1289583905" = "latest" # Pixelmator Pro
+"mas:1662217862" = "latest" # Wipr 2
+"mas:361285480" = "latest"  # Keynote
+"mas:361304891" = "latest"  # Numbers
+"mas:361309726" = "latest"  # Pages
+"mas:424389933" = "latest"  # Final Cut Pro
+"mas:424390742" = "latest"  # Compressor
+"mas:434290957" = "latest"  # Motion
+"mas:497799835" = "latest"  # Xcode
+"mas:634148309" = "latest"  # Logic Pro
+"mas:634159523" = "latest"  # MainStage
 
 [bootstrap.macos.defaults."com.apple.WindowManager"]
 EnableTiledWindowMargins = true
@@ -101,17 +128,31 @@ run = "hk check"
 
 [tasks."daemon:install"]
 description = "Point pitchfork's global config at this repo, expose binaries service accounts need, and register boot start"
+depends = ["daemon:relink"]
 run = """
 sudo install -d -m 755 -o root -g wheel /etc/pitchfork
 sudo ln -sf /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
-for bin in alloy blackbox_exporter caddy cloudflared fnox loki prometheus; do
-  sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
-done
-sudo ln -sf /opt/homebrew/bin/grafana /usr/local/bin/grafana
-sudo ln -sf /opt/homebrew/bin/forgejo /usr/local/bin/forgejo
 sudo chmod o+x /Users/mac
 sudo install -d -m 750 -o svc_caddy -g observability /var/log/caddy
 sudo pitchfork boot enable
+
+# pitchfork writes its own versioned install path into the plist, so a version
+# bump would silently orphan boot start. Repoint it at the stable symlink and
+# keep the supervisor restarting if it dies.
+plist=/Library/LaunchDaemons/pitchfork.plist
+sudo /usr/libexec/PlistBuddy -c 'Set :ProgramArguments:0 /usr/local/bin/pitchfork' "$plist"
+sudo /usr/libexec/PlistBuddy -c 'Add :KeepAlive bool true' "$plist" 2>/dev/null ||
+  sudo /usr/libexec/PlistBuddy -c 'Set :KeepAlive true' "$plist"
+"""
+
+[tasks."daemon:relink"]
+description = "Repoint /usr/local/bin at the current service binaries after a version change"
+run = """
+for bin in alloy blackbox_exporter caddy cloudflared fnox loki pitchfork prometheus; do
+  sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
+done
+sudo ln -sf /opt/homebrew/bin/forgejo /usr/local/bin/forgejo
+sudo ln -sf /opt/homebrew/bin/grafana /usr/local/bin/grafana
 """
 
 [tasks."daemon:reload"]
