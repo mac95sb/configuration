@@ -27,7 +27,7 @@ if [ ! -t 0 ]; then
   exit 1
 fi
 
-if [ "$(uname -s)" = "Darwin" ] && ! xcode-select -p >/dev/null 2>&1; then
+if ! xcode-select -p >/dev/null 2>&1; then
   say 'Installing Xcode Command Line Tools'
   xcode-select --install || :
   say 'Waiting for Xcode Command Line Tools to finish installing'
@@ -77,22 +77,21 @@ say 'Installing tools, packages, dotfiles, and repositories'
 "$mise" -C "$dotfiles" install
 "$mise" -C "$dotfiles" exec -- mise bootstrap --yes --force-dotfiles
 
-if [ "$(uname -s)" = "Darwin" ]; then
-  say 'Applying macOS preferences'
-  sudo_file=/etc/pam.d/sudo_local
-  sudo_template=/etc/pam.d/sudo_local.template
+say 'Applying macOS preferences'
+sudo_file=/etc/pam.d/sudo_local
+sudo_template=/etc/pam.d/sudo_local.template
 
-  if [ ! -f "$sudo_template" ]; then
-    printf '%s\n' "Touch ID for sudo is unsupported: $sudo_template does not exist." >&2
-    exit 1
-  fi
+if [ ! -f "$sudo_template" ]; then
+  printf '%s\n' "Touch ID for sudo is unsupported: $sudo_template does not exist." >&2
+  exit 1
+fi
 
-  sudo cp "$sudo_template" "$sudo_file"
-  sudo sed -i '' 's/^#auth/auth/' "$sudo_file"
+sudo cp "$sudo_template" "$sudo_file"
+sudo sed -i '' 's/^#auth/auth/' "$sudo_file"
 
-  defaults write com.apple.dock persistent-apps -array
+defaults write com.apple.dock persistent-apps -array
 
-  dock_apps='
+dock_apps='
 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/
 /System/Applications/Messages.app/
 /System/Applications/Mail.app/
@@ -102,20 +101,16 @@ if [ "$(uname -s)" = "Darwin" ]; then
 /System/Applications/Books.app/
 /System/Applications/Music.app/
 '
-  set --
-  for app_path in $dock_apps; do
-    set -- "$@" \
-      "{ \"tile-data\" = { \"file-data\" = { \"_CFURLString\" = \"file://$app_path\"; \"_CFURLStringType\" = 15; }; }; \"tile-type\" = \"file-tile\"; }"
-  done
-  defaults write com.apple.dock persistent-apps -array-add "$@"
-  killall Dock || :
-fi
-
-repo_dir=$dotfiles
-mise_bin=$mise
+set --
+for app_path in $dock_apps; do
+  set -- "$@" \
+    "{ \"tile-data\" = { \"file-data\" = { \"_CFURLString\" = \"file://$app_path\"; \"_CFURLStringType\" = 15; }; }; \"tile-type\" = \"file-tile\"; }"
+done
+defaults write com.apple.dock persistent-apps -array-add "$@"
+killall Dock || :
 
 say 'Creating service accounts and access groups'
-"$mise_bin" -C "$repo_dir" run accounts:install
+"$mise" -C "$dotfiles" run accounts:install
 
 say 'Installing the operational age key'
 installed_key=/etc/fnox/operational.key
@@ -136,8 +131,8 @@ else
     exit 1
   fi
 
-  operational_recipient=$("$mise_bin" -C "$repo_dir" exec -- age-keygen -y "$staged_key")
-  if ! grep -Fq "\"$operational_recipient\"" "$repo_dir/fnox.toml"; then
+  operational_recipient=$("$mise" -C "$dotfiles" exec -- age-keygen -y "$staged_key")
+  if ! grep -Fq "\"$operational_recipient\"" "$dotfiles/fnox.toml"; then
     printf '%s\n' \
       "The staged key's recipient ($operational_recipient) is not in fnox.toml." \
       'Re-encrypt the fnox secrets for this recipient before continuing.' >&2
@@ -150,7 +145,7 @@ else
 fi
 
 say 'Configuring the Cloudflare Tunnel'
-cloudflared_config=$repo_dir/services/cloudflared/config.yml
+cloudflared_config=$dotfiles/services/cloudflared/config.yml
 tunnel_id=$(awk '/^tunnel:/ { print $2; exit }' "$cloudflared_config")
 cloudflared_home=$HOME/.cloudflared
 local_credentials=$cloudflared_home/$tunnel_id.json
@@ -158,10 +153,10 @@ local_credentials=$cloudflared_home/$tunnel_id.json
 if [ ! -f "$local_credentials" ]; then
   say --wait 'Cloudflare browser authentication required' \
     'On a rebuild, delete or rename the old home-caddy tunnel in the dashboard first; locally-managed tunnel credentials cannot be regenerated.'
-  "$mise_bin" -C "$repo_dir" exec -- cloudflared tunnel login
+  "$mise" -C "$dotfiles" exec -- cloudflared tunnel login
 
   create_output=''
-  until create_output=$("$mise_bin" -C "$repo_dir" exec -- cloudflared tunnel create home-caddy 2>&1); do
+  until create_output=$("$mise" -C "$dotfiles" exec -- cloudflared tunnel create home-caddy 2>&1); do
     printf '%s\n' "$create_output" >&2
     say --wait 'Resolve the home-caddy tunnel-name conflict in Cloudflare before retrying'
   done
@@ -195,13 +190,13 @@ say --wait 'Protect dashboard.maclong.dev with Cloudflare Access' \
 
 awk '$1 == "-" && $2 == "hostname:" { print $3 }' "$cloudflared_config" |
   while IFS= read -r hostname; do
-    "$mise_bin" -C "$repo_dir" exec -- \
+    "$mise" -C "$dotfiles" exec -- \
       cloudflared tunnel route dns --overwrite-dns "$tunnel_id" "$hostname"
   done
 
 say 'Installing and starting the pitchfork supervisor'
-"$mise_bin" -C "$repo_dir" run daemon:install
-"$mise_bin" -C "$repo_dir" run daemon:reload
+"$mise" -C "$dotfiles" run daemon:install
+"$mise" -C "$dotfiles" run daemon:reload
 
 say 'Creating the first Forgejo administrator, if needed'
 forgejo_work_path=/Users/svc_forgejo/forgejo-data

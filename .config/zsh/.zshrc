@@ -25,14 +25,7 @@ if (( ! $+functions[z4h] )); then
   if [[ ! -e "$Z4H/z4h.zsh" ]]; then
     mkdir -p -- "$Z4H" || return
     print -Pu2 '%F{yellow}z4h%f: fetching %Uz4h.zsh%u'
-    if command -v curl >/dev/null 2>&1; then
-      curl -fsSL -- "$Z4H_URL/z4h.zsh" >"$Z4H/z4h.zsh.$$" || return
-    elif command -v wget >/dev/null 2>&1; then
-      wget -O- -- "$Z4H_URL/z4h.zsh" >"$Z4H/z4h.zsh.$$" || return
-    else
-      print -Pu2 '%F{yellow}z4h%f: please install %F{green}curl%f or %F{green}wget%f'
-      return 1
-    fi
+    curl -fsSL -- "$Z4H_URL/z4h.zsh" >"$Z4H/z4h.zsh.$$" || return
     mv -- "$Z4H/z4h.zsh.$$" "$Z4H/z4h.zsh" || return
   fi
 

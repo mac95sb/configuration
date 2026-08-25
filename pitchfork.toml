@@ -3,52 +3,44 @@ user = "mac"
 
 [daemons.caddy]
 user = "svc_caddy"
-dir = "/Users/mac/Developer/configuration"
 boot_start = true
 env = { HOME = "/Users/svc_caddy" }
 run = "/usr/local/bin/caddy run --config services/caddy/Caddyfile"
 
 [daemons.cloudflared]
 user = "svc_cloudflared"
-dir = "/Users/mac/Developer/configuration"
 boot_start = true
 run = "/usr/local/bin/cloudflared --config services/cloudflared/config.yml tunnel run"
 
 [daemons.blackbox]
 user = "svc_observability"
-dir = "/Users/mac/Developer/configuration"
 boot_start = true
 run = "/usr/local/bin/blackbox_exporter --config.file=services/blackbox/config.yml --web.listen-address=127.0.0.1:9115"
 
 [daemons.prometheus]
 user = "svc_observability"
-dir = "/Users/mac/Developer/configuration"
 boot_start = true
 run = "/usr/local/bin/prometheus --config.file=services/prometheus/config.yml --storage.tsdb.path=/Users/svc_observability/prometheus-data --storage.tsdb.retention.time=90d --web.listen-address=127.0.0.1:9090"
 
 [daemons.loki]
 user = "svc_observability"
-dir = "/Users/mac/Developer/configuration"
 boot_start = true
 run = "/usr/local/bin/loki -config.file=services/loki/config.yml"
 
 [daemons.alloy]
 user = "svc_observability"
-dir = "/Users/mac/Developer/configuration"
 boot_start = true
 depends = ["loki"]
 run = "/usr/local/bin/fnox exec --profile observability -- /usr/local/bin/alloy run services/alloy/config.alloy --storage.path=/Users/svc_observability/alloy-data --server.http.listen-addr=127.0.0.1:12345"
 
 [daemons.grafana]
 user = "svc_observability"
-dir = "/Users/mac/Developer/configuration"
 boot_start = true
 depends = ["prometheus", "loki"]
 run = "/usr/local/bin/grafana server --config=services/grafana/config.ini --homepath=/opt/homebrew/opt/grafana/share/grafana --packaging=brew cfg:default.paths.logs=/Users/svc_observability/grafana-logs cfg:default.paths.data=/Users/svc_observability/grafana-data cfg:default.paths.plugins=/Users/svc_observability/grafana-plugins"
 
 [daemons.forgejo]
 user = "svc_forgejo"
-dir = "/Users/mac/Developer/configuration"
 boot_start = true
 env = { HOME = "/Users/svc_forgejo" }
 run = "/usr/local/bin/fnox exec --profile forgejo -- /Users/mac/Developer/configuration/services/forgejo/start.sh"
