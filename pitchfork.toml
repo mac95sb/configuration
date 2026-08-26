@@ -15,12 +15,19 @@ run = "/Users/mac/Developer/configuration/services/cloudflared/start.sh"
 [daemons.node_exporter]
 user = "svc_observability"
 boot_start = true
-run = "/usr/local/bin/node_exporter --web.listen-address=127.0.0.1:9101 --collector.textfile.directory=/Users/svc_observability/textfile"
+run = "/usr/local/bin/node_exporter --web.listen-address=127.0.0.1:9101 --collector.textfile.directory=/Users/svc_observability/textfile --no-collector.thermal"
+
+[daemons.soc_metrics]
+user = "svc_observability"
+boot_start = true
+cron_schedule = "*/15 * * * * *"
+cron_retrigger = "finish"
+run = "/Users/mac/Developer/configuration/services/metrics/soc.sh"
 
 [daemons.blackbox]
 user = "svc_observability"
 boot_start = true
-run = "/usr/local/bin/blackbox_exporter --config.file=/Users/mac/Developer/configuration/services/blackbox/config.yml --web.listen-address=127.0.0.1:9115"
+run = "/usr/local/bin/blackbox_exporter --config.file=/Users/mac/Developer/configuration/services/blackbox/config.yml --web.listen-address=127.0.0.1:9115 --log.prober=error"
 
 [daemons.prometheus]
 user = "svc_observability"

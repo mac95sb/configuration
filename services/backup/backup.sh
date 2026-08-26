@@ -56,7 +56,7 @@ if [ "$(date +%u)" = 7 ]; then
   fi
 fi
 
-find "$staging" -type f -mtime +90 -delete
+"$repo/services/backup/prune.sh" "$staging"
 
 /usr/local/bin/rclone sync "$staging" R2:home-backups
 

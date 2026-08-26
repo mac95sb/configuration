@@ -196,7 +196,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Host CPU and memory",
+      "title": "Host compute and memory",
       "gridPos": {
         "x": 0,
         "y": 7,
@@ -228,6 +228,28 @@
           },
           "expr": "(node_memory_active_bytes + node_memory_wired_bytes + node_memory_compressed_bytes) / node_memory_total_bytes * 100",
           "legendFormat": "memory",
+          "instant": false
+        },
+        {
+          "refId": "C",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "host_gpu_utilization_ratio * 100",
+          "legendFormat": "GPU",
+          "instant": false
+        },
+        {
+          "refId": "D",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "clamp_max(rate(host_ane_busy_seconds_total[1m]) * 100, 100)",
+          "legendFormat": "Neural Engine",
           "instant": false
         }
       ],
@@ -272,10 +294,40 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "GPU"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#f2cc60"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Neural Engine"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#b877d9"
+                }
+              }
+            ]
           }
         ]
       },
-      "description": "Host CPU and memory use over the selected period. Hover for exact values or drag across the graph to narrow the dashboard and its logs to a spike."
+      "description": "CPU, GPU, Neural Engine and memory use over the selected period. GPU is the current device utilization reported by I/O Registry; Neural Engine is derived from its cumulative driver-busy time."
     },
     {
       "type": "timeseries",
