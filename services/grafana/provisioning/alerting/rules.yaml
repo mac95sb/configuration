@@ -64,6 +64,33 @@ groups:
               conditions:
                 - evaluator: { type: lt, params: [1] }
 
+      - uid: tls_certificate_expiring
+        title: TLS certificate expires soon
+        condition: threshold
+        for: 1h
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "The TLS certificate for {{ $labels.instance }} expires in less than 30 days."
+        labels:
+          severity: warning
+        data:
+          - refId: remaining
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: remaining
+              expr: min by (instance) (probe_ssl_earliest_cert_expiry - time())
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: remaining
+              conditions:
+                - evaluator: { type: lt, params: [2592000] }
+
       # This is the alert that would have caught the Loki ring failure: the
       # daemon was up and healthy while silently discarding every log line.
       - uid: log_ingestion_failing

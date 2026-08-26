@@ -5,7 +5,7 @@ providers:
     orgId: 1
     folder: Infrastructure
     type: file
-    disableDeletion: true
+    disableDeletion: false
     allowUiUpdates: false
     options:
       path: /Users/mac/Developer/configuration/services/grafana/provisioning/dashboards

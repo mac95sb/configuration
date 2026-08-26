@@ -24,11 +24,12 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9115"]
 
-  # Application daemons. Only Forgejo needed enabling; the rest already served these.
+  # Application daemons. Keep their service metrics plus standard process
+  # usage so host CPU and memory spikes can be attributed by job.
   - job_name: "caddy"
     metric_relabel_configs:
       - source_labels: [__name__]
-        regex: "up|scrape_.*|caddy_http_.*|caddy_reverse_proxy_.*"
+        regex: "up|scrape_.*|process_.*|caddy_http_.*|caddy_reverse_proxy_.*"
         action: keep
     static_configs:
       - targets: ["127.0.0.1:2019"]
@@ -36,7 +37,7 @@ scrape_configs:
   - job_name: "cloudflared"
     metric_relabel_configs:
       - source_labels: [__name__]
-        regex: "up|scrape_.*|cloudflared_tunnel_.*"
+        regex: "up|scrape_.*|process_.*|cloudflared_tunnel_.*"
         action: keep
     static_configs:
       - targets: ["127.0.0.1:20241"]
@@ -44,7 +45,7 @@ scrape_configs:
   - job_name: "grafana"
     metric_relabel_configs:
       - source_labels: [__name__]
-        regex: "up|scrape_.*|grafana_alerting_.*"
+        regex: "up|scrape_.*|process_.*|grafana_alerting_.*"
         action: keep
     static_configs:
       - targets: ["127.0.0.1:3000"]
@@ -52,7 +53,7 @@ scrape_configs:
   - job_name: "forgejo"
     metric_relabel_configs:
       - source_labels: [__name__]
-        regex: "up|scrape_.*|gitea_.*"
+        regex: "up|scrape_.*|process_.*|gitea_.*"
         action: keep
     static_configs:
       - targets: ["127.0.0.1:3030"]

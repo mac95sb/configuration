@@ -14,4 +14,4 @@ modules:
     http:
       preferred_ip_protocol: "ip4"
       follow_redirects: false
-      valid_status_codes: [200, 302]
+      valid_status_codes: [302]

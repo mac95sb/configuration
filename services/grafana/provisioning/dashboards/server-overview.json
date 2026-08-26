@@ -6,7 +6,8 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 1,
+  "version": 5,
+  "graphTooltip": 1,
   "refresh": "30s",
   "time": {
     "from": "now-6h",
@@ -15,7 +16,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Daemons",
+      "title": "Overview",
       "gridPos": {
         "x": 0,
         "y": 0,
@@ -28,7 +29,7 @@
     {
       "type": "stat",
       "title": "Daemon uptime (24h)",
-      "description": "Share of scrapes that reached each daemon over the last day. Multiplied by current state, so a target that is down right now reads DOWN in red instead of a reassuring average. While it is up, the number is its uptime over the window. Restarts count against it \u2014 a probe failing while cloudflared reconnects is a real failure from outside. Time when Prometheus itself was down is absent rather than zero, so this reads higher than truth after a Prometheus restart.",
+      "description": "Share of scrapes that reached each daemon over the last day. Multiplied by current state, so a target that is down right now reads DOWN in red instead of a reassuring average. While it is up, the number is its uptime over the window. Restarts count against it — a probe failing while cloudflared reconnects is a real failure from outside. Time when Prometheus itself was down is absent rather than zero, so this reads higher than truth after a Prometheus restart.",
       "gridPos": {
         "x": 0,
         "y": 1,
@@ -70,7 +71,7 @@
                 "value": 99
               },
               {
-                "color": "green",
+                "color": "#4fb8ac",
                 "value": 99.9
               }
             ]
@@ -106,7 +107,7 @@
     {
       "type": "stat",
       "title": "Endpoint uptime (24h)",
-      "description": "Share of probes through Cloudflare that succeeded over the last day. Multiplied by current state, so a target that is down right now reads DOWN in red instead of a reassuring average. While it is up, the number is its uptime over the window. Restarts count against it \u2014 a probe failing while cloudflared reconnects is a real failure from outside.",
+      "description": "Share of probes through Cloudflare that succeeded over the last day. Multiplied by current state, so a target that is down right now reads DOWN in red instead of a reassuring average. While it is up, the number is its uptime over the window. Restarts count against it — a probe failing while cloudflared reconnects is a real failure from outside.",
       "gridPos": {
         "x": 12,
         "y": 1,
@@ -148,7 +149,7 @@
                 "value": 99
               },
               {
-                "color": "green",
+                "color": "#4fb8ac",
                 "value": 99.9
               }
             ]
@@ -183,7 +184,7 @@
     },
     {
       "type": "row",
-      "title": "Per-service detail",
+      "title": "Host",
       "gridPos": {
         "x": 0,
         "y": 6,
@@ -195,10 +196,515 @@
     },
     {
       "type": "timeseries",
-      "title": "Caddy requests by status",
+      "title": "Host CPU and memory",
       "gridPos": {
         "x": 0,
         "y": 7,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
+          "legendFormat": "CPU",
+          "instant": false
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(node_memory_active_bytes + node_memory_wired_bytes + node_memory_compressed_bytes) / node_memory_total_bytes * 100",
+          "legendFormat": "memory",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "custom": {
+            "fillOpacity": 8,
+            "lineWidth": 2,
+            "showPoints": "never"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CPU"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4fb8ac"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "memory"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#94a19b"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "description": "Host CPU and memory use over the selected period. Hover for exact values or drag across the graph to narrow the dashboard and its logs to a spike."
+    },
+    {
+      "type": "timeseries",
+      "title": "Load (1m)",
+      "gridPos": {
+        "x": 12,
+        "y": 7,
+        "w": 6,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "node_load1",
+          "legendFormat": "load1",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#4fb8ac",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 8
+              },
+              {
+                "color": "red",
+                "value": 12
+              }
+            ]
+          },
+          "custom": {
+            "fillOpacity": 8,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#4fb8ac"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Average number of processes wanting CPU over the last minute, including ones waiting their turn. Read against 12 cores: under 12 has headroom, above 12 means queueing. Amber 8, red 12."
+    },
+    {
+      "type": "timeseries",
+      "title": "Disk used",
+      "gridPos": {
+        "x": 18,
+        "y": 7,
+        "w": 6,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "(1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100",
+          "legendFormat": "used",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "#4fb8ac",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 80
+              },
+              {
+                "color": "red",
+                "value": 90
+              }
+            ]
+          },
+          "custom": {
+            "fillOpacity": 8,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#4fb8ac"
+          },
+          "min": 0,
+          "max": 100
+        },
+        "overrides": []
+      },
+      "description": "Share of the root filesystem in use, including its trend over the selected period. Amber 80%, red 90%."
+    },
+    {
+      "type": "row",
+      "title": "Spike attribution",
+      "gridPos": {
+        "x": 0,
+        "y": 14,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "CPU by daemon",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "datasourceUid": "prometheus",
+          "expr": "sum by (job) (rate(process_cpu_seconds_total[5m])) * 100 / scalar(count(count by (cpu) (node_cpu_seconds_total)))",
+          "legendFormat": "{{job}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 8,
+            "lineWidth": 2,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Share of total host CPU used by each scraped daemon. Match a host spike to a line here; a host spike with no matching daemon points to another macOS process or system work.",
+      "gridPos": {
+        "x": 0,
+        "y": 15,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory by daemon",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "datasourceUid": "prometheus",
+          "expr": "sum by (job) (process_resident_memory_bytes) / scalar(node_memory_total_bytes) * 100",
+          "legendFormat": "{{job}}",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 8,
+            "lineWidth": 2,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Share of host memory held resident by each scraped daemon. This covers managed services, not desktop applications, backup subprocesses or the kernel.",
+      "gridPos": {
+        "x": 12,
+        "y": 15,
+        "w": 12,
+        "h": 7
+      }
+    },
+    {
+      "type": "row",
+      "title": "Public endpoints",
+      "gridPos": {
+        "x": 0,
+        "y": 22,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Probe duration",
+      "gridPos": {
+        "x": 0,
+        "y": 23,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 2
+          },
+          "min": 0,
+          "mappings": [],
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "probe_duration_seconds",
+          "legendFormat": "{{instance}}",
+          "refId": "A"
+        }
+      ],
+      "description": "How long each public probe took, end to end through Cloudflare. Watch for a step change rather than an absolute value — a sustained rise usually means a slow backend, not a slow network."
+    },
+    {
+      "type": "stat",
+      "title": "TLS certificate expires in",
+      "gridPos": {
+        "x": 12,
+        "y": 23,
+        "w": 12,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "decimals": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "red",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 1209600
+              },
+              {
+                "color": "#4fb8ac",
+                "value": 2592000
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "probe_ssl_earliest_cert_expiry - time()",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "orientation": "auto"
+      },
+      "description": "Time remaining on the earliest certificate in each endpoint's TLS chain. Amber below 30 days, red below 14 days; the alert fires at 30 days."
+    },
+    {
+      "type": "stat",
+      "title": "Public endpoint HTTP status",
+      "gridPos": {
+        "x": 0,
+        "y": 30,
+        "w": 12,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "probe_http_status_code",
+          "legendFormat": "{{instance}}",
+          "refId": "A",
+          "instant": true
+        }
+      ],
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "colorMode": "none",
+        "orientation": "auto"
+      },
+      "description": "Raw status code returned by each public endpoint. Expected responses are 200 for status and Forgejo, and a 302 Cloudflare Access redirect for Grafana."
+    },
+    {
+      "type": "timeseries",
+      "title": "Cloudflare tunnel connections",
+      "gridPos": {
+        "x": 12,
+        "y": 30,
+        "w": 12,
+        "h": 5
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "cloudflared_tunnel_ha_connections",
+          "legendFormat": "active",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "fillOpacity": 8,
+            "showPoints": "never"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Active connections from cloudflared to Cloudflare's edge. Four is normal — the tunnel keeps redundant connections to separate data centres. Dropping toward zero means the tunnel is failing and the public hostnames go with it."
+    },
+    {
+      "type": "row",
+      "title": "Services",
+      "gridPos": {
+        "x": 0,
+        "y": 35,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "timeseries",
+      "title": "Caddy requests by status",
+      "gridPos": {
+        "x": 0,
+        "y": 36,
         "w": 12,
         "h": 7
       },
@@ -236,7 +742,7 @@
       "title": "Caddy upstream health",
       "gridPos": {
         "x": 12,
-        "y": 7,
+        "y": 36,
         "w": 12,
         "h": 7
       },
@@ -271,108 +777,10 @@
     },
     {
       "type": "timeseries",
-      "title": "Forgejo content",
-      "gridPos": {
-        "x": 0,
-        "y": 14,
-        "w": 12,
-        "h": 7
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "datasourceUid": "prometheus",
-          "expr": "gitea_repositories",
-          "legendFormat": "repositories",
-          "instant": false
-        },
-        {
-          "refId": "B",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "datasourceUid": "prometheus",
-          "expr": "gitea_issues_open",
-          "legendFormat": "open issues",
-          "instant": false
-        },
-        {
-          "refId": "C",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "datasourceUid": "prometheus",
-          "expr": "gitea_users",
-          "legendFormat": "users",
-          "instant": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": {
-            "fillOpacity": 8,
-            "showPoints": "never"
-          }
-        },
-        "overrides": []
-      },
-      "description": "How much is actually in the forge \u2014 repositories, open issues, users. Not a health metric; it is here so an unexpected drop (a bad restore, a wrong data path) is visible."
-    },
-    {
-      "type": "timeseries",
-      "title": "Cloudflare tunnel connections",
-      "gridPos": {
-        "x": 12,
-        "y": 14,
-        "w": 12,
-        "h": 7
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasourceUid": "prometheus",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "cloudflared_tunnel_ha_connections",
-          "legendFormat": "active",
-          "instant": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "custom": {
-            "fillOpacity": 8,
-            "showPoints": "never"
-          }
-        },
-        "overrides": []
-      },
-      "description": "Active connections from cloudflared to Cloudflare's edge. Four is normal \u2014 the tunnel keeps redundant connections to separate data centres. Dropping toward zero means the tunnel is failing and the public hostnames go with it."
-    },
-    {
-      "type": "timeseries",
       "title": "Grafana active alerts",
       "gridPos": {
         "x": 0,
-        "y": 21,
+        "y": 43,
         "w": 12,
         "h": 7
       },
@@ -406,275 +814,48 @@
       "description": "How many alert rules are currently firing. Flat at zero is healthy. This counts Grafana's own view, so it stays accurate even if the ntfy push fails to deliver."
     },
     {
-      "type": "row",
-      "title": "Host",
-      "gridPos": {
-        "x": 0,
-        "y": 28,
-        "w": 24,
-        "h": 1
-      },
-      "collapsed": false,
-      "panels": []
-    },
-    {
-      "type": "stat",
-      "title": "CPU used",
-      "gridPos": {
-        "x": 0,
-        "y": 29,
-        "w": 6,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasourceUid": "prometheus",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "100 - (avg(rate(node_cpu_seconds_total{mode=\"idle\"}[5m])) * 100)",
-          "legendFormat": "cpu",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 70
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "value_and_name",
-        "colorMode": "background",
-        "orientation": "auto"
-      },
-      "description": "Share of all 12 cores in use, averaged over 5 minutes. Amber at 70%, red at 90%. Mole shows an instant sample, so small differences between the two are expected, not a fault."
-    },
-    {
-      "type": "stat",
-      "title": "Memory used",
-      "gridPos": {
-        "x": 6,
-        "y": 29,
-        "w": 6,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasourceUid": "prometheus",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "(node_memory_active_bytes + node_memory_wired_bytes + node_memory_compressed_bytes) / node_memory_total_bytes * 100",
-          "legendFormat": "mem",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 75
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "value_and_name",
-        "colorMode": "background",
-        "orientation": "auto"
-      },
-      "description": "Active plus wired plus compressed, as a share of total. Amber 75%, red 90%. macOS counts cache as used, so a high number here is not necessarily pressure \u2014 Mole's PRS figure is the better signal for that, and node_exporter cannot export it."
-    },
-    {
-      "type": "stat",
-      "title": "Load (1m)",
+      "type": "timeseries",
+      "title": "Log entries dropped",
       "gridPos": {
         "x": 12,
-        "y": 29,
-        "w": 6,
-        "h": 4
+        "y": 43,
+        "w": 12,
+        "h": 7
       },
       "datasource": {
         "type": "prometheus",
         "uid": "prometheus"
       },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 2
+          },
+          "min": 0,
+          "mappings": []
+        },
+        "overrides": []
+      },
       "targets": [
         {
-          "refId": "A",
-          "datasourceUid": "prometheus",
           "datasource": {
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "node_load1",
-          "legendFormat": "load1",
-          "instant": true
+          "expr": "sum(increase(loki_write_dropped_entries_total[5m]))",
+          "legendFormat": "{{reason}}",
+          "refId": "A"
         }
       ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 8
-              },
-              {
-                "color": "red",
-                "value": 12
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "value_and_name",
-        "colorMode": "background",
-        "orientation": "auto"
-      },
-      "description": "Average number of processes wanting CPU over the last minute, including ones waiting their turn. Read against 12 cores: under 12 has headroom, above 12 means queueing. Amber 8, red 12."
-    },
-    {
-      "type": "stat",
-      "title": "Disk used",
-      "gridPos": {
-        "x": 18,
-        "y": 29,
-        "w": 6,
-        "h": 4
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasourceUid": "prometheus",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "(1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100",
-          "legendFormat": "used",
-          "instant": true
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "percent",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 80
-              },
-              {
-                "color": "red",
-                "value": 90
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "value_and_name",
-        "colorMode": "background",
-        "orientation": "auto"
-      },
-      "description": "Share of the root filesystem in use. Amber 80%, red 90%. Infrastructure health has the same figure as a trend."
+      "description": "Log lines Loki refused. Any value above zero means lines are being lost — usually rate limiting or a malformed stream — and the logs you are reading are then incomplete."
     },
     {
       "type": "row",
       "title": "Backups",
       "gridPos": {
         "x": 0,
-        "y": 33,
+        "y": 50,
         "w": 24,
         "h": 1
       },
@@ -686,9 +867,9 @@
       "title": "Since last backup",
       "gridPos": {
         "x": 0,
-        "y": 34,
+        "y": 51,
         "w": 12,
-        "h": 4
+        "h": 5
       },
       "datasource": {
         "type": "prometheus",
@@ -704,7 +885,7 @@
           },
           "expr": "time() - backup_last_success_seconds",
           "legendFormat": "backup",
-          "instant": true
+          "instant": false
         }
       ],
       "fieldConfig": {
@@ -714,7 +895,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "#4fb8ac",
                 "value": null
               },
               {
@@ -740,18 +921,19 @@
         },
         "textMode": "value_and_name",
         "colorMode": "background",
-        "orientation": "auto"
+        "orientation": "auto",
+        "graphMode": "area"
       },
-      "description": "Time since the backup daemon last completed a full run \u2014 capture, encrypt, and upload to R2. Amber at 25h, red at 26h, matching the alert. A run that fails partway never updates this, so the tile ages rather than falsely reporting success."
+      "description": "Time since the backup daemon last completed a full run — capture, encrypt, and upload to R2. Amber at 25h, red at 26h, matching the alert. A run that fails partway never updates this, so the tile ages rather than falsely reporting success."
     },
     {
       "type": "stat",
       "title": "Since last iCloud courier",
       "gridPos": {
         "x": 12,
-        "y": 34,
+        "y": 51,
         "w": 12,
-        "h": 4
+        "h": 5
       },
       "datasource": {
         "type": "prometheus",
@@ -767,7 +949,7 @@
           },
           "expr": "time() - backup_courier_last_success_seconds",
           "legendFormat": "courier",
-          "instant": true
+          "instant": false
         }
       ],
       "fieldConfig": {
@@ -777,7 +959,7 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "#4fb8ac",
                 "value": null
               },
               {
@@ -803,7 +985,8 @@
         },
         "textMode": "value_and_name",
         "colorMode": "background",
-        "orientation": "auto"
+        "orientation": "auto",
+        "graphMode": "area"
       },
       "description": "Time since encrypted archives were last copied into iCloud Drive. This one lags by design: the courier runs as your user account and cannot run until someone logs in, so after an unattended reboot it will sit stale while R2 stays current."
     },
@@ -812,7 +995,7 @@
       "title": "Logs",
       "gridPos": {
         "x": 0,
-        "y": 38,
+        "y": 56,
         "w": 24,
         "h": 1
       },
@@ -820,11 +1003,151 @@
       "panels": []
     },
     {
+      "type": "timeseries",
+      "title": "Log volume by level",
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 24,
+        "h": 7
+      },
+      "datasource": {
+        "type": "loki",
+        "uid": "loki"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service=~\"$service\"} |~ \"(?i)(level=(error|fatal)|\\\\[(E|F)\\\\])\" [$__interval]))",
+          "legendFormat": "Error"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service=~\"$service\"} |~ \"(?i)(level=warn(ing)?|\\\\[W\\\\])\" [$__interval]))",
+          "legendFormat": "Warning"
+        },
+        {
+          "refId": "C",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service=~\"$service\"} |~ \"(?i)(level=info|\\\\[I\\\\])\" [$__interval]))",
+          "legendFormat": "Info"
+        },
+        {
+          "refId": "D",
+          "datasource": {
+            "type": "loki",
+            "uid": "loki"
+          },
+          "expr": "sum(count_over_time({service=~\"$service\"} !~ \"(?i)(level=(info|warn(ing)?|error|fatal)|\\\\[(I|W|E|F)\\\\])\" [$__interval]))",
+          "legendFormat": "Other"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "custom": {
+            "drawStyle": "bars",
+            "fillOpacity": 75,
+            "lineWidth": 0,
+            "stacking": {
+              "mode": "normal",
+              "group": "A"
+            }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Error"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Warning"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Info"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#4fb8ac"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Other"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#94a19b"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "desc"
+        }
+      },
+      "description": "Log lines per interval, grouped by detected severity across the selected services. Hover for exact counts or drag over a burst to narrow the dashboard and inspect the matching raw logs below."
+    },
+    {
       "type": "logs",
       "title": "Daemon logs",
       "gridPos": {
         "x": 0,
-        "y": 39,
+        "y": 64,
         "w": 24,
         "h": 12
       },
@@ -850,7 +1173,7 @@
       "description": "Every pitchfork daemon's output, relayed out of pitchfork's SQLite store into a file Alloy can tail. Use the Service dropdown at the top to filter to one daemon."
     }
   ],
-  "description": "Right-now health of every daemon and public hostname, plus host vitals, backup freshness and per-service logs. Start here. Tiles are green/amber/red against thresholds; hover any panel's info icon for how to read it. For history rather than current state, see Infrastructure health.",
+  "description": "Immediate uptime and interactive host history first, followed by per-daemon spike attribution, endpoint and service diagnostics, backups, and searchable logs. Hover graphs for exact values or drag to narrow the selected time range.",
   "templating": {
     "list": [
       {

@@ -148,8 +148,10 @@ description = "Point pitchfork's global config at this repo, expose binaries ser
 depends = ["daemon:relink"]
 run = """
 sudo install -d -m 755 -o root -g wheel /etc/pitchfork
-sudo install -o root -g wheel -m 644 \
-  /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
+if [ ! /Users/mac/Developer/configuration/pitchfork.toml -ef /etc/pitchfork/config.toml ]; then
+  sudo install -o root -g wheel -m 644 \
+    /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
+fi
 sudo chmod o+x /Users/mac
 sudo install -d -m 750 -o svc_caddy -g observability /var/log/caddy
 sudo install -d -m 750 -o mac -g observability /var/log/services
@@ -187,10 +189,11 @@ sudo ln -sf /opt/homebrew/bin/grafana /usr/local/bin/grafana
 [tasks."daemon:reload"]
 description = "Install the edited pitchfork.toml as root and restart all daemons"
 run = """
-# The supervisor reads the root-owned copy, not this checkout, so an edit here
-# only takes effect once someone with sudo installs it.
-sudo install -o root -g wheel -m 644 \
-  /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
+# Update copied configs; symlinked setups already read the checkout directly.
+if [ ! /Users/mac/Developer/configuration/pitchfork.toml -ef /etc/pitchfork/config.toml ]; then
+  sudo install -o root -g wheel -m 644 \
+    /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
+fi
 pitchfork restart --all-global
 """
 
