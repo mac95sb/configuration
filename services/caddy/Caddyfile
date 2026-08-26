@@ -22,6 +22,36 @@
 	}
 
 	@dashboard host dashboard.maclong.dev
+	@grafanaLogo {
+		host dashboard.maclong.dev
+		path /public/img/grafana_icon.svg /public/img/grafana_mask_icon.svg /public/build/img/grafana_icon.svg /public/build/img/grafana_mask_icon.svg
+	}
+	handle @grafanaLogo {
+		root * /Users/mac/Developer/configuration/services/grafana/branding
+		rewrite * /logo.svg
+		header Cache-Control "no-cache, no-store, must-revalidate"
+		file_server
+	}
+	@grafanaFavicon {
+		host dashboard.maclong.dev
+		path /public/build/img/fav32.png
+	}
+	handle @grafanaFavicon {
+		root * /Users/mac/Developer/configuration/services/grafana/branding
+		rewrite * /fav32.png
+		header Cache-Control "no-cache, no-store, must-revalidate"
+		file_server
+	}
+	@grafanaTouchIcon {
+		host dashboard.maclong.dev
+		path /public/build/img/apple-touch-icon.png
+	}
+	handle @grafanaTouchIcon {
+		root * /Users/mac/Developer/configuration/services/grafana/branding
+		rewrite * /apple-touch-icon.png
+		header Cache-Control "no-cache, no-store, must-revalidate"
+		file_server
+	}
 	handle @dashboard {
 		reverse_proxy 127.0.0.1:3000
 	}

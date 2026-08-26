@@ -13,4 +13,4 @@ cat >>"$config" <<-EOF
 	INTERNAL_TOKEN = ${FORGEJO__SECURITY__INTERNAL_TOKEN}
 EOF
 
-exec /usr/local/bin/forgejo web --work-path "$work_path" --config "$config"
+exec /usr/local/bin/forgejo web --work-path "$work_path" --custom-path /Users/mac/Developer/configuration/services/forgejo/custom --config "$config"

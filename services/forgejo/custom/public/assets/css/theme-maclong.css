@@ -1,0 +1,50 @@
+@import url("theme-forgejo-dark.css");
+
+:root {
+  --steel-900: #070c0b;
+  --steel-850: #0b1110;
+  --steel-800: #0b1110;
+  --steel-750: #111a18;
+  --steel-700: #16211f;
+  --steel-650: #1d2b28;
+  --steel-600: #253632;
+  --steel-550: #32413d;
+  --steel-500: #465752;
+  --steel-450: #5f6f69;
+  --steel-400: #788782;
+  --steel-350: #94a19b;
+  --steel-300: #aab5b0;
+  --steel-250: #bec8c3;
+  --steel-200: #d6deda;
+  --steel-150: #e3e9e6;
+  --steel-100: #edf2ef;
+
+  --color-primary: #4fb8ac;
+  --color-primary-contrast: #0b1110;
+  --color-primary-dark-1: #6fccc1;
+  --color-primary-dark-2: #86d7ce;
+  --color-primary-light-1: #3fa095;
+  --color-primary-light-2: #338a81;
+  --color-primary-light-3: #28746d;
+  --color-primary-light-4: #205e59;
+  --color-primary-light-5: #194b47;
+  --color-primary-light-6: #143c39;
+  --color-primary-light-7: #102f2d;
+  --color-primary-alpha-10: #4fb8ac19;
+  --color-primary-alpha-20: #4fb8ac33;
+  --color-primary-alpha-30: #4fb8ac4b;
+  --color-primary-alpha-40: #4fb8ac66;
+  --color-primary-alpha-50: #4fb8ac80;
+  --color-primary-alpha-60: #4fb8ac99;
+  --color-primary-alpha-70: #4fb8acb3;
+  --color-primary-alpha-80: #4fb8accc;
+  --color-primary-alpha-90: #4fb8ace1;
+  --color-primary-hover: #6fccc1;
+  --color-primary-active: #3fa095;
+  --color-accent: var(--color-primary);
+  --color-selection-bg: var(--color-primary);
+  --color-selection-fg: var(--color-primary-contrast);
+
+  --fonts-proportional: Inter, system-ui, -apple-system, sans-serif;
+  --fonts-monospace: "IBM Plex Mono", ui-monospace, monospace;
+}

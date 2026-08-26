@@ -42,4 +42,8 @@ typeset -U path PATH
 # Options.
 setopt HIST_IGNORE_ALL_DUPS INTERACTIVE_COMMENTS
 
+kp() {
+  kill $(lsof -tiTCP:"$1" -sTCP:LISTEN)
+}
+
 eval "$(~/.local/bin/mise activate zsh)"
