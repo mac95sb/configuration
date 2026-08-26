@@ -1,0 +1,65 @@
+# Coverage for the archive cycle. The backup job reads the [sources.*] entries;
+# adding a service to the cycle means adding one. Retention is 90 days across
+# daily/weekly/monthly, promoted by hard link — see services/backup/backup.sh.
+#
+# kind: git-bundle (full, clonable) | sqlite (.backup) | directory (tarred).
+# Everything is encrypted to the fnox age recipients before leaving staging.
+
+[sources.configuration]
+kind = "git-bundle"
+path = "/Users/mac/Developer/configuration"
+why = "System definition; this bundle is what the bootstrap clones"
+
+[sources.robin]
+kind = "git-bundle"
+path = "/Users/mac/Developer/robin"
+why = "Swift web framework source; the only copy once GitHub is gone"
+
+[sources.forgejo-db]
+kind = "sqlite"
+path = "/Users/svc_forgejo/forgejo-data/data/forgejo.db"
+why = "Users, tokens, issues and pull requests; a live copy is torn"
+
+[sources.forgejo-repositories]
+kind = "directory"
+path = "/Users/svc_forgejo/forgejo-data/data/repositories"
+why = "Bare repositories served by the forge"
+
+[sources.grafana-db]
+kind = "sqlite"
+path = "/Users/svc_observability/grafana-data/grafana.db"
+why = "Alert state, silences, and anything created in the UI"
+
+# Applications under ~/Developer/applications join by adding a [sources.*] entry.
+# The job skips sources whose path is missing, so entries can be added early.
+
+# Deliberately excluded. Each entry claims the item is reproducible from
+# something else in the archive, or that including it would be a mistake.
+
+[excluded.forgejo-app-ini]
+path = "/Users/svc_forgejo/forgejo-data/app.ini"
+why = "Regenerated at every start by services/forgejo/start.sh from the tracked template plus fnox secrets"
+
+[excluded.operational-age-key]
+path = "/etc/fnox/operational.key"
+why = "Storing the decryption key beside the ciphertext defeats the encryption; the Apple Passwords escrow key is the recovery route"
+
+[excluded.prometheus-data]
+path = "/Users/svc_observability/prometheus-data"
+why = "Metrics history, not restorable state; a 90-day window would dominate the size cap"
+
+[excluded.loki-data]
+path = "/Users/svc_observability/loki-data"
+why = "Log history, not restorable state"
+
+[excluded.alloy-data]
+path = "/Users/svc_observability/alloy-data"
+why = "Write-ahead log, ephemeral by design"
+
+[excluded.caddy-logs]
+path = "/var/log/caddy"
+why = "Already shipped to Loki by Alloy"
+
+[excluded.cloudflared-credentials]
+path = "/etc/cloudflared/*.json"
+why = "Live credential; setup.sh recreates the tunnel on a rebuild instead"

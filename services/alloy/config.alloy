@@ -1,7 +1,11 @@
+// file_match polls, so a file created after Alloy starts is still picked up.
+local.file_match "caddy" {
+	path_targets = [{__path__ = "/var/log/caddy/access.log"}]
+	sync_period  = "10s"
+}
+
 loki.source.file "caddy" {
-	targets = [
-		{__path__ = "/var/log/caddy/access.log"},
-	]
+	targets    = local.file_match.caddy.targets
 	forward_to = [loki.process.caddy.receiver]
 }
 
@@ -26,6 +30,29 @@ loki.process "caddy" {
 	stage.replace {
 		expression = "\"(?:Cf-Connecting-Ip|X-Forwarded-For)\":\\[\"(?P<v>[^\"]+)\"\\]"
 		replace    = "{{ Hash .Value \"" + sys.env("SCRUB_SALT") + "\" }}"
+	}
+}
+
+local.file_match "daemons" {
+	path_targets = [{__path__ = "/var/log/services/pitchfork.log"}]
+	sync_period  = "10s"
+}
+
+loki.source.file "daemons" {
+	targets    = local.file_match.daemons.targets
+	forward_to = [loki.process.daemons.receiver]
+}
+
+loki.process "daemons" {
+	forward_to = [loki.write.local.receiver]
+
+	// Tag only: the timestamp prefix is governed by logs.timestamp_format.
+	stage.regex {
+		expression = "\\[global/(?P<service>[^\\]]+)\\]"
+	}
+
+	stage.labels {
+		values = {service = ""}
 	}
 }
 

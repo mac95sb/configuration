@@ -23,7 +23,7 @@ say() {
 
 if [ ! -t 0 ]; then
   printf '%s\n' 'This interactive installer needs a terminal on standard input.' >&2
-  printf '%s\n' "Run it with: /bin/sh -c \"\$(curl -fsSL https://raw.githubusercontent.com/mac95sb/configuration/main/setup.sh)\"" >&2
+  printf '%s\n' 'Run it with: sh ~/Developer/configuration/setup.sh' >&2
   exit 1
 fi
 
@@ -36,34 +36,35 @@ if ! xcode-select -p >/dev/null 2>&1; then
   done
 fi
 
-ssh_key=$HOME/.ssh/id_ed25519
-if [ ! -f "$ssh_key" ]; then
-  say 'Generating the GitHub SSH key'
-  mkdir -p "$HOME/.ssh"
-  chmod 700 "$HOME/.ssh"
-  ssh-keygen -t ed25519 -C 'contact@maclong.dev' -f "$ssh_key"
-fi
-
-say 'Add this SSH key to GitHub' 'https://github.com/settings/ssh/new'
-cat "$ssh_key.pub"
-while :; do
-  say --wait 'Continue after adding the GitHub SSH key'
-  github_auth=$(ssh -T git@github.com 2>&1 || :)
-  if printf '%s\n' "$github_auth" | grep -q 'successfully authenticated'; then
-    break
-  fi
-  printf '%s\n' "$github_auth" >&2
-  say 'GitHub SSH authentication failed; try again'
-done
-
 dotfiles=$HOME/Developer/configuration
+bundle_dir=$HOME/Library/Mobile\ Documents/com~apple~CloudDocs/Backups/configuration
+bundle=$bundle_dir/configuration-latest.bundle
+bundle_placeholder=$bundle_dir/.configuration-latest.bundle.icloud
 
-if [ -d "$dotfiles/.git" ]; then
-  say "Configuration repository already cloned at $dotfiles"
-else
+if [ ! -d "$dotfiles/.git" ]; then
+  if [ ! -f "$bundle" ] && [ ! -f "$bundle_placeholder" ]; then
+    printf '%s\n' \
+      "No configuration clone at $dotfiles and no bundle at $bundle." \
+      'Recover the most recent bundle from iCloud Drive or Cloudflare R2 first.' >&2
+    exit 1
+  fi
+
+  say 'Materialising the configuration bundle from iCloud Drive'
+  brctl download "$bundle" || :
+
+  attempt=0
+  until git bundle verify "$bundle" >/dev/null 2>&1; do
+    attempt=$((attempt + 1))
+    if [ "$attempt" -ge 60 ]; then
+      printf '%s\n' "The bundle at $bundle did not materialise." >&2
+      exit 1
+    fi
+    sleep 5
+  done
+
   say "Cloning the configuration repository into $dotfiles"
   mkdir -p "$(dirname "$dotfiles")"
-  git clone git@github.com:mac95sb/configuration.git "$dotfiles"
+  git clone "$bundle" "$dotfiles"
 fi
 
 mise=$HOME/.local/bin/mise
@@ -151,15 +152,20 @@ cloudflared_home=$HOME/.cloudflared
 local_credentials=$cloudflared_home/$tunnel_id.json
 
 if [ ! -f "$local_credentials" ]; then
-  say --wait 'Cloudflare browser authentication required' \
-    'On a rebuild, delete or rename the old home-caddy tunnel in the dashboard first; locally-managed tunnel credentials cannot be regenerated.'
+  say --wait 'Cloudflare browser authentication required'
   "$mise" -C "$dotfiles" exec -- cloudflared tunnel login
 
-  create_output=''
-  until create_output=$("$mise" -C "$dotfiles" exec -- cloudflared tunnel create home-caddy 2>&1); do
+  if ! create_output=$("$mise" -C "$dotfiles" exec -- cloudflared tunnel create home-caddy 2>&1); then
     printf '%s\n' "$create_output" >&2
-    say --wait 'Resolve the home-caddy tunnel-name conflict in Cloudflare before retrying'
-  done
+    say 'Deleting the leftover home-caddy tunnel' \
+      'Cloudflare refuses this while the tunnel still has active connections.'
+    "$mise" -C "$dotfiles" exec -- cloudflared tunnel delete home-caddy
+
+    if ! create_output=$("$mise" -C "$dotfiles" exec -- cloudflared tunnel create home-caddy 2>&1); then
+      printf '%s\n' "$create_output" >&2
+      exit 1
+    fi
+  fi
   printf '%s\n' "$create_output"
 
   new_tunnel_id=$(printf '%s\n' "$create_output" | grep -Eo '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}' | tail -n 1)
@@ -235,45 +241,23 @@ else
   unset forgejo_password
 fi
 
-say 'Configuring Forgejo-primary repositories and GitHub mirrors'
-for repo_name in configuration robin; do
-  repository=$HOME/Developer/$repo_name
-  forgejo_url=https://git.maclong.dev/mac/$repo_name.git
-  github_url=https://github.com/mac95sb/$repo_name.git
+say 'Pointing the configuration repository at Forgejo'
+forgejo_url=https://git.maclong.dev/mac/configuration.git
+current_origin=$(git -C "$dotfiles" remote get-url origin 2>/dev/null || :)
 
-  if [ ! -d "$repository/.git" ]; then
-    say "Skipping $repo_name because $repository is not cloned"
-    continue
-  fi
+if [ "$current_origin" = "$forgejo_url" ]; then
+  say 'The configuration repository already uses Forgejo as origin'
+else
+  say --wait 'Create the empty mac/configuration repository in Forgejo before continuing'
 
-  current_origin=$(git -C "$repository" remote get-url origin 2>/dev/null || :)
-  current_github=$(git -C "$repository" remote get-url github 2>/dev/null || :)
-  if [ "$current_origin" = "$forgejo_url" ] && [ "$current_github" = "$github_url" ]; then
-    say "$repo_name already uses Forgejo as origin and GitHub as its mirror remote"
-    continue
-  fi
-
-  say --wait "Prepare the $repo_name repository mirrors" \
-    "1. Create the empty mac/$repo_name repository in Forgejo." \
-    "2. Add its GitHub push mirror for $github_url with the scoped PAT."
-
-  if git -C "$repository" remote get-url forgejo >/dev/null 2>&1; then
-    git -C "$repository" remote set-url forgejo "$forgejo_url"
+  if [ -n "$current_origin" ]; then
+    git -C "$dotfiles" remote set-url origin "$forgejo_url"
   else
-    git -C "$repository" remote add forgejo "$forgejo_url"
+    git -C "$dotfiles" remote add origin "$forgejo_url"
   fi
-  git -C "$repository" push forgejo --all
-  git -C "$repository" push forgejo --tags
 
-  if git -C "$repository" remote get-url github >/dev/null 2>&1; then
-    git -C "$repository" remote set-url github "$github_url"
-    git -C "$repository" remote set-url origin "$forgejo_url"
-    git -C "$repository" remote remove forgejo
-  else
-    git -C "$repository" remote rename origin github
-    git -C "$repository" remote set-url github "$github_url"
-    git -C "$repository" remote rename forgejo origin
-  fi
-done
+  git -C "$dotfiles" push origin --all
+  git -C "$dotfiles" push origin --tags
+fi
 
 say 'System provisioning complete'

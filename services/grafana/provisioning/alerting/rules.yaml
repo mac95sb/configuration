@@ -119,3 +119,62 @@ groups:
               expression: free
               conditions:
                 - evaluator: { type: lt, params: [0.1] }
+
+  - orgId: 1
+    name: backup
+    folder: Alerts
+    interval: 5m
+    rules:
+      - uid: backup_stale
+        title: Backup has not succeeded
+        condition: threshold
+        for: 0m
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "No successful backup run in over 26 hours."
+        labels:
+          severity: critical
+        data:
+          - refId: age
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: age
+              expr: time() - backup_last_success_seconds
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: age
+              conditions:
+                - evaluator: { type: gt, params: [93600] }
+
+      - uid: backup_courier_stale
+        title: Backups are not reaching iCloud
+        condition: threshold
+        for: 0m
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "The iCloud courier has not run in over 26 hours; R2 may still be current."
+        labels:
+          severity: warning
+        data:
+          - refId: age
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: age
+              expr: time() - backup_courier_last_success_seconds
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: age
+              conditions:
+                - evaluator: { type: gt, params: [93600] }

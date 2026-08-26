@@ -1,5 +1,11 @@
 {
 	default_bind 127.0.0.1
+
+	# Per-server HTTP metrics are off by default; the admin endpoint only
+	# exposes admin and upstream-health metrics without this.
+	servers {
+		metrics
+	}
 }
 
 :8080 {

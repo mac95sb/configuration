@@ -15,7 +15,7 @@ run = "/Users/mac/Developer/configuration/services/cloudflared/start.sh"
 [daemons.node_exporter]
 user = "svc_observability"
 boot_start = true
-run = "/usr/local/bin/node_exporter --web.listen-address=127.0.0.1:9101"
+run = "/usr/local/bin/node_exporter --web.listen-address=127.0.0.1:9101 --collector.textfile.directory=/Users/svc_observability/textfile"
 
 [daemons.blackbox]
 user = "svc_observability"
@@ -49,3 +49,15 @@ user = "svc_forgejo"
 boot_start = true
 env = { HOME = "/Users/svc_forgejo" }
 run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile forgejo -- /Users/mac/Developer/configuration/services/forgejo/start.sh"
+
+[daemons.log_shipper]
+user = "mac"
+boot_start = true
+run = "/Users/mac/Developer/configuration/services/logs/ship.sh"
+
+[daemons.backup]
+user = "svc_backup"
+boot_start = true
+cron_schedule = "0 0 3 * * *"
+cron_retrigger = "finish"
+run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile backup -- /Users/mac/Developer/configuration/services/backup/backup.sh"

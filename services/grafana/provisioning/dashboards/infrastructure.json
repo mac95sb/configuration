@@ -6,7 +6,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "refresh": "1m",
+  "refresh": "30s",
   "time": {
     "from": "now-6h",
     "to": "now"
@@ -48,7 +48,8 @@
           "legendFormat": "{{job}} {{instance}}",
           "refId": "A"
         }
-      ]
+      ],
+      "description": "1 = Prometheus reached that target, 0 = it did not. The same signal as the Daemon scrape health tiles on Server overview, but over time, so you can see when something dropped and for how long."
     },
     {
       "id": 2,
@@ -86,7 +87,8 @@
           "legendFormat": "{{instance}}",
           "refId": "A"
         }
-      ]
+      ],
+      "description": "1 = the hostname answered a probe through Cloudflare, 0 = it did not. Gaps show outages as your users would have experienced them, not as the host saw them."
     },
     {
       "id": 3,
@@ -124,7 +126,8 @@
           "legendFormat": "{{instance}}",
           "refId": "A"
         }
-      ]
+      ],
+      "description": "How long each public probe took, end to end through Cloudflare. Watch for a step change rather than an absolute value \u2014 a sustained rise usually means a slow backend, not a slow network."
     },
     {
       "id": 4,
@@ -161,7 +164,8 @@
           "legendFormat": "sent/s",
           "refId": "A"
         }
-      ]
+      ],
+      "description": "Rate of log lines successfully accepted by Loki. Should track activity. Flat zero while services are clearly running means the shipping path has broken."
     },
     {
       "id": 5,
@@ -198,12 +202,13 @@
           "legendFormat": "{{reason}}",
           "refId": "A"
         }
-      ]
+      ],
+      "description": "Log lines Loki refused. Any value above zero means lines are being lost \u2014 usually rate limiting or a malformed stream \u2014 and the logs you are reading are then incomplete."
     },
     {
       "id": 6,
       "type": "timeseries",
-      "title": "Root filesystem free",
+      "title": "Disk used",
       "gridPos": {
         "h": 7,
         "w": 12,
@@ -222,7 +227,7 @@
           },
           "min": 0,
           "mappings": [],
-          "unit": "percentunit",
+          "unit": "percent",
           "max": 1
         },
         "overrides": []
@@ -233,11 +238,13 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}",
+          "expr": "(1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100",
           "legendFormat": "free",
           "refId": "A"
         }
-      ]
+      ],
+      "description": "Share of the root volume in use, over time. The Server overview tile shows the same figure right now."
     }
-  ]
+  ],
+  "description": "Trends over time for the whole system: scrape and probe history, log pipeline throughput, and disk headroom. Use this when you want to know when something broke and for how long. For a right-now view of individual services, use Server overview instead."
 }

@@ -9,6 +9,7 @@ experimental = true
 # orphans them. Move these deliberately with `mise upgrade --bump`, which also
 # rewrites the pins below; `mise run daemon:relink` then repoints the symlinks.
 "aqua:prometheus/prometheus" = "3.14.0"
+age = "1.3.1"
 caddy = "2.11.4"
 cloudflared = "2026.7.3"
 fnox = "1.31.1"
@@ -16,11 +17,11 @@ fnox = "1.31.1"
 "github:grafana/loki" = "3.7.6"
 "github:prometheus/blackbox_exporter" = "0.28.0"
 pitchfork = "2.20.0"
+rclone = "1.75.0"
 "ubi:prometheus/node_exporter" = "1.12.1"
 
 # User tools track latest. Nothing depends on their exact version, so a plain
 # `mise upgrade` moves these and leaves the pinned service tools alone.
-age = "latest"
 hk = "latest"
 mas = "latest"
 pkl = "latest"
@@ -36,7 +37,7 @@ github-cli = "latest"
 # install on a password prompt.
 postinstall = """
 case "$MISE_INSTALLED_TOOLS" in
-  *alloy*|*blackbox_exporter*|*caddy*|*cloudflared*|*fnox*|*loki*|*node_exporter*|*pitchfork*|*prometheus*) ;;
+  *age*|*alloy*|*blackbox_exporter*|*caddy*|*cloudflared*|*fnox*|*loki*|*node_exporter*|*pitchfork*|*prometheus*|*rclone*) ;;
   *) exit 0 ;;
 esac
 if sudo -n true 2>/dev/null; then
@@ -47,9 +48,8 @@ fi
 """
 
 [bootstrap.repos]
-"~/Developer/configuration" = { url = "git@github.com:mac95sb/configuration.git" }
-"~/Developer/portfolio" = { url = "git@github.com:mac95sb/portfolio.git" }
-"~/Developer/robin" = { url = "git@github.com:mac95sb/robin.git" }
+"~/Developer/configuration" = { url = "https://git.maclong.dev/mac/configuration.git" }
+"~/Developer/robin" = { url = "https://git.maclong.dev/mac/robin.git" }
 
 [bootstrap.packages]
 "brew-cask:claude" = "latest"                             # Claude
@@ -77,6 +77,13 @@ fi
 [bootstrap.macos.defaults."com.apple.WindowManager"]
 EnableTiledWindowMargins = true
 GloballyEnabled = true
+
+[bootstrap.macos.launchd.agents.backup-courier]
+program = "/Users/mac/Developer/configuration/services/backup/courier.sh"
+run_at_load = true
+start_interval = 3600
+stdout_path = "~/Library/Logs/backup-courier.log"
+stderr_path = "~/Library/Logs/backup-courier.log"
 
 [bootstrap.macos.finder]
 preferred_view_style = "column"
@@ -107,6 +114,9 @@ fi
 if ! dscl . -read /Groups/observability >/dev/null 2>&1; then
   sudo dseditgroup -o create observability
 fi
+if ! dscl . -read /Users/svc_backup >/dev/null 2>&1; then
+  sudo sysadminctl -addUser svc_backup -fullName "Backup service account" -shell /usr/bin/false -roleAccount
+fi
 if ! dscl . -read /Users/svc_caddy >/dev/null 2>&1; then
   sudo sysadminctl -addUser svc_caddy -fullName "Caddy service account" -shell /usr/bin/false -roleAccount
 fi
@@ -119,9 +129,14 @@ fi
 if ! dscl . -read /Users/svc_observability >/dev/null 2>&1; then
   sudo sysadminctl -addUser svc_observability -fullName "Observability service account" -shell /usr/bin/false -roleAccount
 fi
+sudo dseditgroup -o edit -a svc_backup -t user fnox
 sudo dseditgroup -o edit -a svc_forgejo -t user fnox
 sudo dseditgroup -o edit -a svc_observability -t user fnox
 sudo dseditgroup -o edit -a svc_observability -t user observability
+sudo dseditgroup -o edit -a svc_backup -t user observability
+sudo install -d -m 750 -o svc_backup -g staff /Users/svc_backup/backup-staging
+sudo dseditgroup -o edit -a mac -t user observability
+sudo install -d -m 775 -o svc_observability -g observability /Users/svc_observability/textfile
 """
 
 [tasks.check]
@@ -136,6 +151,11 @@ sudo install -d -m 755 -o root -g wheel /etc/pitchfork
 sudo ln -sf /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
 sudo chmod o+x /Users/mac
 sudo install -d -m 750 -o svc_caddy -g observability /var/log/caddy
+sudo install -d -m 750 -o mac -g observability /var/log/services
+sudo tee /etc/newsyslog.d/pitchfork.conf >/dev/null <<'ROTATE'
+# logfile                        owner:group    mode count size when flags
+/var/log/services/pitchfork.log  mac:observability 640  5     10240 *    J
+ROTATE
 sudo pitchfork boot enable
 
 # pitchfork writes its own versioned install path into the plist, so a version
@@ -150,7 +170,7 @@ sudo /usr/libexec/PlistBuddy -c 'Add :KeepAlive bool true' "$plist" 2>/dev/null 
 [tasks."daemon:relink"]
 description = "Repoint /usr/local/bin at the current service binaries after a version change"
 run = """
-for bin in alloy blackbox_exporter caddy cloudflared fnox loki node_exporter pitchfork prometheus; do
+for bin in age alloy blackbox_exporter caddy cloudflared fnox loki node_exporter pitchfork prometheus rclone; do
   sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
 done
 sudo ln -sf /opt/homebrew/bin/forgejo /usr/local/bin/forgejo
