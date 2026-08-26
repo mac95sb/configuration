@@ -5,7 +5,7 @@ work_path="/Users/svc_forgejo/forgejo-data"
 config="$work_path/app.ini"
 
 mkdir -p "$work_path"
-install -m 640 /Users/mac/Developer/configuration/services/forgejo/app.ini "$config"
+install -m 600 /Users/mac/Developer/configuration/services/forgejo/app.ini "$config"
 cat >>"$config" <<-EOF
 
 	[security]

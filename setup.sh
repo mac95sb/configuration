@@ -151,7 +151,7 @@ tunnel_id=$(awk '/^tunnel:/ { print $2; exit }' "$cloudflared_config")
 cloudflared_home=$HOME/.cloudflared
 local_credentials=$cloudflared_home/$tunnel_id.json
 
-if [ ! -f "$local_credentials" ]; then
+if [ ! -f "/etc/cloudflared/$tunnel_id.json" ] && [ ! -f "$local_credentials" ]; then
   say --wait 'Cloudflare browser authentication required'
   "$mise" -C "$dotfiles" exec -- cloudflared tunnel login
 
@@ -186,19 +186,31 @@ if [ ! -f "$local_credentials" ]; then
     'Review and commit that generated configuration change.'
 fi
 
-sudo install -d -m 755 -o root -g wheel /etc/cloudflared
-sudo install -o svc_cloudflared -g staff -m 400 \
-  "$local_credentials" "/etc/cloudflared/$tunnel_id.json"
+if [ -f "$local_credentials" ]; then
+  sudo install -d -m 755 -o root -g wheel /etc/cloudflared
+  sudo install -o svc_cloudflared -g staff -m 400 \
+    "$local_credentials" "/etc/cloudflared/$tunnel_id.json"
+  rm -f "$local_credentials"
+fi
 
 say --wait 'Protect dashboard.maclong.dev with Cloudflare Access' \
   'In Cloudflare Zero Trust, create a self-hosted Access application for dashboard.maclong.dev.' \
   'Add an Allow policy restricted to your identity before continuing.'
 
-awk '$1 == "-" && $2 == "hostname:" { print $3 }' "$cloudflared_config" |
-  while IFS= read -r hostname; do
-    "$mise" -C "$dotfiles" exec -- \
-      cloudflared tunnel route dns --overwrite-dns "$tunnel_id" "$hostname"
-  done
+# cert.pem is not the tunnel credential: it is a zone-wide origin certificate
+# that can create, delete, and re-route every tunnel in the zone. Nothing after
+# the DNS routes needs it, so it does not stay in the operator's home.
+if [ -f "$cloudflared_home/cert.pem" ]; then
+  awk '$1 == "-" && $2 == "hostname:" { print $3 }' "$cloudflared_config" |
+    while IFS= read -r hostname; do
+      "$mise" -C "$dotfiles" exec -- \
+        cloudflared tunnel route dns --overwrite-dns "$tunnel_id" "$hostname"
+    done
+  rm -f "$cloudflared_home/cert.pem"
+else
+  say 'Skipping DNS routing: no Cloudflare origin certificate present' \
+    'Run cloudflared tunnel login first if the hostnames need re-routing.'
+fi
 
 say 'Installing and starting the pitchfork supervisor'
 "$mise" -C "$dotfiles" run daemon:install
@@ -219,26 +231,24 @@ if sudo -u svc_forgejo /usr/local/bin/forgejo admin user list \
   grep -Eq '^[[:space:]]*[0-9]+[[:space:]]+'; then
   say 'A Forgejo user already exists; skipping administrator creation'
 else
-  say 'Choose the initial Forgejo administrator credentials'
+  say 'Choose the initial Forgejo administrator'
   printf '%s' 'Username: '
   read -r forgejo_username
   printf '%s' 'Email: '
   read -r forgejo_email
-  printf '%s' 'Temporary password (input hidden): '
-  trap 'stty echo 2>/dev/null || :' EXIT HUP INT TERM
-  stty -echo
-  read -r forgejo_password
-  stty echo
-  trap - EXIT HUP INT TERM
-  printf '\n'
+
+  # Forgejo generates and prints the password. Passing one as --password would
+  # expose it in `ps` to every local account for the life of the command.
   sudo -u svc_forgejo /usr/local/bin/forgejo admin user create \
     --work-path "$forgejo_work_path" \
     --config "$forgejo_config" \
     --username "$forgejo_username" \
     --email "$forgejo_email" \
-    --password "$forgejo_password" \
+    --random-password \
+    --must-change-password \
     --admin
-  unset forgejo_password
+  say --wait 'Save the generated password above' \
+    'Forgejo requires changing it at first login.'
 fi
 
 say 'Pointing the configuration repository at Forgejo'

@@ -148,7 +148,8 @@ description = "Point pitchfork's global config at this repo, expose binaries ser
 depends = ["daemon:relink"]
 run = """
 sudo install -d -m 755 -o root -g wheel /etc/pitchfork
-sudo ln -sf /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
+sudo install -o root -g wheel -m 644 \
+  /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
 sudo chmod o+x /Users/mac
 sudo install -d -m 750 -o svc_caddy -g observability /var/log/caddy
 sudo install -d -m 750 -o mac -g observability /var/log/services
@@ -170,16 +171,28 @@ sudo /usr/libexec/PlistBuddy -c 'Add :KeepAlive bool true' "$plist" 2>/dev/null 
 [tasks."daemon:relink"]
 description = "Repoint /usr/local/bin at the current service binaries after a version change"
 run = """
+# Copy rather than symlink. /usr/local/bin/pitchfork is the root LaunchDaemon's
+# executable, so a link into the mac-owned mise tree would let anything running
+# as mac take root at the next boot with no Touch ID prompt in the way.
 for bin in age alloy blackbox_exporter caddy cloudflared fnox loki node_exporter pitchfork prometheus rclone; do
-  sudo ln -sf "$(mise which "$bin")" "/usr/local/bin/$bin"
+  sudo install -o root -g wheel -m 755 "$(mise which "$bin")" "/usr/local/bin/$bin"
 done
+
+# These stay symlinks: grafana resolves its homepath tree relative to the
+# Homebrew prefix, and neither of them is ever executed as root.
 sudo ln -sf /opt/homebrew/bin/forgejo /usr/local/bin/forgejo
 sudo ln -sf /opt/homebrew/bin/grafana /usr/local/bin/grafana
 """
 
 [tasks."daemon:reload"]
-description = "Restart all daemons after editing pitchfork.toml"
-run = "pitchfork restart --all-global"
+description = "Install the edited pitchfork.toml as root and restart all daemons"
+run = """
+# The supervisor reads the root-owned copy, not this checkout, so an edit here
+# only takes effect once someone with sudo installs it.
+sudo install -o root -g wheel -m 644 \
+  /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
+pitchfork restart --all-global
+"""
 
 [tasks.fix]
 description = "Run hk's quality gate with fixes applied"

@@ -13,7 +13,8 @@ loki.process "caddy" {
 	forward_to = [loki.write.local.receiver]
 
 	// Rewrites the stored log line itself, not just an extracted copy —
-	// the plaintext IP never reaches disk. Same input always produces
+	// the plaintext IP never reaches Loki. It does reach the Caddy access
+	// log first, which is why that file rolls fast. Same input produces
 	// the same token (trace correlation intact) without the salt.
 	// `.Value` is the matched capture group's own text, not a named
 	// field — a named group only matters for exposing it elsewhere.
