@@ -4,10 +4,7 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
-# Service tools are pinned. Daemons reach these through /usr/local/bin symlinks
-# that resolve to a versioned install path, so an unattended version change
-# orphans them. Move these deliberately with `mise upgrade --bump`, which also
-# rewrites the pins below; `mise run daemon:relink` then repoints the symlinks.
+# Service tools
 "aqua:prometheus/prometheus" = "3.14.0"
 age = "1.3.1"
 caddy = "2.11.4"
@@ -20,8 +17,7 @@ pitchfork = "2.20.0"
 rclone = "1.75.0"
 "ubi:prometheus/node_exporter" = "1.12.1"
 
-# User tools track latest. Nothing depends on their exact version, so a plain
-# `mise upgrade` moves these and leaves the pinned service tools alone.
+# User tools
 hk = "latest"
 mas = "latest"
 pkl = "latest"
@@ -31,10 +27,6 @@ taplo = "latest"
 github-cli = "latest"
 
 [hooks]
-# A pinned service tool only moves on `mise upgrade --bump`, and when it does the
-# /usr/local/bin symlinks still point at the old versioned path. Relink straight
-# away when sudo is already available; otherwise say so rather than blocking the
-# install on a password prompt.
 postinstall = """
 case "$MISE_INSTALLED_TOOLS" in
   *age*|*alloy*|*blackbox_exporter*|*caddy*|*cloudflared*|*fnox*|*loki*|*node_exporter*|*pitchfork*|*prometheus*|*rclone*) ;;
@@ -48,18 +40,14 @@ fi
 """
 
 [bootstrap.repos]
-"~/Developer/configuration" = { url = "https://git.maclong.dev/mac/configuration.git" }
-"~/Developer/robin" = { url = "https://git.maclong.dev/mac/robin.git" }
+"~/Developer/configuration" = { url = "git@git.maclong.dev:mac/configuration.git" }
+"~/Developer/robin" = { url = "git@git.maclong.dev:mac/robin.git" }
 
 [bootstrap.packages]
-"brew-cask:claude" = "latest"                             # Claude
 "brew-cask:crossover" = "latest"                          # Crossover
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
 "brew-cask:font-sf-pro" = "latest"                        # SF Pro
 "brew-cask:mole-app" = "latest"                           # Mole
-# Forgejo and Grafana are service binaries but Homebrew has no version pinning,
-# so they cannot join the pinned block in [tools]. Their /usr/local/bin symlinks
-# point at stable Homebrew paths, so a version change does not orphan them.
 "brew:forgejo" = "latest"   # Forgejo
 "brew:grafana" = "latest"   # Grafana
 "mas:1289583905" = "latest" # Pixelmator Pro
