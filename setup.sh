@@ -259,8 +259,8 @@ else
 fi
 
 say 'Pointing the configuration repository at Forgejo'
-forgejo_url=https://git.maclong.dev/mac/configuration.git
-current_origin=$(git -C "$dotfiles" remote get-url origin 2>/dev/null || :)
+forgejo_url=git@git.maclong.dev:mac/configuration.git
+current_origin=$(git -C "$dotfiles" config --get remote.origin.url 2>/dev/null || :)
 
 if [ "$current_origin" = "$forgejo_url" ]; then
   say 'The configuration repository already uses Forgejo as origin'

@@ -35,3 +35,6 @@
 	email = contact@maclong.dev
 	name = Mac
 	signingkey = ~/.ssh/id_ed25519
+
+[url "ssh://git@127.0.0.1:2222/"]
+	insteadOf = git@git.maclong.dev:
