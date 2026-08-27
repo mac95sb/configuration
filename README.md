@@ -16,6 +16,37 @@ sh "$HOME/Developer/configuration/setup.sh"
 `brctl download` materialises the bundle, which iCloud Drive may hold as a
 placeholder. Cloudflare R2 carries the same bundles if iCloud is unreachable.
 
+## Backup and recovery
+
+The backup daemon runs at 03:00 daily. It keeps encrypted dailies, promotes
+Sundays to weeklies and the last Sunday of each month to monthlies, then copies
+the same 8.5 GB tier-aware rolling set to Cloudflare R2 and iCloud Drive.
+
+Application data, service configuration and repositories have a 24-hour RPO
+and four-hour RTO. Restore-from-backup is deliberate; there is no live storage
+redundancy. Reconsider the design when free space falls below 100 GiB, is
+projected to do so within 12 months, a second always-on host needs shared
+writable data, or a service needs an RTO below four hours. Applications with
+external users move to managed hosting before storing user data.
+
+Restore into a disposable directory, never over live service paths:
+
+```sh
+restore=$(mktemp -d /private/tmp/home-restore.XXXXXX)
+sudo chown svc_backup:staff "$restore"
+sudo chmod 750 "$restore"
+sudo -u svc_backup fnox exec --config "$PWD/fnox.toml" --profile backup -- \
+  rclone copyto R2:home-backups/daily/YYYY-MM-DD.tar.gz.age "$restore/archive.age"
+sudo -u svc_backup age -d -i /etc/fnox/operational.key \
+  -o "$restore/archive.tar.gz" "$restore/archive.age"
+tar -xzf "$restore/archive.tar.gz" -C "$restore"
+```
+
+On 27 August 2026 an R2 restore verified both SQLite databases, both Git
+bundles and both Forgejo repositories. Grafana then started from the restored
+database on a clean temporary path and reported `database: ok`. Repeat the
+drill annually and after any material backup change.
+
 ## Architecture
 ```mermaid
 flowchart LR
