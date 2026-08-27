@@ -10,7 +10,7 @@ loki.source.file "caddy" {
 }
 
 loki.process "caddy" {
-	forward_to = [loki.write.local.receiver]
+	forward_to = [loki.process.level.receiver]
 
 	// Rewrites the stored log line itself, not just an extracted copy —
 	// the plaintext IP never reaches Loki. It does reach the Caddy access
@@ -45,7 +45,7 @@ loki.source.file "daemons" {
 }
 
 loki.process "daemons" {
-	forward_to = [loki.write.local.receiver]
+	forward_to = [loki.process.level.receiver]
 
 	// Tag only: the timestamp prefix is governed by logs.timestamp_format.
 	stage.regex {
@@ -68,7 +68,7 @@ loki.source.file "postfix" {
 }
 
 loki.process "postfix" {
-	forward_to = [loki.write.local.receiver]
+	forward_to = [loki.process.level.receiver]
 
 	stage.regex {
 		expression = "localhost (?P<postfix_component>postfix|master|pickup|cleanup|qmgr|smtp|bounce|defer|local)\\["
@@ -95,6 +95,7 @@ loki.process "postfix" {
 			action            = "inc"
 			max_idle_duration = "168h"
 		}
+
 		metric.counter {
 			name              = "delivery_deferred_total"
 			description       = "Messages awaiting another delivery attempt."
@@ -104,6 +105,7 @@ loki.process "postfix" {
 			action            = "inc"
 			max_idle_duration = "168h"
 		}
+
 		metric.counter {
 			name              = "delivery_bounced_total"
 			description       = "Messages permanently rejected by a recipient mail server."
@@ -112,6 +114,32 @@ loki.process "postfix" {
 			value             = "bounced"
 			action            = "inc"
 			max_idle_duration = "168h"
+		}
+	}
+}
+
+loki.process "level" {
+	forward_to = [loki.write.local.receiver]
+
+	// A line without an explicit severity is routine output. Normalise the
+	// formats emitted by the managed services into one low-cardinality label.
+	stage.static_labels {
+		values = {level = "INFO"}
+	}
+
+	stage.match {
+		selector = "{level=\"INFO\"} |~ \"(?i)(\\\"level\\\"\\\\s*:\\s*\\\"(?:warn(?:ing)?|wrn)\\\"|\\\\blevel=(?:warn(?:ing)?|wrn)\\\\b|\\\\[(?:W|WRN|WARN|WARNING)\\\\]|\\\\] \\S+ (?:WRN|WARN|WARNING) |\\\\]: warn(?:ing)?:|status=deferred\\\\b)\""
+
+		stage.static_labels {
+			values = {level = "WARN"}
+		}
+	}
+
+	stage.match {
+		selector = "{level=~\"INFO|WARN\"} |~ \"(?i)(\\\"level\\\"\\\\s*:\\s*\\\"(?:error|err|fatal|critical|crit|panic)\\\"|\\\\blevel=(?:error|err|fatal|critical|crit|panic)\\\\b|\\\\[(?:E|F|ERR|ERROR|FATAL)\\\\]|\\\\] \\S+ (?:ERR|ERROR|FATAL) |\\\\]: (?:error|fatal|panic):|status=bounced\\\\b)\""
+
+		stage.static_labels {
+			values = {level = "ERROR"}
 		}
 	}
 }

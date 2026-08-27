@@ -6,7 +6,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 10,
+  "version": 11,
   "graphTooltip": 1,
   "refresh": "30s",
   "time": {
@@ -1241,7 +1241,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service=~\"$service\"} |~ \"(?i)(level=(error|fatal)|\\\\[(E|F)\\\\])\" [$__interval]))",
+          "expr": "sum(count_over_time({service=~\"$service\", level=\"ERROR\"} [$__interval]))",
           "legendFormat": "Error"
         },
         {
@@ -1250,7 +1250,7 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service=~\"$service\"} |~ \"(?i)(level=warn(ing)?|\\\\[W\\\\])\" [$__interval]))",
+          "expr": "sum(count_over_time({service=~\"$service\", level=\"WARN\"} [$__interval]))",
           "legendFormat": "Warning"
         },
         {
@@ -1259,17 +1259,8 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "sum(count_over_time({service=~\"$service\"} |~ \"(?i)(level=info|\\\\[I\\\\])\" [$__interval]))",
+          "expr": "sum(count_over_time({service=~\"$service\", level=\"INFO\"} [$__interval]))",
           "legendFormat": "Info"
-        },
-        {
-          "refId": "D",
-          "datasource": {
-            "type": "loki",
-            "uid": "loki"
-          },
-          "expr": "sum(count_over_time({service=~\"$service\"} !~ \"(?i)(level=(info|warn(ing)?|error|fatal)|\\\\[(I|W|E|F)\\\\])\" [$__interval]))",
-          "legendFormat": "Other"
         }
       ],
       "fieldConfig": {
@@ -1330,21 +1321,6 @@
                 }
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Other"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "#94a19b"
-                }
-              }
-            ]
           }
         ]
       },
@@ -1359,7 +1335,7 @@
           "sort": "desc"
         }
       },
-      "description": "Log lines per interval, grouped by detected severity across the selected services. Hover for exact counts or drag over a burst to narrow the dashboard and inspect the matching raw logs below."
+      "description": "Log lines per interval, grouped by the INFO, WARN or ERROR severity assigned during ingestion. Hover for exact counts or drag over a burst to narrow the dashboard and inspect the matching raw logs below."
     },
     {
       "type": "logs",
