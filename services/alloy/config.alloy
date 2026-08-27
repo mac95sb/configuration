@@ -128,7 +128,7 @@ loki.process "level" {
 	}
 
 	stage.match {
-		selector = "{level=\"INFO\"} |~ \"(?i)(\\\"level\\\"\\\\s*:\\s*\\\"(?:warn(?:ing)?|wrn)\\\"|\\\\blevel=(?:warn(?:ing)?|wrn)\\\\b|\\\\[(?:W|WRN|WARN|WARNING)\\\\]|\\\\] \\S+ (?:WRN|WARN|WARNING) |\\\\]: warn(?:ing)?:|status=deferred\\\\b)\""
+		selector = "{level=\"INFO\"} |~ \"(?i)(\\\"level\\\"\\\\s*:\\\\s*\\\"(?:warn(?:ing)?|wrn)\\\"|\\\\blevel=(?:warn(?:ing)?|wrn)\\\\b|\\\\[(?:W|WRN|WARN|WARNING)\\\\]|\\\\] \\\\S+ (?:WRN|WARN|WARNING) |\\\\]: warn(?:ing)?:|status=deferred\\\\b)\""
 
 		stage.static_labels {
 			values = {level = "WARN"}
@@ -136,7 +136,7 @@ loki.process "level" {
 	}
 
 	stage.match {
-		selector = "{level=~\"INFO|WARN\"} |~ \"(?i)(\\\"level\\\"\\\\s*:\\s*\\\"(?:error|err|fatal|critical|crit|panic)\\\"|\\\\blevel=(?:error|err|fatal|critical|crit|panic)\\\\b|\\\\[(?:E|F|ERR|ERROR|FATAL)\\\\]|\\\\] \\S+ (?:ERR|ERROR|FATAL) |\\\\]: (?:error|fatal|panic):|status=bounced\\\\b)\""
+		selector = "{level=~\"INFO|WARN\"} |~ \"(?i)(\\\"level\\\"\\\\s*:\\\\s*\\\"(?:error|err|fatal|critical|crit|panic)\\\"|\\\\blevel=(?:error|err|fatal|critical|crit|panic)\\\\b|\\\\[(?:E|F|ERR|ERROR|FATAL)\\\\]|\\\\] \\\\S+ (?:ERR|ERROR|FATAL) |\\\\]: (?:error|fatal|panic):|status=bounced\\\\b)\""
 
 		stage.static_labels {
 			values = {level = "ERROR"}
