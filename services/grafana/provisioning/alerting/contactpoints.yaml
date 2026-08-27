@@ -9,7 +9,7 @@ contactPoints:
         disableResolveMessage: false
         settings:
           # Injected by fnox at daemon start; the topic URL is a capability and
-          # is not committed. See [profiles.grafana] in fnox.toml.
+          # is not committed. See [profiles.notifications] in fnox.toml.
           url: $NTFY_URL
           httpMethod: POST
           headers:

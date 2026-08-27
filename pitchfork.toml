@@ -48,7 +48,7 @@ run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox
 user = "svc_observability"
 boot_start = true
 depends = ["prometheus", "loki"]
-run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile grafana -- /usr/local/bin/grafana server --config=/Users/mac/Developer/configuration/services/grafana/config.ini --homepath=/opt/homebrew/opt/grafana/share/grafana --packaging=brew cfg:default.paths.logs=/Users/svc_observability/grafana-logs cfg:default.paths.data=/Users/svc_observability/grafana-data cfg:default.paths.plugins=/Users/svc_observability/grafana-plugins"
+run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile grafana,notifications -- /usr/local/bin/grafana server --config=/Users/mac/Developer/configuration/services/grafana/config.ini --homepath=/opt/homebrew/opt/grafana/share/grafana --packaging=brew cfg:default.paths.logs=/Users/svc_observability/grafana-logs cfg:default.paths.data=/Users/svc_observability/grafana-data cfg:default.paths.plugins=/Users/svc_observability/grafana-plugins"
 
 [daemons.forgejo]
 user = "svc_forgejo"
