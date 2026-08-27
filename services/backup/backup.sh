@@ -2,7 +2,9 @@
 set -eu
 
 repo=/Users/mac/Developer/configuration
-staging=/Users/svc_backup/backup-staging
+staging=${BACKUP_STAGING:-/Users/svc_backup/backup-staging}
+remote=${BACKUP_REMOTE-R2:home-backups}
+metrics_dir=${BACKUP_METRICS_DIR-/Users/svc_observability/textfile}
 stamp=$(date +%F)
 
 # awk, not a TOML parser: taplo is a user tool and not on a service PATH.
@@ -61,11 +63,14 @@ fi
 
 "$repo/services/backup/prune.sh" "$staging"
 
-/usr/local/bin/rclone sync "$staging" R2:home-backups
+if [ -n "$remote" ]; then
+  /usr/local/bin/rclone sync "$staging" "$remote"
+fi
 
 metric=backup_last_success_seconds
-metrics_dir=/Users/svc_observability/textfile
-printf '%s %s\n' "$metric" "$(date +%s)" >"$metrics_dir/$metric.tmp"
-mv "$metrics_dir/$metric.tmp" "$metrics_dir/$metric.prom"
+if [ -n "$metrics_dir" ]; then
+  printf '%s %s\n' "$metric" "$(date +%s)" >"$metrics_dir/$metric.tmp"
+  mv "$metrics_dir/$metric.tmp" "$metrics_dir/$metric.prom"
+fi
 
 printf 'backup complete: %s\n' "$archive"
