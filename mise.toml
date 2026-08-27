@@ -200,3 +200,15 @@ pitchfork restart --all-global
 [tasks.fix]
 description = "Run hk's quality gate with fixes applied"
 run = "hk fix"
+
+[tasks."mail:install"]
+description = "Configure the built-in Postfix for local, direct outbound mail"
+run = "/Users/mac/Developer/configuration/services/mail/install.sh"
+
+[tasks."mail:dns"]
+description = "Print the DNS records required for direct outbound mail"
+run = "/Users/mac/Developer/configuration/services/mail/dns.sh"
+
+[tasks."mail:test"]
+description = "Send a direct-delivery test message"
+run = "/Users/mac/Developer/configuration/services/mail/test.sh"

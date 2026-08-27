@@ -113,6 +113,13 @@ killall Dock || :
 say 'Creating service accounts and access groups'
 "$mise" -C "$dotfiles" run accounts:install
 
+say 'Required outbound mail DNS records'
+"$mise" -C "$dotfiles" run mail:dns
+say --wait 'Publish the outbound mail DNS records shown above'
+
+say 'Configuring local outbound mail'
+"$mise" -C "$dotfiles" run mail:install
+
 say 'Installing the operational age key'
 installed_key=/etc/fnox/operational.key
 staged_key=$HOME/operational.key

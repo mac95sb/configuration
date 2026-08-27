@@ -1,0 +1,2 @@
+# Give mail(1) a public sender. Explicit application senders are unchanged.
+@mail.maclong.dev noreply@maclong.dev
