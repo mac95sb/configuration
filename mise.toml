@@ -199,3 +199,28 @@ run = "/Users/mac/Developer/configuration/services/mail/dns.sh"
 [tasks."mail:test"]
 description = "Send a direct-delivery test message"
 run = "/Users/mac/Developer/configuration/services/mail/test.sh"
+
+[tasks."recovery:checkpoint"]
+description = "Create and courier a verified recovery point before resetting the host"
+run = """
+repo=/Users/mac/Developer/configuration
+for checkout in "$repo" /Users/mac/Developer/robin; do
+  if [ -n "$(git -C "$checkout" status --porcelain)" ]; then
+    printf 'Commit or remove every working-tree change in %s before creating a recovery point.\n' \
+      "$checkout" >&2
+    exit 1
+  fi
+done
+
+sudo -u svc_backup /usr/local/bin/fnox exec \
+  --config "$repo/fnox.toml" --profile backup -- \
+  "$repo/services/backup/backup.sh"
+
+head=$(git -C "$repo" rev-parse HEAD)
+bundle=/Users/svc_backup/backup-staging/configuration-latest.bundle
+git bundle verify "$bundle" >/dev/null
+git bundle list-heads "$bundle" | grep -Fq "$head refs/heads/main"
+"$repo/services/backup/restore.sh" --verify
+"$repo/services/backup/courier.sh"
+printf 'Recovery checkpoint contains %s and is synced to R2 and iCloud Drive.\n' "$head"
+"""

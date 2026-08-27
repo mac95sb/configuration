@@ -73,10 +73,10 @@ if [ ! -x "$mise" ]; then
   curl -fsSL https://mise.run | sh
 fi
 
-say 'Installing tools, packages, dotfiles, and repositories'
+say 'Installing tools, packages, and dotfiles'
 "$mise" -C "$dotfiles" trust
 "$mise" -C "$dotfiles" install
-"$mise" -C "$dotfiles" exec -- mise bootstrap --yes --force-dotfiles
+"$mise" -C "$dotfiles" exec -- mise bootstrap --yes --force-dotfiles --skip repos
 
 say 'Applying macOS preferences'
 sudo_file=/etc/pam.d/sudo_local
@@ -123,15 +123,29 @@ say 'Configuring local outbound mail'
 say 'Installing the operational age key'
 installed_key=/etc/fnox/operational.key
 staged_key=$HOME/operational.key
+temporary_key=
 
 if [ -f "$installed_key" ]; then
   say "Using the existing operational key at $installed_key"
 else
   if [ ! -f "$staged_key" ]; then
-    say --wait 'Operational age key required' \
-      "Place the matching private key at $staged_key." \
-      'The public recipient derived from it must already be present in fnox.toml.' \
-      'For disaster recovery, retrieve the escrow key from Apple Passwords, decrypt the secrets, and rotate them to a new operational recipient; do not generate an unrelated key for existing ciphertext.'
+    say 'Operational age key required' \
+      'Paste the matching AGE-SECRET-KEY value below; input is hidden.' \
+      'Its public recipient must already be present in fnox.toml.'
+    temporary_key=$(mktemp "${TMPDIR:-/tmp}/operational-key.XXXXXX")
+    chmod 600 "$temporary_key"
+    staged_key=$temporary_key
+    trap 'stty echo 2>/dev/null || :; rm -f "$temporary_key"' EXIT
+    trap 'exit 1' HUP INT TERM
+    printf '%s' '    Key: '
+    stty -echo
+    if ! IFS= read -r operational_identity; then
+      exit 1
+    fi
+    stty echo
+    printf '\n'
+    printf '%s\n' "$operational_identity" >"$staged_key"
+    unset operational_identity
   fi
 
   if [ ! -f "$staged_key" ]; then
@@ -152,11 +166,56 @@ else
   rm -f "$staged_key"
 fi
 
+if [ -n "$temporary_key" ]; then
+  rm -f "$temporary_key"
+  trap - EXIT HUP INT TERM
+fi
+
+say 'Preparing service binaries for restoration'
+"$mise" -C "$dotfiles" run daemon:relink
+sudo chmod o+x /Users/mac
+
+forgejo_db=/Users/svc_forgejo/forgejo-data/data/forgejo.db
+grafana_db=/Users/svc_observability/grafana-data/grafana.db
+restored=false
+if [ ! -e "$forgejo_db" ] && [ ! -e "$grafana_db" ]; then
+  say 'Restoring the latest service state'
+  "$dotfiles/services/backup/restore.sh"
+  restored=true
+elif [ ! -e "$forgejo_db" ] || [ ! -e "$grafana_db" ]; then
+  printf '%s\n' 'Only one service database exists; refusing to mix live and restored state.' >&2
+  exit 1
+fi
+
 say 'Configuring the Cloudflare Tunnel'
 cloudflared_config=$dotfiles/services/cloudflared/config.yml
 tunnel_id=$(awk '/^tunnel:/ { print $2; exit }' "$cloudflared_config")
 cloudflared_home=$HOME/.cloudflared
 local_credentials=$cloudflared_home/$tunnel_id.json
+encrypted_credentials=$dotfiles/services/cloudflared/credentials.json.age
+new_tunnel=false
+
+if [ ! -f "/etc/cloudflared/$tunnel_id.json" ] && [ -f "$encrypted_credentials" ]; then
+  credential_tmp_dir=$(mktemp -d /private/tmp/cloudflared-credential.XXXXXX)
+  credential_tmp=$credential_tmp_dir/credential.json
+  sudo chown svc_backup:staff "$credential_tmp_dir"
+  sudo chmod 700 "$credential_tmp_dir"
+  trap 'sudo -u svc_backup rm -rf "$credential_tmp_dir"' EXIT
+  trap 'exit 1' HUP INT TERM
+  sudo -u svc_backup /usr/local/bin/age -d -i /etc/fnox/operational.key \
+    -o "$credential_tmp" "$encrypted_credentials"
+  restored_tunnel_id=$(sudo -u svc_backup /usr/bin/plutil \
+    -extract TunnelID raw -o - "$credential_tmp")
+  if [ "$restored_tunnel_id" != "$tunnel_id" ]; then
+    printf 'Encrypted credentials do not belong to tunnel %s.\n' "$tunnel_id" >&2
+    exit 1
+  fi
+  sudo install -d -m 755 -o root -g wheel /etc/cloudflared
+  sudo install -o svc_cloudflared -g staff -m 400 \
+    "$credential_tmp" "/etc/cloudflared/$tunnel_id.json"
+  sudo -u svc_backup rm -rf "$credential_tmp_dir"
+  trap - EXIT HUP INT TERM
+fi
 
 if [ ! -f "/etc/cloudflared/$tunnel_id.json" ] && [ ! -f "$local_credentials" ]; then
   say --wait 'Cloudflare browser authentication required'
@@ -164,14 +223,9 @@ if [ ! -f "/etc/cloudflared/$tunnel_id.json" ] && [ ! -f "$local_credentials" ];
 
   if ! create_output=$("$mise" -C "$dotfiles" exec -- cloudflared tunnel create home-caddy 2>&1); then
     printf '%s\n' "$create_output" >&2
-    say 'Deleting the leftover home-caddy tunnel' \
-      'Cloudflare refuses this while the tunnel still has active connections.'
-    "$mise" -C "$dotfiles" exec -- cloudflared tunnel delete home-caddy
-
-    if ! create_output=$("$mise" -C "$dotfiles" exec -- cloudflared tunnel create home-caddy 2>&1); then
-      printf '%s\n' "$create_output" >&2
-      exit 1
-    fi
+    printf '%s\n' \
+      'Could not create home-caddy. Restore its credential or remove the existing tunnel manually.' >&2
+    exit 1
   fi
   printf '%s\n' "$create_output"
 
@@ -191,6 +245,21 @@ if [ ! -f "/etc/cloudflared/$tunnel_id.json" ] && [ ! -f "$local_credentials" ];
   mv "$config_tmp" "$cloudflared_config"
   say 'Updated services/cloudflared/config.yml with the new tunnel ID' \
     'Review and commit that generated configuration change.'
+
+  set --
+  # Age recipients cannot contain whitespace.
+  # shellcheck disable=SC2013
+  for recipient in $(grep -Eo 'age1[a-z0-9]+' "$dotfiles/fnox.toml" | sort -u); do
+    set -- "$@" -r "$recipient"
+  done
+  encrypted_tmp=$(mktemp "$dotfiles/services/cloudflared/.credentials.json.age.XXXXXX")
+  rm -f "$encrypted_tmp"
+  "$mise" -C "$dotfiles" exec -- age -a "$@" \
+    -o "$encrypted_tmp" "$local_credentials"
+  chmod 600 "$encrypted_tmp"
+  mv "$encrypted_tmp" "$encrypted_credentials"
+  say 'Encrypted the new tunnel credential into the configuration repository'
+  new_tunnel=true
 fi
 
 if [ -f "$local_credentials" ]; then
@@ -200,23 +269,27 @@ if [ -f "$local_credentials" ]; then
   rm -f "$local_credentials"
 fi
 
-say --wait 'Protect dashboard.maclong.dev with Cloudflare Access' \
-  'In Cloudflare Zero Trust, create a self-hosted Access application for dashboard.maclong.dev.' \
-  'Add an Allow policy restricted to your identity before continuing.'
-
 # cert.pem is not the tunnel credential: it is a zone-wide origin certificate
 # that can create, delete, and re-route every tunnel in the zone. Nothing after
 # the DNS routes needs it, so it does not stay in the operator's home.
-if [ -f "$cloudflared_home/cert.pem" ]; then
+if [ "$new_tunnel" = true ] && [ -f "$cloudflared_home/cert.pem" ]; then
   awk '$1 == "-" && $2 == "hostname:" { print $3 }' "$cloudflared_config" |
     while IFS= read -r hostname; do
       "$mise" -C "$dotfiles" exec -- \
         cloudflared tunnel route dns --overwrite-dns "$tunnel_id" "$hostname"
     done
   rm -f "$cloudflared_home/cert.pem"
-else
+elif [ "$new_tunnel" = true ]; then
   say 'Skipping DNS routing: no Cloudflare origin certificate present' \
     'Run cloudflared tunnel login first if the hostnames need re-routing.'
+fi
+
+if [ "$new_tunnel" = true ]; then
+  say --wait 'Protect dashboard.maclong.dev with Cloudflare Access' \
+    'In Cloudflare Zero Trust, create a self-hosted Access application for dashboard.maclong.dev.' \
+    'Add an Allow policy restricted to your identity before continuing.'
+else
+  say 'Reusing the existing Cloudflare tunnel, DNS routes, and Access policy'
 fi
 
 say 'Installing and starting the pitchfork supervisor'
@@ -264,6 +337,9 @@ current_origin=$(git -C "$dotfiles" config --get remote.origin.url 2>/dev/null |
 
 if [ "$current_origin" = "$forgejo_url" ]; then
   say 'The configuration repository already uses Forgejo as origin'
+elif [ "$restored" = true ]; then
+  git -C "$dotfiles" remote set-url origin "$forgejo_url"
+  say 'Restored Forgejo already contains the configuration repository'
 else
   say --wait 'Create the empty mac/configuration repository in Forgejo before continuing'
 

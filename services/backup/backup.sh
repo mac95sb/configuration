@@ -18,7 +18,8 @@ sources=$(awk '
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/backup.XXXXXX")
 grep -Eo 'age1[a-z0-9]+' "$repo/fnox.toml" | sort -u >"$work/recipients"
-trap 'rm -rf "$work"' EXIT HUP INT TERM
+archive_tmp=
+trap 'rm -rf "$work"; [ -z "$archive_tmp" ] || rm -f "$archive_tmp"' EXIT HUP INT TERM
 
 printf '%s\n' "$sources" | while IFS="$(printf '\t')" read -r name kind path; do
   [ -n "$name" ] || continue
@@ -40,7 +41,9 @@ done
 
 mkdir -p "$staging/daily" "$staging/weekly" "$staging/monthly"
 archive=$staging/daily/$stamp.tar.gz.age
-tar czf - -C "$work" . | /usr/local/bin/age -R "$work/recipients" -o "$archive"
+archive_tmp=$(mktemp "$staging/daily/.$stamp.tar.gz.age.XXXXXX")
+tar czf - -C "$work" . | /usr/local/bin/age -R "$work/recipients" -o "$archive_tmp"
+mv "$archive_tmp" "$archive"
 
 # Unencrypted so a rebuild can clone before any key exists; fnox.toml is ciphertext.
 if [ -f "$work/configuration.bundle" ]; then

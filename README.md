@@ -22,25 +22,29 @@ The backup daemon runs at 03:00 daily. It keeps encrypted dailies, promotes
 Sundays to weeklies and the last Sunday of each month to monthlies, then copies
 the same 8.5 GB tier-aware rolling set to Cloudflare R2 and iCloud Drive.
 
-Application data, service configuration and repositories have a 24-hour RPO
-and four-hour RTO. Restore-from-backup is deliberate; there is no live storage
-redundancy. Reconsider the design when free space falls below 100 GiB, is
-projected to do so within 12 months, a second always-on host needs shared
-writable data, or a service needs an RTO below four hours. Applications with
-external users move to managed hosting before storing user data.
-
-Restore into a disposable directory, never over live service paths:
+Immediately before erasing the host, commit the configuration and Robin checkouts and
+create a verified recovery point:
 
 ```sh
-restore=$(mktemp -d /private/tmp/home-restore.XXXXXX)
-sudo chown svc_backup:staff "$restore"
-sudo chmod 750 "$restore"
-sudo -u svc_backup fnox exec --config "$PWD/fnox.toml" --profile backup -- \
-  rclone copyto R2:home-backups/daily/YYYY-MM-DD.tar.gz.age "$restore/archive.age"
-sudo -u svc_backup age -d -i /etc/fnox/operational.key \
-  -o "$restore/archive.tar.gz" "$restore/archive.age"
-tar -xzf "$restore/archive.tar.gz" -C "$restore"
+mise run recovery:checkpoint
 ```
+
+The checkpoint refuses a dirty checkout, backs up the current service state, verifies
+the configuration bundle contains `main`, downloads and validates the encrypted R2
+archive, then couriers the same files to iCloud Drive.
+
+Application data, service configuration and repositories normally have a 24-hour RPO
+and four-hour RTO; a pre-reset checkpoint reduces the planned-reset RPO to zero. During
+setup, paste the operational age key when prompted. The installer downloads and
+validates the newest R2 archive, restores Forgejo and Grafana before starting them, and
+reuses the encrypted Cloudflare tunnel credential. DNS routes and the Access policy stay
+in the Cloudflare account. Prometheus metrics and Loki logs deliberately start with new
+histories.
+
+There is no live storage redundancy. Reconsider the design when free space falls below
+100 GiB, is projected to do so within 12 months, a second always-on host needs shared
+writable data, or a service needs an RTO below four hours. Applications with external
+users move to managed hosting before storing user data.
 
 On 27 August 2026 an R2 restore verified both SQLite databases, both Git
 bundles and both Forgejo repositories. Grafana then started from the restored

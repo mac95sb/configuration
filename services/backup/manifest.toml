@@ -62,4 +62,4 @@ why = "Already shipped to Loki by Alloy"
 
 [excluded.cloudflared-credentials]
 path = "/etc/cloudflared/*.json"
-why = "Live credential; setup.sh recreates the tunnel on a rebuild instead"
+why = "Live credential; the age-encrypted copy in services/cloudflared is included through the configuration bundle"
