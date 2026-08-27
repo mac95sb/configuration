@@ -20,8 +20,7 @@ run = "/usr/local/bin/node_exporter --web.listen-address=127.0.0.1:9101 --collec
 [daemons.soc_metrics]
 user = "svc_observability"
 boot_start = true
-cron_schedule = "*/15 * * * * *"
-cron_retrigger = "finish"
+cron = { schedule = "*/15 * * * * *", retrigger = "finish" }
 run = "/Users/mac/Developer/configuration/services/metrics/soc.sh"
 
 [daemons.blackbox]
@@ -65,6 +64,5 @@ run = "/Users/mac/Developer/configuration/services/logs/ship.sh"
 [daemons.backup]
 user = "svc_backup"
 boot_start = true
-cron_schedule = "0 0 3 * * *"
-cron_retrigger = "finish"
+cron = { schedule = "0 0 3 * * *", retrigger = "finish" }
 run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile backup -- /Users/mac/Developer/configuration/services/backup/backup.sh"
