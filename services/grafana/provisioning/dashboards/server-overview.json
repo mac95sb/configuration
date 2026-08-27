@@ -6,7 +6,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 5,
+  "version": 10,
   "graphTooltip": 1,
   "refresh": "30s",
   "time": {
@@ -335,7 +335,7 @@
       "gridPos": {
         "x": 12,
         "y": 7,
-        "w": 6,
+        "w": 4,
         "h": 7
       },
       "datasource": {
@@ -391,11 +391,55 @@
     },
     {
       "type": "timeseries",
+      "title": "Power consumption",
+      "gridPos": {
+        "x": 16,
+        "y": 7,
+        "w": 4,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "host_power_watts",
+          "legendFormat": "power",
+          "instant": false
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "watt",
+          "min": 0,
+          "custom": {
+            "fillOpacity": 8,
+            "lineWidth": 2,
+            "showPoints": "never"
+          },
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#f2cc60"
+          }
+        },
+        "overrides": []
+      },
+      "description": "Estimated system load reported by the Mac's power controller; this is not total wall draw. Practical guide for this M4 Pro: 3–8 W quiet or idle, 8–25 W normal use, 25–50 W intentional heavy work, and brief peaks above 50 W can be normal. Investigate more than 15 W for 20–30 minutes while genuinely idle, more than 30 W without a known workload, power that stays high after work ends, or high draw accompanied by heat, fans, or battery drain on AC. Correlate unexpected draw with the CPU and GPU series or Activity Monitor's Energy pane."
+    },
+    {
+      "type": "timeseries",
       "title": "Disk used",
       "gridPos": {
-        "x": 18,
+        "x": 20,
         "y": 7,
-        "w": 6,
+        "w": 4,
         "h": 7
       },
       "datasource": {
@@ -487,6 +531,9 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
           "custom": {
             "fillOpacity": 8,
             "lineWidth": 2,
@@ -527,6 +574,9 @@
         "defaults": {
           "unit": "percent",
           "min": 0,
+          "color": {
+            "mode": "palette-classic-by-name"
+          },
           "custom": {
             "fillOpacity": 8,
             "lineWidth": 2,
@@ -1044,10 +1094,127 @@
     },
     {
       "type": "row",
-      "title": "Logs",
+      "title": "Postfix",
       "gridPos": {
         "x": 0,
         "y": 56,
+        "w": 24,
+        "h": 1
+      },
+      "collapsed": false,
+      "panels": []
+    },
+    {
+      "type": "stat",
+      "title": "Mail delivery outcomes",
+      "gridPos": {
+        "x": 0,
+        "y": 57,
+        "w": 24,
+        "h": 7
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(postfix_delivery_sent_total) or vector(0)",
+          "legendFormat": "sent",
+          "instant": true
+        },
+        {
+          "refId": "B",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(postfix_delivery_deferred_total) or vector(0)",
+          "legendFormat": "deferred",
+          "instant": true
+        },
+        {
+          "refId": "C",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "sum(postfix_delivery_bounced_total) or vector(0)",
+          "legendFormat": "bounced",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "decimals": 0,
+          "color": {
+            "mode": "fixed",
+            "fixedColor": "#4fb8ac"
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "deferred"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "orange"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "bounced"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "red"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "textMode": "value_and_name",
+        "colorMode": "background",
+        "orientation": "auto",
+        "graphMode": "none"
+      },
+      "description": "Delivery outcomes observed in Postfix logs since Alloy last restarted. Sent means the recipient server accepted the message; deferred will retry; bounced is a permanent rejection. Prometheus retains the history even when these live counters restart."
+    },
+    {
+      "type": "row",
+      "title": "Logs",
+      "gridPos": {
+        "x": 0,
+        "y": 64,
         "w": 24,
         "h": 1
       },
@@ -1059,7 +1226,7 @@
       "title": "Log volume by level",
       "gridPos": {
         "x": 0,
-        "y": 57,
+        "y": 65,
         "w": 24,
         "h": 7
       },
@@ -1196,10 +1363,10 @@
     },
     {
       "type": "logs",
-      "title": "Daemon logs",
+      "title": "Service logs",
       "gridPos": {
         "x": 0,
-        "y": 64,
+        "y": 72,
         "w": 24,
         "h": 12
       },
@@ -1214,15 +1381,19 @@
             "type": "loki",
             "uid": "loki"
           },
-          "expr": "{service=~\"$service\"}"
+          "expr": "{service=~\"${service:regex}\"}",
+          "maxLines": 5000
         }
       ],
       "options": {
+        "enableLogDetails": true,
+        "showCommonLabels": false,
+        "showLabels": true,
         "showTime": true,
         "wrapLogMessage": true,
         "sortOrder": "Descending"
       },
-      "description": "Every pitchfork daemon's output, relayed out of pitchfork's SQLite store into a file Alloy can tail. Use the Service dropdown at the top to filter to one daemon."
+      "description": "Service output collected by Alloy, including Postfix delivery logs. Select postfix in the Service dropdown to isolate mail activity, or open a log line and filter by one of its labels."
     }
   ],
   "description": "Immediate uptime and interactive host history first, followed by per-daemon spike attribution, endpoint and service diagnostics, backups, and searchable logs. Hover graphs for exact values or drag to narrow the selected time range.",

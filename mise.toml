@@ -155,10 +155,9 @@ fi
 sudo chmod o+x /Users/mac
 sudo install -d -m 750 -o svc_caddy -g observability /var/log/caddy
 sudo install -d -m 750 -o mac -g observability /var/log/services
-sudo tee /etc/newsyslog.d/pitchfork.conf >/dev/null <<'ROTATE'
-# logfile                        owner:group    mode count size when flags
-/var/log/services/pitchfork.log  mac:observability 640  5     10240 *    J
-ROTATE
+sudo install -o root -g wheel -m 644 \
+  /Users/mac/Developer/configuration/services/logs/newsyslog.conf \
+  /etc/newsyslog.d/services.conf
 sudo pitchfork boot enable
 
 # pitchfork writes its own versioned install path into the plist, so a version

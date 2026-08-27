@@ -1,11 +1,26 @@
 #!/bin/sh
 set -eu
 
-# pitchfork stores daemon logs in SQLite; Alloy tails files. `-n 0` skips the backlog.
-log=/var/log/services/pitchfork.log
+pitchfork_log=/var/log/services/pitchfork.log
+postfix_log=/var/log/services/postfix.log
+postfix_predicate='process == "postfix" OR process == "master" OR process == "pickup" OR process == "cleanup" OR process == "qmgr" OR process == "smtp" OR process == "bounce" OR process == "defer" OR process == "local"'
 
 # Reopen per line so newsyslog rotation is not defeated by a held descriptor.
-/usr/local/bin/pitchfork logs -n 0 --tail --no-pager |
-  while IFS= read -r line; do
-    printf '%s\n' "$line" >>"$log"
-  done
+ship_pitchfork() {
+  # Pitchfork stores daemon logs in SQLite. `-n 0` skips the backlog.
+  /usr/local/bin/pitchfork logs -n 0 --tail --no-pager |
+    while IFS= read -r line; do
+      printf '%s\n' "$line" >>"$pitchfork_log"
+    done
+}
+
+ship_postfix() {
+  /usr/bin/log stream --info --style syslog --predicate "$postfix_predicate" |
+    while IFS= read -r line; do
+      printf '%s\n' "$line" >>"$postfix_log"
+    done
+}
+
+ship_pitchfork &
+ship_postfix &
+wait

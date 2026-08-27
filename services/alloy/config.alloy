@@ -57,6 +57,65 @@ loki.process "daemons" {
 	}
 }
 
+local.file_match "postfix" {
+	path_targets = [{__path__ = "/var/log/services/postfix.log", service = "postfix"}]
+	sync_period  = "10s"
+}
+
+loki.source.file "postfix" {
+	targets    = local.file_match.postfix.targets
+	forward_to = [loki.process.postfix.receiver]
+}
+
+loki.process "postfix" {
+	forward_to = [loki.write.local.receiver]
+
+	stage.regex {
+		expression = "localhost (?P<postfix_component>postfix|master|pickup|cleanup|qmgr|smtp|bounce|defer|local)\\["
+	}
+
+	stage.regex {
+		expression = "status=(?P<delivery_status>sent|deferred|bounced)"
+	}
+
+	stage.labels {
+		values = {
+			delivery_status   = "",
+			postfix_component = "",
+		}
+	}
+
+	stage.metrics {
+		metric.counter {
+			name              = "delivery_sent_total"
+			description       = "Messages accepted by a recipient mail server."
+			prefix            = "postfix_"
+			source            = "delivery_status"
+			value             = "sent"
+			action            = "inc"
+			max_idle_duration = "168h"
+		}
+		metric.counter {
+			name              = "delivery_deferred_total"
+			description       = "Messages awaiting another delivery attempt."
+			prefix            = "postfix_"
+			source            = "delivery_status"
+			value             = "deferred"
+			action            = "inc"
+			max_idle_duration = "168h"
+		}
+		metric.counter {
+			name              = "delivery_bounced_total"
+			description       = "Messages permanently rejected by a recipient mail server."
+			prefix            = "postfix_"
+			source            = "delivery_status"
+			value             = "bounced"
+			action            = "inc"
+			max_idle_duration = "168h"
+		}
+	}
+}
+
 loki.write "local" {
 	endpoint {
 		url = "http://127.0.0.1:3100/loki/api/v1/push"

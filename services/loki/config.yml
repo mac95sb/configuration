@@ -32,6 +32,7 @@ schema_config:
 
 limits_config:
   retention_period: 90d
+  discover_service_name: []
 
 # retention_period alone is inert; the compactor is what enforces it.
 compactor:
