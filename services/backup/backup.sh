@@ -45,6 +45,7 @@ mkdir -p "$staging/daily" "$staging/weekly" "$staging/monthly"
 archive=$staging/daily/$stamp.tar.gz.age
 archive_tmp=$(mktemp "$staging/daily/.$stamp.tar.gz.age.XXXXXX")
 tar czf - -C "$work" . | /usr/local/bin/age -R "$work/recipients" -o "$archive_tmp"
+chmod 640 "$archive_tmp"
 mv "$archive_tmp" "$archive"
 
 # Unencrypted so a rebuild can clone before any key exists; fnox.toml is ciphertext.
