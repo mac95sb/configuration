@@ -6,6 +6,5 @@ policies:
     group_by: ["alertname"]
     group_wait: 30s
     group_interval: 5m
-    # Household infrastructure: a daily reminder is enough for something already
-    # firing, and avoids training the phone to be ignored.
+    # Avoid repeated household notifications.
     repeat_interval: 24h

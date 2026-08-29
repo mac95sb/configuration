@@ -2,8 +2,7 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  # Service health. Each observability component scrapes itself so a failure in
-  # the pipeline is visible rather than silent.
+  # Core observability services.
   - job_name: "prometheus"
     static_configs:
       - targets: ["127.0.0.1:9090"]
@@ -24,8 +23,7 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:9115"]
 
-  # Application daemons. Keep their service metrics plus standard process
-  # usage so host CPU and memory spikes can be attributed by job.
+  # Application daemons with process metrics for attribution.
   - job_name: "caddy"
     metric_relabel_configs:
       - source_labels: [__name__]
@@ -58,7 +56,7 @@ scrape_configs:
     static_configs:
       - targets: ["127.0.0.1:3030"]
 
-  # External reachability, probed the whole way round through Cloudflare.
+  # Public endpoints through Cloudflare.
   - job_name: "blackbox_http"
     metrics_path: /probe
     params:

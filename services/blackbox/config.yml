@@ -5,9 +5,7 @@ modules:
     http:
       preferred_ip_protocol: "ip4"
 
-  # dashboard.maclong.dev sits behind Cloudflare Access, which answers an
-  # unauthenticated probe with a redirect to the login page. A redirect proves
-  # the origin is up and Access is enforcing; following it would not.
+  # Cloudflare Access returns 302 to a healthy unauthenticated probe.
   http_2xx_or_redirect:
     prober: http
     timeout: 5s

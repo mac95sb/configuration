@@ -6,7 +6,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 12,
+  "version": 13,
   "graphTooltip": 1,
   "refresh": "30s",
   "time": {
@@ -262,6 +262,17 @@
           "expr": "host_memory_pressure_ratio * 100",
           "legendFormat": "memory pressure",
           "instant": false
+        },
+        {
+          "refId": "F",
+          "datasourceUid": "prometheus",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "expr": "host_battery_charge_ratio * 100",
+          "legendFormat": "battery",
+          "instant": false
         }
       ],
       "fieldConfig": {
@@ -350,10 +361,25 @@
                 }
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "battery"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "#73bf69"
+                }
+              }
+            ]
           }
         ]
       },
-      "description": "CPU, GPU, Neural Engine, memory use and memory pressure over the selected period. GPU is the current device utilization reported by I/O Registry; Neural Engine is derived from its cumulative driver-busy time; memory pressure is the inverse of macOS's system-wide memory free percentage."
+      "description": "CPU, GPU, Neural Engine, memory use, memory pressure and battery charge over the selected period. GPU and battery charge are reported by I/O Registry; Neural Engine is derived from its cumulative driver-busy time; memory pressure is the inverse of macOS's system-wide memory free percentage."
     },
     {
       "type": "timeseries",

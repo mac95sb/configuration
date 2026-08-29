@@ -1,4 +1,3 @@
-// file_match polls, so a file created after Alloy starts is still picked up.
 local.file_match "caddy" {
 	path_targets = [{__path__ = "/var/log/caddy/access.log"}]
 	sync_period  = "10s"
@@ -12,22 +11,13 @@ loki.source.file "caddy" {
 loki.process "caddy" {
 	forward_to = [loki.process.level.receiver]
 
-	// Rewrites the stored log line itself, not just an extracted copy —
-	// the plaintext IP never reaches Loki. It does reach the Caddy access
-	// log first, which is why that file rolls fast. Same input produces
-	// the same token (trace correlation intact) without the salt.
-	// `.Value` is the matched capture group's own text, not a named
-	// field — a named group only matters for exposing it elsewhere.
-	// Every capturing group is rewritten, so the field-name alternation
-	// must stay non-capturing or the key gets hashed along with the IP.
+	// Keep the field-name alternation non-capturing so only the IP is hashed.
 	stage.replace {
 		expression = "\"(?:remote_ip|client_ip)\":\"(?P<v>[^\"]+)\""
 		replace    = "{{ Hash .Value \"" + sys.env("SCRUB_SALT") + "\" }}"
 	}
 
-	// Caddy's default access log dumps every request header verbatim,
-	// including these two — Cloudflare's own forwarded-client-IP
-	// headers survive even though the connection-level IP is scrubbed.
+	// Hash Cloudflare's forwarded-client-IP headers too.
 	stage.replace {
 		expression = "\"(?:Cf-Connecting-Ip|X-Forwarded-For)\":\\[\"(?P<v>[^\"]+)\"\\]"
 		replace    = "{{ Hash .Value \"" + sys.env("SCRUB_SALT") + "\" }}"
@@ -47,7 +37,6 @@ loki.source.file "daemons" {
 loki.process "daemons" {
 	forward_to = [loki.process.level.receiver]
 
-	// Tag only: the timestamp prefix is governed by logs.timestamp_format.
 	stage.regex {
 		expression = "\\[global/(?P<service>[^\\]]+)\\]"
 	}
@@ -121,8 +110,7 @@ loki.process "postfix" {
 loki.process "level" {
 	forward_to = [loki.write.local.receiver]
 
-	// A line without an explicit severity is routine output. Normalise the
-	// formats emitted by the managed services into one low-cardinality label.
+	// Treat output without an explicit severity as routine.
 	stage.static_labels {
 		values = {level = "INFO"}
 	}

@@ -1,0 +1,9 @@
+#!/bin/sh
+#MISE description="Install the edited pitchfork.toml as root and restart all daemons"
+set -eu
+
+if [ ! /Users/mac/Developer/configuration/pitchfork.toml -ef /etc/pitchfork/config.toml ]; then
+  sudo install -o root -g wheel -m 644 \
+    /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
+fi
+pitchfork restart --all-global

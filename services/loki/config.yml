@@ -7,8 +7,7 @@ server:
   grpc_listen_port: 9095
 
 common:
-  # Without this the ingester registers its LAN address in the ring and the
-  # distributor's gRPC dial to it times out, dropping every write.
+  # Keep ring traffic off the unreachable LAN address.
   instance_addr: 127.0.0.1
   path_prefix: /Users/svc_observability/loki-data
   storage:

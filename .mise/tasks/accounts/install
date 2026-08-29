@@ -1,0 +1,24 @@
+#!/bin/sh
+#MISE description="Create service accounts and their required access groups"
+set -eu
+
+for group in fnox observability; do
+  if ! dscl . -read "/Groups/$group" >/dev/null 2>&1; then
+    sudo dseditgroup -o create "$group"
+  fi
+done
+
+for account in svc_backup:Backup svc_caddy:Caddy svc_cloudflared:Cloudflared svc_forgejo:Forgejo svc_observability:Observability; do
+  user=${account%%:*}
+  if ! dscl . -read "/Users/$user" >/dev/null 2>&1; then
+    sudo sysadminctl -addUser "$user" -fullName "${account#*:} service account" -shell /usr/bin/false -roleAccount
+  fi
+done
+sudo dseditgroup -o edit -a svc_backup -t user fnox
+sudo dseditgroup -o edit -a svc_forgejo -t user fnox
+sudo dseditgroup -o edit -a svc_observability -t user fnox
+sudo dseditgroup -o edit -a svc_observability -t user observability
+sudo dseditgroup -o edit -a svc_backup -t user observability
+sudo install -d -m 750 -o svc_backup -g staff /Users/svc_backup/backup-staging
+sudo dseditgroup -o edit -a mac -t user observability
+sudo install -d -m 775 -o svc_observability -g observability /Users/svc_observability/textfile

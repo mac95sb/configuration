@@ -1,8 +1,6 @@
 {
 	default_bind 127.0.0.1
 
-	# Per-server HTTP metrics are off by default; the admin endpoint only
-	# exposes admin and upstream-health metrics without this.
 	servers {
 		metrics
 	}
@@ -12,9 +10,7 @@
 	log {
 		output file {$CADDY_ACCESS_LOG:/var/log/caddy/access.log} {
 			mode 0640
-			# Defaults are 100MiB x 10 kept for 90 days. Client IPs land here
-			# in plaintext and are only scrubbed on the way to Loki, so roll
-			# fast rather than merely bounded.
+			# Raw client IPs exist here before Alloy scrubs them, so retain briefly.
 			roll_size 10MiB
 			roll_keep 3
 			roll_keep_for 48h
@@ -22,51 +18,13 @@
 	}
 
 	@dashboard host dashboard.maclong.dev
-	@grafanaLogo {
-		host dashboard.maclong.dev
-		path /public/img/grafana_icon.svg /public/img/grafana_mask_icon.svg /public/build/img/grafana_icon.svg /public/build/img/grafana_mask_icon.svg
-	}
-	handle @grafanaLogo {
-		root * /Users/mac/Developer/configuration/services/grafana/branding
-		rewrite * /logo.svg
-		header Cache-Control "no-cache, no-store, must-revalidate"
-		file_server
-	}
-	@grafanaFavicon {
-		host dashboard.maclong.dev
-		path /public/build/img/fav32.png
-	}
-	handle @grafanaFavicon {
-		root * /Users/mac/Developer/configuration/services/grafana/branding
-		rewrite * /fav32.png
-		header Cache-Control "no-cache, no-store, must-revalidate"
-		file_server
-	}
-	@grafanaTouchIcon {
-		host dashboard.maclong.dev
-		path /public/build/img/apple-touch-icon.png
-	}
-	handle @grafanaTouchIcon {
-		root * /Users/mac/Developer/configuration/services/grafana/branding
-		rewrite * /apple-touch-icon.png
-		header Cache-Control "no-cache, no-store, must-revalidate"
-		file_server
-	}
-	handle @dashboard {
-		reverse_proxy 127.0.0.1:3000
-	}
-
 	@git host git.maclong.dev
-	handle @git {
-		reverse_proxy 127.0.0.1:3030
-	}
-
 	@status host status.maclong.dev
-	handle @status {
-		respond "ok"
-	}
 
-	handle {
+	route {
+		reverse_proxy @dashboard 127.0.0.1:3000
+		reverse_proxy @git 127.0.0.1:3030
+		respond @status "ok"
 		respond 404
 	}
 }

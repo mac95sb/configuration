@@ -1,8 +1,7 @@
 #!/bin/sh
 set -eu
 
-# Runs as `mac`: a svc_* daemon cannot write to iCloud Drive. Moves sealed
-# archives only — `mac` is not in the fnox group and cannot decrypt them.
+# Run as mac for iCloud access; this account cannot decrypt the archives.
 staging=/Users/svc_backup/backup-staging
 destination=$HOME/Library/Mobile\ Documents/com~apple~CloudDocs/Backups/configuration
 

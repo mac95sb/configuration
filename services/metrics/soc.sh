@@ -6,15 +6,17 @@ gpu=$(/usr/sbin/ioreg -r -c IOAccelerator -d 1 -l)
 gpu_util=$(printf '%s\n' "$gpu" | sed -n 's/.*"Device Utilization %"=\([0-9][0-9]*\).*/\1/p' | head -1)
 gpu_memory=$(printf '%s\n' "$gpu" | sed -n 's/.*"In use system memory"=\([0-9][0-9]*\).*/\1/p' | head -1)
 ane_busy_ms=$(/usr/sbin/ioreg -r -n ane0 -d 0 | sed -n 's/.*busy [0-9][0-9]* (\([0-9][0-9]*\) ms).*/\1/p' | head -1)
-power_mw=$(/usr/sbin/ioreg -r -c AppleSmartBattery -d 0 -l | sed -n 's/.*"SystemLoad"=\([0-9][0-9]*\).*/\1/p' | head -1)
+battery=$(/usr/sbin/ioreg -r -c AppleSmartBattery -d 0 -l)
+power_mw=$(printf '%s\n' "$battery" | sed -n 's/.*"SystemLoad"=\([0-9][0-9]*\).*/\1/p' | head -1)
+battery_percent=$(printf '%s\n' "$battery" | sed -n 's/.*"CurrentCapacity" = \([0-9][0-9]*\).*/\1/p' | head -1)
 memory_free_percent=$(/usr/bin/memory_pressure -Q | sed -n 's/^System-wide memory free percentage: \([0-9][0-9]*\)%$/\1/p')
 
-for value in "$gpu_util" "$gpu_memory" "$ane_busy_ms" "$power_mw" "$memory_free_percent"; do
-  case $value in '' | *[!0-9]*)
-    printf 'unexpected host metric: %s\n' "$value" >&2
-    exit 1
-    ;;
-  esac
+for value in "$gpu_util" "$gpu_memory" "$ane_busy_ms" "$power_mw" "$battery_percent" "$memory_free_percent"; do
+	case $value in '' | *[!0-9]*)
+		printf 'unexpected host metric: %s\n' "$value" >&2
+		exit 1
+		;;
+	esac
 done
 
 tmp=$output.tmp
@@ -31,6 +33,9 @@ host_ane_busy_seconds_total $(awk -v value="$ane_busy_ms" 'BEGIN { print value /
 # HELP host_power_watts Current estimated system power consumption.
 # TYPE host_power_watts gauge
 host_power_watts $(awk -v value="$power_mw" 'BEGIN { print value / 1000 }')
+# HELP host_battery_charge_ratio Current battery charge.
+# TYPE host_battery_charge_ratio gauge
+host_battery_charge_ratio $(awk -v value="$battery_percent" 'BEGIN { print value / 100 }')
 # HELP host_memory_pressure_ratio Current memory pressure derived from the macOS system-wide memory free percentage.
 # TYPE host_memory_pressure_ratio gauge
 host_memory_pressure_ratio $(awk -v value="$memory_free_percent" 'BEGIN { print 1 - value / 100 }')

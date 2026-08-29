@@ -1,0 +1,12 @@
+#!/bin/sh
+#MISE description="Repoint /usr/local/bin at the current service binaries after a version change"
+set -eu
+
+# Root-executed binaries must not follow links into the user-owned mise tree.
+for bin in age alloy blackbox_exporter caddy cloudflared fnox loki node_exporter pitchfork prometheus rclone; do
+  sudo install -o root -g wheel -m 755 "$(mise which "$bin")" "/usr/local/bin/$bin"
+done
+
+# Grafana needs its Homebrew-relative assets; neither symlink runs as root.
+sudo ln -sf /opt/homebrew/bin/forgejo /usr/local/bin/forgejo
+sudo ln -sf /opt/homebrew/bin/grafana /usr/local/bin/grafana

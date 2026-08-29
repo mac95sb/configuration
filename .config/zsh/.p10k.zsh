@@ -12,19 +12,19 @@
   [[ $ZSH_VERSION == (5.<1->*|<6->.*) ]] || return
 
   typeset -g POWERLEVEL9K_LEFT_PROMPT_ELEMENTS=(
-    dir                     # current directory
-    vcs                     # git status
-    newline                 # \n
-    prompt_char             # prompt symbol
+    dir
+    vcs
+    newline
+    prompt_char
   )
 
   typeset -g POWERLEVEL9K_RIGHT_PROMPT_ELEMENTS=(
-    status                  # exit code of the last command
-    command_execution_time  # duration of the last command
-    virtualenv              # python virtual environment
-    node_version            # node.js version
-    package                 # name@version from package.json
-    newline                 # \n
+    status
+    command_execution_time
+    virtualenv
+    node_version
+    package
+    newline
   )
 
   typeset -g POWERLEVEL9K_MODE=nerdfont-v3
@@ -69,7 +69,6 @@
   typeset -g POWERLEVEL9K_DIR_SHORTENED_FOREGROUND=6
   typeset -g POWERLEVEL9K_DIR_ANCHOR_FOREGROUND=6
   typeset -g POWERLEVEL9K_DIR_ANCHOR_BOLD=false
-  # Don't shorten directories that contain any of these files; they act as anchors.
   local anchor_files=(
     .git
     .mise.toml
@@ -88,7 +87,7 @@
   typeset -g POWERLEVEL9K_VCS_BRANCH_ICON=
   typeset -g POWERLEVEL9K_VCS_UNTRACKED_ICON='?'
 
-  typeset -g POWERLEVEL9K_VCS_MAX_INDEX_SIZE_DIRTY=-1  # -1 = no limit
+  typeset -g POWERLEVEL9K_VCS_MAX_INDEX_SIZE_DIRTY=-1
   typeset -g POWERLEVEL9K_VCS_DISABLED_WORKDIR_PATTERN='~'
   typeset -g POWERLEVEL9K_VCS_DISABLE_GITSTATUS_FORMATTING=false
   typeset -g POWERLEVEL9K_VCS_{STAGED,UNSTAGED,UNTRACKED,CONFLICTED,COMMITS_AHEAD,COMMITS_BEHIND}_MAX_NUM=-1
@@ -97,7 +96,6 @@
   typeset -g POWERLEVEL9K_VCS_VISUAL_IDENTIFIER_EXPANSION=
   typeset -g POWERLEVEL9K_VCS_PREFIX='%fon '
   typeset -g POWERLEVEL9K_VCS_BACKENDS=(git)
-  # Used only if gitstatusd fails and p10k falls back to vcs_info.
   typeset -g POWERLEVEL9K_VCS_CLEAN_FOREGROUND=7
   typeset -g POWERLEVEL9K_VCS_UNTRACKED_FOREGROUND=7
   typeset -g POWERLEVEL9K_VCS_MODIFIED_FOREGROUND=3
@@ -144,7 +142,6 @@
   (( ! $+functions[p10k] )) || p10k reload
 }
 
-# Tell `p10k configure` which file it should overwrite.
 typeset -g POWERLEVEL9K_CONFIG_FILE=${${(%):-%x}:a}
 
 (( ${#p10k_config_opts} )) && setopt ${p10k_config_opts[@]}
