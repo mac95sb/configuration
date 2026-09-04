@@ -12,11 +12,11 @@ battery_percent=$(printf '%s\n' "$battery" | sed -n 's/.*"CurrentCapacity" = \([
 memory_free_percent=$(/usr/bin/memory_pressure -Q | sed -n 's/^System-wide memory free percentage: \([0-9][0-9]*\)%$/\1/p')
 
 for value in "$gpu_util" "$gpu_memory" "$ane_busy_ms" "$power_mw" "$battery_percent" "$memory_free_percent"; do
-	case $value in '' | *[!0-9]*)
-		printf 'unexpected host metric: %s\n' "$value" >&2
-		exit 1
-		;;
-	esac
+  case $value in '' | *[!0-9]*)
+    printf 'unexpected host metric: %s\n' "$value" >&2
+    exit 1
+    ;;
+  esac
 done
 
 tmp=$output.tmp

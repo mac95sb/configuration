@@ -19,7 +19,7 @@ sudo "$postconf" -e 'smtpd_relay_restrictions = permit_mynetworks, reject'
 sudo "$postconf" -e 'disable_vrfy_command = yes'
 
 sudo install -o root -g wheel -m 644 \
-	/Users/mac/Developer/configuration/services/mail/generic /etc/postfix/generic
+  /Users/mac/Developer/configuration/services/mail/generic /etc/postfix/generic
 sudo /usr/sbin/postmap /etc/postfix/generic
 sudo "$postfix" check
 

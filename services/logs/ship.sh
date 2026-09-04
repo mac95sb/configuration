@@ -7,17 +7,17 @@ postfix_predicate='process == "postfix" OR process == "master" OR process == "pi
 
 # Reopen per line so newsyslog can rotate the files.
 ship_pitchfork() {
-	/usr/local/bin/pitchfork logs -n 0 --tail --no-pager |
-		while IFS= read -r line; do
-			printf '%s\n' "$line" >>"$pitchfork_log"
-		done
+  /usr/local/bin/pitchfork logs -n 0 --tail --no-pager |
+    while IFS= read -r line; do
+      printf '%s\n' "$line" >>"$pitchfork_log"
+    done
 }
 
 ship_postfix() {
-	/usr/bin/log stream --info --style syslog --predicate "$postfix_predicate" |
-		while IFS= read -r line; do
-			printf '%s\n' "$line" >>"$postfix_log"
-		done
+  /usr/bin/log stream --info --style syslog --predicate "$postfix_predicate" |
+    while IFS= read -r line; do
+      printf '%s\n' "$line" >>"$postfix_log"
+    done
 }
 
 ship_pitchfork &

@@ -7,24 +7,12 @@ remote=${BACKUP_REMOTE-R2:home-backups}
 metrics_dir=${BACKUP_METRICS_DIR-/Users/svc_observability/textfile}
 stamp=$(date +%F)
 
-# awk, not a TOML parser: taplo is a user tool and not on a service PATH.
-sources=$(awk '
-  function flush() { if (n != "") printf "%s\t%s\t%s\n", n, k, p; n = ""; k = ""; p = "" }
-  function val() { match($0, /"[^"]*"/); return substr($0, RSTART + 1, RLENGTH - 2) }
-  /^\[sources\./ { flush(); n = $0; gsub(/^\[sources\.|\]$/, "", n); next }
-  /^\[/          { flush(); next }
-  /^kind *=/     { k = val(); next }
-  /^path *=/     { p = val(); next }
-  END            { flush() }
-' "$repo/services/backup/manifest.toml")
-
 work=$(mktemp -d "${TMPDIR:-/tmp}/backup.XXXXXX")
 grep -Eo 'age1[a-z0-9]+' "$repo/fnox.toml" | sort -u >"$work/recipients"
 archive_tmp=
 trap 'rm -rf "$work"; [ -z "$archive_tmp" ] || rm -f "$archive_tmp"' EXIT HUP INT TERM
 
-printf '%s\n' "$sources" | while IFS="$(printf '\t')" read -r name kind path; do
-  [ -n "$name" ] || continue
+while read -r name kind path; do
   if [ ! -e "$path" ]; then
     printf 'skipping %s: %s is missing\n' "$name" "$path"
     continue
@@ -39,7 +27,13 @@ printf '%s\n' "$sources" | while IFS="$(printf '\t')" read -r name kind path; do
     exit 1
     ;;
   esac
-done
+done <<EOF
+configuration git-bundle /Users/mac/Developer/configuration
+robin git-bundle /Users/mac/Developer/robin
+forgejo-db sqlite /Users/svc_forgejo/forgejo-data/data/forgejo.db
+forgejo-repositories directory /Users/svc_forgejo/forgejo-data/data/repositories
+grafana-db sqlite /Users/svc_observability/grafana-data/grafana.db
+EOF
 
 mkdir -p "$staging/daily" "$staging/weekly" "$staging/monthly"
 archive=$staging/daily/$stamp.tar.gz.age
