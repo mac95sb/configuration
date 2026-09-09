@@ -42,6 +42,7 @@ fi
 "~/Developer/robin" = { url = "git@git.maclong.dev:mac/robin.git" }
 
 [bootstrap.packages]
+"brew-cask:chatgpt" = "latest"                            # ChatGPT
 "brew-cask:crossover" = "latest"                          # Crossover
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
 "brew-cask:font-sf-pro" = "latest"                        # SF Pro
@@ -80,6 +81,9 @@ show_pathbar = true
 tap_to_click = true
 three_finger_drag = true
 
+[bootstrap.services.mise-history]
+builtin = "history-watch"
+
 [dotfiles]
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
@@ -88,6 +92,14 @@ three_finger_drag = true
 "~/.config/zsh/.p10k.zsh" = {}
 "~/.config/zsh/.zshrc" = {}
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
+
+# Preserve the current symlink deployment while saving edits to its sources.
+"~/Developer/configuration/.config/git/config" = { mode = "track" }
+"~/Developer/configuration/.config/git/ignore" = { mode = "track" }
+"~/Developer/configuration/.config/zsh/.p10k.zsh" = { mode = "track" }
+"~/Developer/configuration/.config/zsh/.zshenv" = { mode = "track" }
+"~/Developer/configuration/.config/zsh/.zshrc" = { mode = "track" }
+"~/Developer/configuration/mise.toml" = { mode = "track" }
 
 [tasks."mail:install"]
 description = "Configure the built-in Postfix for local, direct outbound mail"
