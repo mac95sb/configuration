@@ -1,6 +1,4 @@
 [settings]
-dotfiles.default_mode = "symlink"
-dotfiles.root = "~/Developer/configuration/"
 experimental = true
 
 [tools]
@@ -85,21 +83,12 @@ three_finger_drag = true
 builtin = "history-watch"
 
 [dotfiles]
-"~/.config/git/config" = {}
-"~/.config/git/ignore" = {}
-"~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
-
-"~/.config/zsh/.p10k.zsh" = {}
-"~/.config/zsh/.zshrc" = {}
-"~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
-
-# Preserve the current symlink deployment while saving edits to its sources.
-"~/Developer/configuration/.config/git/config" = { mode = "track" }
-"~/Developer/configuration/.config/git/ignore" = { mode = "track" }
-"~/Developer/configuration/.config/zsh/.p10k.zsh" = { mode = "track" }
-"~/Developer/configuration/.config/zsh/.zshenv" = { mode = "track" }
-"~/Developer/configuration/.config/zsh/.zshrc" = { mode = "track" }
-"~/Developer/configuration/mise.toml" = { mode = "track" }
+"~/.config/git/config" = { mode = "track" }
+"~/.config/git/ignore" = { mode = "track" }
+"~/.config/mise/config.toml" = { mode = "track" }
+"~/.config/zsh/.p10k.zsh" = { mode = "track" }
+"~/.config/zsh/.zshrc" = { mode = "track" }
+"~/.zshenv" = { mode = "track" }
 
 [tasks."mail:install"]
 description = "Configure the built-in Postfix for local, direct outbound mail"
