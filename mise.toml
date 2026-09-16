@@ -23,6 +23,8 @@ shellcheck = "latest"
 shfmt = "latest"
 taplo = "latest"
 github-cli = "latest"
+container = "latest"
+act = "latest"
 
 [hooks]
 postinstall = """
@@ -42,7 +44,6 @@ fi
 "~/Developer/robin" = { url = "git@git.maclong.dev:mac/robin.git" }
 
 [bootstrap.packages]
-"brew-cask:chatgpt" = "latest"                            # ChatGPT
 "brew-cask:crossover" = "latest"                          # Crossover
 "brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
 "brew-cask:font-sf-pro" = "latest"                        # SF Pro
@@ -60,6 +61,7 @@ fi
 "mas:497799835" = "latest"                                # Xcode
 "mas:634148309" = "latest"                                # Logic Pro
 "mas:634159523" = "latest"                                # MainStage
+"brew:magic-wormhole" = "latest"
 
 [bootstrap.macos.defaults."com.apple.WindowManager"]
 EnableTiledWindowMargins = true
