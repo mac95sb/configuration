@@ -27,7 +27,7 @@
     newline
   )
 
-  typeset -g POWERLEVEL9K_MODE=nerdfont-v3
+  typeset -g POWERLEVEL9K_MODE=ascii
   typeset -g POWERLEVEL9K_ICON_PADDING=moderate
 
   typeset -g POWERLEVEL9K_BACKGROUND=
@@ -135,7 +135,7 @@
 
   typeset -g POWERLEVEL9K_PACKAGE_FOREGROUND=6
 
-  typeset -g POWERLEVEL9K_TRANSIENT_PROMPT=always
+  typeset -g POWERLEVEL9K_TRANSIENT_PROMPT=off
   typeset -g POWERLEVEL9K_INSTANT_PROMPT=quiet
   typeset -g POWERLEVEL9K_DISABLE_HOT_RELOAD=true  # hot reload costs 1-2ms per prompt
 
