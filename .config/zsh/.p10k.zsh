@@ -27,7 +27,7 @@
     newline
   )
 
-  typeset -g POWERLEVEL9K_MODE=ascii
+  typeset -g POWERLEVEL9K_MODE=nerdfont-v3
   typeset -g POWERLEVEL9K_ICON_PADDING=moderate
 
   typeset -g POWERLEVEL9K_BACKGROUND=
