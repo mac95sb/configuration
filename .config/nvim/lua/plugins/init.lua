@@ -61,6 +61,17 @@ return {
     },
   },
   {
+    "MeanderingProgrammer/render-markdown.nvim",
+    ft = { "markdown" },
+    dependencies = {
+      "nvim-treesitter/nvim-treesitter",
+    },
+    opts = {},
+    keys = {
+      { "<leader>um", "<cmd>RenderMarkdown toggle<cr>", ft = "markdown", desc = "Toggle Markdown rendering" },
+    },
+  },
+  {
     "folke/which-key.nvim",
     event = "VeryLazy",
     opts = {
@@ -99,6 +110,20 @@ return {
     "lewis6991/gitsigns.nvim",
     event = { "BufReadPre", "BufNewFile" },
     opts = {},
+  },
+  {
+    "sindrets/diffview.nvim",
+    cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewToggleFiles" },
+    dependencies = { "nvim-lua/plenary.nvim" },
+    opts = {
+      view = {
+        default = { layout = "diff2_vertical" },
+      },
+    },
+    keys = {
+      { "<leader>gd", "<cmd>DiffviewOpen<cr>", desc = "Git diff (working tree)" },
+      { "<leader>gD", "<cmd>DiffviewClose<cr>", desc = "Close git diff" },
+    },
   },
   {
     "saghen/blink.cmp",

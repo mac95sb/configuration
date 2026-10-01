@@ -1,5 +1,4 @@
 {
-  "$schema": "https://modelcontextprotocol.io/schemas/2025-06-18/server.json",
   "mcpServers": {
     "notion": {
       "url": "https://mcp.notion.com/mcp",
@@ -11,29 +10,16 @@
       "oauth": {},
       "description": "Search and manage Linear issues, projects, and teams."
     },
-    "microsoft-teams": {
-      "url": "https://mcp.microsoft.com/mcp",
-      "oauth": {},
-      "description": "Access Microsoft Teams conversations and collaboration data."
-    },
-    "microsoft-outlook": {
-      "url": "https://mcp.microsoft.com/mcp",
-      "oauth": {},
-      "description": "Access Microsoft Outlook mail and calendar data."
-    },
     "figma": {
       "url": "https://mcp.figma.com/mcp",
-      "oauth": { "clientName": "Pi" },
-      "description": "Read and inspect Figma designs and files."
-    },
-    "stackoverflow": {
-      "url": "https://mcp.stackexchange.com/mcp",
       "oauth": {},
-      "description": "Search Stack Overflow for Agents and technical answers."
+      "description": "Figma remote MCP server; no desktop app required."
     },
     "github": {
-      "url": "https://api.githubcopilot.com/mcp",
-      "oauth": {},
+      "url": "https://api.githubcopilot.com/mcp/",
+      "auth": "bearer",
+      "bearerToken": "!gh auth token",
+      "protocolVersion": "auto",
       "description": "Search and work with GitHub repositories, issues, and pull requests."
     }
   }

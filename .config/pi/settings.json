@@ -9,6 +9,7 @@
   ],
   "theme": "system",
   "externalEditor": "nvim",
+  "extensions": ["~/Developer/configuration/.config/pi/extensions"],
   "skills": ["~/Developer/configuration/.config/pi/skills"],
   "packages": [
     "npm:pi-mcp-adapter",
