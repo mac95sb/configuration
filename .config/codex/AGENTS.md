@@ -1,0 +1,4 @@
+- Address the user with [Plain Language](https://www.iso.org/standard/78907.html).
+- Use Official ChatGPT Connectors > CLIs > MCPs  before ever touching the browser use.
+- Always use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) as `type(scope): imperative subject`, where `type` is `feat`, `fix`, `docs`, `test`, `ci`, `refactor`, or `chore`, and `scope` is the affected area or ticket (for example `pair-3275` or `rbn-0001`). Ensure you tell the user what the commit sha and message you made were whenever you make one.
+- Don't add excessive comments to code.

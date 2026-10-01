@@ -27,6 +27,11 @@ container = "latest"
 act = "latest"
 pi = "latest"
 codex = "latest"
+neovim = "latest"
+node = "24.21.0"
+ripgrep = "latest"
+fd = "latest"
+opencode = "latest"
 
 [hooks]
 postinstall = """
@@ -87,12 +92,19 @@ three_finger_drag = true
 
 [dotfiles]
 "~/.config/ghostty/config" = {}
+"~/.config/mcp/mcp.json" = { source = "~/Developer/configuration/.config/mcp/mcp.json" }
+"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/.config/codex/AGENTS.md" }
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
+"~/.config/nvim" = {}
 "~/.config/zsh/.p10k.zsh" = {}
 "~/.config/zsh/.zshrc" = {}
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
+
+[tasks."pi:configure"]
+description = "Merge tracked pi model and theme preferences into local settings"
+run = "python3 /Users/mac/Developer/configuration/.config/pi/configure.py"
 
 [tasks."mail:install"]
 description = "Configure the built-in Postfix for local, direct outbound mail"
