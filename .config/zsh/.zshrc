@@ -32,3 +32,8 @@ kp() {
 }
 
 eval "$(~/.local/bin/mise activate zsh)"
+# The following lines have been added by Docker Desktop to enable Docker CLI completions.
+fpath=(/Users/mac/.docker/completions $fpath)
+fpath+=(/Users/mac/.local/share/zsh/site-functions)
+autoload -Uz compinit && compinit
+# End of Docker CLI completions
