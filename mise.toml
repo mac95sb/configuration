@@ -25,13 +25,6 @@ taplo = "latest"
 github-cli = "latest"
 container = "latest"
 act = "latest"
-pi = "latest"
-codex = "latest"
-neovim = "latest"
-node = "24.21.0"
-ripgrep = "latest"
-fd = "latest"
-opencode = "latest"
 
 [hooks]
 postinstall = """
@@ -57,18 +50,18 @@ fi
 "brew-cask:mole-app" = "latest"                           # Mole
 "brew:forgejo" = "latest"                                 # Forgejo
 "brew:grafana" = "latest"                                 # Grafana
-#"mas:1289583905" = "latest"                               # Pixelmator Pro
-#"mas:1662217862" = "latest"                               # Wipr 2
-#"mas:361285480" = "latest"                                # Keynote
-#"mas:361304891" = "latest"                                # Numbers
-#"mas:361309726" = "latest"                                # Pages
-#"mas:424389933" = "latest"                                # Final Cut Pro
-#"mas:424390742" = "latest"                                # Compressor
-#"mas:434290957" = "latest"                                # Motion
-#"mas:497799835" = "latest"                                # Xcode
+"mas:1289583905" = "latest"                               # Pixelmator Pro
+"mas:1662217862" = "latest"                               # Wipr 2
+"mas:361285480" = "latest"                                # Keynote
+"mas:361304891" = "latest"                                # Numbers
+"mas:361309726" = "latest"                                # Pages
+"mas:424389933" = "latest"                                # Final Cut Pro
+"mas:424390742" = "latest"                                # Compressor
+"mas:434290957" = "latest"                                # Motion
+"mas:497799835" = "latest"                                # Xcode
 "mas:634148309" = "latest"                                # Logic Pro
 "mas:634159523" = "latest"                                # MainStage
-"brew-cask:docker-desktop" = "latest"
+"brew:magic-wormhole" = "latest"
 
 [bootstrap.macos.defaults."com.apple.WindowManager"]
 EnableTiledWindowMargins = true
@@ -91,20 +84,12 @@ tap_to_click = true
 three_finger_drag = true
 
 [dotfiles]
-"~/.config/ghostty/config" = {}
-"~/.config/mcp/mcp.json" = { source = "~/Developer/configuration/.config/mcp/mcp.json" }
-"~/.codex/AGENTS.md" = { source = "~/Developer/configuration/.config/codex/AGENTS.md" }
 "~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
-"~/.config/nvim" = {}
 "~/.config/zsh/.p10k.zsh" = {}
 "~/.config/zsh/.zshrc" = {}
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
-
-[tasks."pi:configure"]
-description = "Merge tracked pi model and theme preferences into local settings"
-run = "python3 /Users/mac/Developer/configuration/.config/pi/configure.py"
 
 [tasks."mail:install"]
 description = "Configure the built-in Postfix for local, direct outbound mail"
