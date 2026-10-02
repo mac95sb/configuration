@@ -23,8 +23,6 @@ shellcheck = "latest"
 shfmt = "latest"
 taplo = "latest"
 github-cli = "latest"
-container = "latest"
-act = "latest"
 
 [hooks]
 postinstall = """

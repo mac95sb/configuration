@@ -38,3 +38,9 @@
 
 [url "ssh://git@127.0.0.1:2222/"]
 	insteadOf = git@git.maclong.dev:
+[hook "hk-pre-commit"]
+	command = test \"${HK:-1}\" = \"0\" || ~/.local/bin/mise x hk -- hk run pre-commit --from-hook --staged
+	event = pre-commit
+[hook "hk-pre-push"]
+	command = test \"${HK:-1}\" = \"0\" || ~/.local/bin/mise x hk -- hk run pre-push --from-hook
+	event = pre-push
