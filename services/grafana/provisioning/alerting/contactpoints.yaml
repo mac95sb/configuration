@@ -12,7 +12,7 @@ contactPoints:
           url: $NTFY_URL
           httpMethod: POST
           headers:
-            Title: Homelab alert
+            Title: Nexus alert
             Tags: rotating_light
           # Send readable text instead of Grafana's webhook JSON.
           payload:

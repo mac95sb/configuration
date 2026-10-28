@@ -36,7 +36,7 @@ restore the newest R2 archive. Prometheus metrics and Loki logs start fresh.
 flowchart LR
     Internet([Internet]) --> Cloudflare[Cloudflare<br/>DNS, TLS, dashboard access]
 
-    subgraph Host[MacBook Pro]
+    subgraph Host[Nexus]
         Cloudflared[cloudflared] --> Caddy[Caddy :8080]
         Caddy --> Status[status]
         Caddy --> Forgejo[Forgejo :3030]
