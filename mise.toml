@@ -87,6 +87,7 @@ three_finger_drag = true
 "~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
 "~/.config/zsh/.p10k.zsh" = {}
 "~/.config/zsh/.zshrc" = {}
+"~/.config/zed/AGENTS.md" = { source = "~/Developer/configuration/.config/zed/AGENTS.md" }
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
 
 [tasks."mail:install"]
