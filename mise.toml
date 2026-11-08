@@ -110,7 +110,7 @@ three_finger_drag = true
 
 [dotfiles]
 "~/.config/git/config" = {}
-"~/Library/Application Support/delta/AGENTS.md" = { source = "~/Developer/configuration/config/delta/AGENTS.md" }
+"~/.config/delta/AGENTS.md" = { source = "~/Developer/configuration/config/delta/AGENTS.md" }
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
 "~/.config/zsh/.p10k.zsh" = {}
