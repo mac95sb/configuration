@@ -3,11 +3,21 @@
 
 	servers {
 		metrics
+		# Only cloudflared's local connection may supply the client address.
+		trusted_proxies static 127.0.0.1/32
+		client_ip_headers Cf-Connecting-Ip
 	}
 }
 
 :8080 {
 	log {
+		format filter {
+			wrap json
+			fields {
+				request>headers>Cf-Access-Jwt-Assertion delete
+				request>headers>Cf-Access-Authenticated-User-Email delete
+			}
+		}
 		output file {$CADDY_ACCESS_LOG:/var/log/caddy/access.log} {
 			mode 0640
 			# Raw client IPs exist here before Alloy scrubs them, so retain briefly.

@@ -1,0 +1,4 @@
+#!/bin/sh
+#MISE description="Restore an exact snapshot; --session NAME required; --offline supports fresh hosts"
+set -eu
+exec sudo /usr/local/libexec/mac-server/backup/launch.sh restore "$@"

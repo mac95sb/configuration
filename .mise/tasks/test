@@ -1,0 +1,33 @@
+#!/usr/bin/env python3
+#MISE description="Run isolated recovery/security/observability fixtures and shell checks"
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tomllib
+
+repo = Path(__file__).resolve().parents[2]
+os.chdir(repo)
+required = ('age', 'age-keygen', 'caddy', 'blackbox_exporter', 'promtool', 'shellcheck')
+missing = [name for name in required if not shutil.which(name)]
+if not shutil.which('restic') and not Path(os.environ.get('TEST_RESTIC', '')).is_file():
+    missing.append('restic')
+if missing:
+    raise SystemExit('Install the pinned tools before testing: ' + ', '.join(missing))
+for suite in ('services/security/test_security.py', 'services/backup/test_backup.py',
+              'services/metrics/test_observability.py'):
+    subprocess.run([sys.executable, '-I', '-B', suite, '-v'], check=True)
+subprocess.run(['/bin/sh', 'services/metrics/soc_test.sh'], check=True)
+shells = []
+for path in [repo / 'setup.sh', repo / 'recover.sh', *sorted((repo / 'services').rglob('*')),
+             *sorted((repo / '.mise/tasks').rglob('*'))]:
+    if path.is_file() and path.read_bytes().startswith(b'#!/bin/sh\n'):
+        shells.append(str(path))
+        subprocess.run(['/bin/sh', '-n', str(path)], check=True)
+subprocess.run(['shellcheck', *shells], check=True)
+for path in ('.config/zsh/.zshenv', '.config/zsh/.zshrc', '.config/zsh/.p10k.zsh'):
+    subprocess.run(['/bin/zsh', '-n', path], check=True)
+for path in ('mise.toml', 'pitchfork.toml', 'fnox.toml', 'services/maintenance/versions.toml'):
+    tomllib.loads((repo / path).read_text())
+print('All isolated tests and shell/TOML checks passed. Live deployment was not tested.')

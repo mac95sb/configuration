@@ -1,0 +1,9 @@
+# Reviewed deployment baseline. Change these deliberately alongside mise.toml.
+# Homebrew's version field is not an exact-version installer; pin blocks upgrades
+# of the installed formula, while check.py refuses a different baseline.
+[bootstrap]
+mise = "2026.11.2"
+
+[homebrew]
+forgejo = "16.0.4"
+grafana = "13.2.2"

@@ -1,0 +1,4 @@
+#!/bin/sh
+#MISE description="Disable sleep for hosting and enable restart after power loss (mains power)"
+set -eu
+exec /bin/sh /Users/mac/Developer/configuration/services/host/power.sh server

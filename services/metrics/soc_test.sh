@@ -1,10 +1,37 @@
 #!/bin/sh
 set -eu
 
-output=$(mktemp "${TMPDIR:-/tmp}/soc-metrics.XXXXXX")
-trap 'rm -f "$output"' EXIT HUP INT TERM
-METRICS_FILE=$output "$(dirname "$0")/soc.sh"
-
-for metric in host_gpu_utilization_ratio host_gpu_memory_bytes host_ane_busy_seconds_total host_power_watts host_battery_charge_ratio host_memory_pressure_ratio; do
-  grep -Eq "^$metric [0-9]+([.][0-9]+)?$" "$output"
+# Synthetic inputs only: never query the running Mac's hardware.
+base=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+work=$(mktemp -d "${TMPDIR:-/tmp}/soc-metrics.XXXXXX")
+trap 'rm -rf "$work"' EXIT HUP INT TERM
+cat >"$work/ioreg" <<'EOF'
+#!/bin/sh
+cat <<'DATA'
+"Device Utilization %"=25
+"In use system memory"=1048576
+busy 0 (2000 ms)
+"SystemLoad"=12500
+"CurrentCapacity" = 80
+DATA
+EOF
+cat >"$work/memory_pressure" <<'EOF'
+#!/bin/sh
+printf 'System-wide memory free percentage: 40%%\n'
+EOF
+chmod +x "$work/ioreg" "$work/memory_pressure"
+IOREG_BIN=$work/ioreg MEMORY_PRESSURE_BIN=$work/memory_pressure METRICS_FILE=$work/soc.prom /bin/sh "$base/soc.sh"
+for sample in 'host_gpu_utilization_ratio 0.25' 'host_gpu_memory_bytes 1048576' 'host_ane_busy_seconds_total 2' 'host_power_watts 12.5' 'host_battery_charge_ratio 0.8' 'host_memory_free_ratio 0.4'; do
+  grep -Fx "$sample" "$work/soc.prom"
 done
+cp "$work/soc.prom" "$work/previous"
+printf '#!/bin/sh\necho invalid\n' >"$work/memory_pressure"
+if IOREG_BIN=$work/ioreg MEMORY_PRESSURE_BIN=$work/memory_pressure METRICS_FILE=$work/soc.prom /bin/sh "$base/soc.sh"; then
+  printf 'invalid input should fail\n' >&2
+  exit 1
+fi
+cmp "$work/previous" "$work/soc.prom"
+if grep -q host_memory_pressure_ratio "$work/soc.prom"; then
+  exit 1
+fi
+promtool check metrics <"$work/soc.prom"

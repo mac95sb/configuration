@@ -2,14 +2,16 @@
 set -eu
 
 output=${METRICS_FILE:-/Users/svc_observability/textfile/soc.prom}
-gpu=$(/usr/sbin/ioreg -r -c IOAccelerator -d 1 -l)
+ioreg_bin=${IOREG_BIN:-/usr/sbin/ioreg}
+memory_pressure_bin=${MEMORY_PRESSURE_BIN:-/usr/bin/memory_pressure}
+gpu=$("$ioreg_bin" -r -c IOAccelerator -d 1 -l)
 gpu_util=$(printf '%s\n' "$gpu" | sed -n 's/.*"Device Utilization %"=\([0-9][0-9]*\).*/\1/p' | head -1)
 gpu_memory=$(printf '%s\n' "$gpu" | sed -n 's/.*"In use system memory"=\([0-9][0-9]*\).*/\1/p' | head -1)
-ane_busy_ms=$(/usr/sbin/ioreg -r -n ane0 -d 0 | sed -n 's/.*busy [0-9][0-9]* (\([0-9][0-9]*\) ms).*/\1/p' | head -1)
-battery=$(/usr/sbin/ioreg -r -c AppleSmartBattery -d 0 -l)
+ane_busy_ms=$("$ioreg_bin" -r -n ane0 -d 0 | sed -n 's/.*busy [0-9][0-9]* (\([0-9][0-9]*\) ms).*/\1/p' | head -1)
+battery=$("$ioreg_bin" -r -c AppleSmartBattery -d 0 -l)
 power_mw=$(printf '%s\n' "$battery" | sed -n 's/.*"SystemLoad"=\([0-9][0-9]*\).*/\1/p' | head -1)
 battery_percent=$(printf '%s\n' "$battery" | sed -n 's/.*"CurrentCapacity" = \([0-9][0-9]*\).*/\1/p' | head -1)
-memory_free_percent=$(/usr/bin/memory_pressure -Q | sed -n 's/^System-wide memory free percentage: \([0-9][0-9]*\)%$/\1/p')
+memory_free_percent=$("$memory_pressure_bin" -Q | sed -n 's/^System-wide memory free percentage: \([0-9][0-9]*\)%$/\1/p')
 
 for value in "$gpu_util" "$gpu_memory" "$ane_busy_ms" "$power_mw" "$battery_percent" "$memory_free_percent"; do
   case $value in '' | *[!0-9]*)
@@ -36,8 +38,8 @@ host_power_watts $(awk -v value="$power_mw" 'BEGIN { print value / 1000 }')
 # HELP host_battery_charge_ratio Current battery charge.
 # TYPE host_battery_charge_ratio gauge
 host_battery_charge_ratio $(awk -v value="$battery_percent" 'BEGIN { print value / 100 }')
-# HELP host_memory_pressure_ratio Current memory pressure derived from the macOS system-wide memory free percentage.
-# TYPE host_memory_pressure_ratio gauge
-host_memory_pressure_ratio $(awk -v value="$memory_free_percent" 'BEGIN { print 1 - value / 100 }')
+# HELP host_memory_free_ratio macOS system-wide memory free fraction; not the memory pressure state.
+# TYPE host_memory_free_ratio gauge
+host_memory_free_ratio $(awk -v value="$memory_free_percent" 'BEGIN { print value / 100 }')
 EOF
 mv "$tmp" "$output"

@@ -1,0 +1,4 @@
+#!/bin/sh
+#MISE description="Set configuration and robin origin to Forgejo; preserve previous remotes"
+set -eu
+exec /bin/sh /Users/mac/Developer/configuration/services/git/forgejo.sh

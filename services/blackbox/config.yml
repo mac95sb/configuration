@@ -5,11 +5,29 @@ modules:
     http:
       preferred_ip_protocol: "ip4"
 
-  # Cloudflare Access returns 302 to a healthy unauthenticated probe.
-  http_2xx_or_redirect:
+  # An Access login redirect checks the edge policy, NOT origin health.
+  http_access_redirect:
     prober: http
     timeout: 5s
     http:
       preferred_ip_protocol: "ip4"
       follow_redirects: false
       valid_status_codes: [302]
+
+  http_grafana_health:
+    prober: http
+    timeout: 5s
+    http:
+      preferred_ip_protocol: "ip4"
+      follow_redirects: false
+      headers:
+        Host: dashboard.maclong.dev
+      valid_status_codes: [200]
+
+  http_forgejo_health:
+    prober: http
+    timeout: 5s
+    http:
+      preferred_ip_protocol: "ip4"
+      follow_redirects: false
+      valid_status_codes: [200]

@@ -4,6 +4,7 @@ zstyle ':z4h:bindkey' keyboard 'mac'
 zstyle ':z4h:' term-shell-integration 'yes'
 zstyle ':z4h:term-title:local' precmd '%1~'
 zstyle ':z4h:term-title:local' preexec '%1~'
+# zsh4humans otherwise enables its bundled multiplexer by default.
 zstyle ':z4h:' start-tmux 'no'
 zstyle ':z4h:' prompt-at-bottom 'no'
 zstyle ':z4h:autosuggestions' forward-char 'accept'
@@ -25,10 +26,6 @@ fi
 
 z4h init || return
 
-# Keep tmux from replacing the concise shell title with its launcher command.
-if [[ -n $TMUX ]]; then
-  tmux set-option -g set-titles off 2>/dev/null
-fi
 
 path=("$HOME/.local/bin" $path)
 typeset -U path PATH

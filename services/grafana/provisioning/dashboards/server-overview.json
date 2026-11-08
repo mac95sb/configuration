@@ -29,7 +29,7 @@
     {
       "type": "stat",
       "title": "Daemon uptime (24h)",
-      "description": "Share of scrapes that reached each daemon over the last day. Multiplied by current state, so a target that is down right now reads DOWN in red instead of a reassuring average. While it is up, the number is its uptime over the window. Restarts count against it — a probe failing while cloudflared reconnects is a real failure from outside. Time when Prometheus itself was down is absent rather than zero, so this reads higher than truth after a Prometheus restart.",
+      "description": "Share of scrapes reaching each daemon over 24 hours, multiplied by current scrape state. This checks metrics reachability, not application health or public access. Missing scrapes while Prometheus is down are absent, not failures.",
       "gridPos": {
         "x": 0,
         "y": 1,
@@ -106,8 +106,8 @@
     },
     {
       "type": "stat",
-      "title": "Endpoint uptime (24h)",
-      "description": "Share of probes through Cloudflare that succeeded over the last day. Multiplied by current state, so a target that is down right now reads DOWN in red instead of a reassuring average. While it is up, the number is its uptime over the window. Restarts count against it — a probe failing while cloudflared reconnects is a real failure from outside.",
+      "title": "HTTP check success (24h): edge / local",
+      "description": "Success per check, multiplied by its current state. The dashboard public 302 checks only Cloudflare Access, not the tunnel, Caddy, or Grafana origin. Direct loopback /api/health and /api/healthz probes check Grafana and Forgejo separately and bypass Caddy. Missing scrapes are not counted as failures.",
       "gridPos": {
         "x": 12,
         "y": 1,
@@ -127,7 +127,7 @@
           },
           "datasourceUid": "prometheus",
           "expr": "avg_over_time(probe_success[24h]) * 100 * probe_success",
-          "legendFormat": "{{instance}}",
+          "legendFormat": "{{job}} \u2014 {{instance}}",
           "instant": true
         }
       ],
@@ -259,8 +259,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "host_memory_pressure_ratio * 100",
-          "legendFormat": "memory pressure",
+          "expr": "host_memory_free_ratio * 100",
+          "legendFormat": "memory free fraction",
           "instant": false
         },
         {
@@ -350,7 +350,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "memory pressure"
+              "options": "memory free fraction"
             },
             "properties": [
               {
@@ -379,7 +379,7 @@
           }
         ]
       },
-      "description": "CPU, GPU, Neural Engine, memory use, memory pressure and battery charge over the selected period. GPU and battery charge are reported by I/O Registry; Neural Engine is derived from its cumulative driver-busy time; memory pressure is the inverse of macOS's system-wide memory free percentage."
+      "description": "CPU, GPU, Neural Engine, memory use, memory free fraction and battery charge over the selected period. GPU and battery charge are reported by I/O Registry; Neural Engine is derived from its cumulative driver-busy time; memory free fraction is macOS's system-wide memory free percentage, not the green/amber/red memory pressure state."
     },
     {
       "type": "timeseries",
@@ -483,7 +483,7 @@
         },
         "overrides": []
       },
-      "description": "Estimated system load reported by the Mac's power controller; this is not total wall draw. Practical guide for this M4 Pro: 3–8 W quiet or idle, 8–25 W normal use, 25–50 W intentional heavy work, and brief peaks above 50 W can be normal. Investigate more than 15 W for 20–30 minutes while genuinely idle, more than 30 W without a known workload, power that stays high after work ends, or high draw accompanied by heat, fans, or battery drain on AC. Correlate unexpected draw with the CPU and GPU series or Activity Monitor's Energy pane."
+      "description": "Estimated system load reported by the Mac's power controller; this is not total wall draw. Practical guide for this M4 Pro: 3\u20138 W quiet or idle, 8\u201325 W normal use, 25\u201350 W intentional heavy work, and brief peaks above 50 W can be normal. Investigate more than 15 W for 20\u201330 minutes while genuinely idle, more than 30 W without a known workload, power that stays high after work ends, or high draw accompanied by heat, fans, or battery drain on AC. Correlate unexpected draw with the CPU and GPU series or Activity Monitor's Energy pane."
     },
     {
       "type": "timeseries",
@@ -506,8 +506,8 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(1 - node_filesystem_avail_bytes{mountpoint=\"/\"} / node_filesystem_size_bytes{mountpoint=\"/\"}) * 100",
-          "legendFormat": "used",
+          "expr": "(1 - node_filesystem_avail_bytes{job=\"node\",mountpoint=~\"/|/System/Volumes/Data\"} / node_filesystem_size_bytes{job=\"node\",mountpoint=~\"/|/System/Volumes/Data\"}) * 100",
+          "legendFormat": "{{mountpoint}} used",
           "instant": false
         }
       ],
@@ -545,7 +545,7 @@
         },
         "overrides": []
       },
-      "description": "Share of the root filesystem in use, including its trend over the selected period. Amber 80%, red 90%."
+      "description": "System and writable Data volume usage. Application data and logs live on Data. Amber 80%, red 90%; separate alerts detect missing filesystem metrics."
     },
     {
       "type": "row",
@@ -647,7 +647,7 @@
     },
     {
       "type": "row",
-      "title": "Public endpoints",
+      "title": "Public edge and local application checks",
       "gridPos": {
         "x": 0,
         "y": 22,
@@ -693,7 +693,7 @@
           "refId": "A"
         }
       ],
-      "description": "How long each public probe took, end to end through Cloudflare. Watch for a step change rather than an absolute value — a sustained rise usually means a slow backend, not a slow network."
+      "description": "Duration of public edge checks and direct local application health checks. The public dashboard check stops at the Access login redirect and does not measure origin latency."
     },
     {
       "type": "stat",
@@ -760,7 +760,7 @@
     },
     {
       "type": "stat",
-      "title": "Public endpoint HTTP status",
+      "title": "HTTP check status (edge / local)",
       "gridPos": {
         "x": 0,
         "y": 30,
@@ -801,7 +801,7 @@
         "colorMode": "none",
         "orientation": "auto"
       },
-      "description": "Raw status code returned by each public endpoint. Expected responses are 200 for status and Forgejo, and a 302 Cloudflare Access redirect for Grafana."
+      "description": "Public status and Forgejo expect 2xx; public dashboard expects only the Access 302 login redirect, which says nothing about origin health. Local Grafana /api/health (dashboard Host header) and Forgejo /api/healthz expect 200. Local checks bypass Caddy; Caddy active upstream checks are not configured."
     },
     {
       "type": "timeseries",
@@ -839,7 +839,7 @@
         },
         "overrides": []
       },
-      "description": "Active connections from cloudflared to Cloudflare's edge. Four is normal — the tunnel keeps redundant connections to separate data centres. Dropping toward zero means the tunnel is failing and the public hostnames go with it."
+      "description": "Active connections from cloudflared to Cloudflare's edge. Four is normal \u2014 the tunnel keeps redundant connections to separate data centres. Dropping toward zero means the tunnel is failing and the public hostnames go with it."
     },
     {
       "type": "row",
@@ -893,7 +893,7 @@
     },
     {
       "type": "timeseries",
-      "title": "Caddy upstream health",
+      "title": "Caddy upstream eligibility (not a health probe)",
       "gridPos": {
         "x": 12,
         "y": 36,
@@ -927,7 +927,7 @@
         },
         "overrides": []
       },
-      "description": "Whether Caddy can reach each backend it proxies to. 1 = reachable, 0 = not. :3000 is Grafana, :3030 is Forgejo. Drops here precede a failed public probe."
+      "description": "Caddy's internal upstream eligibility: 1 means eligible for routing, not verified reachable or healthy. Active and passive health checks are not configured, so this can remain 1 while a backend is down. Use the direct Grafana and Forgejo health probes for application health; they bypass Caddy."
     },
     {
       "type": "timeseries",
@@ -1002,7 +1002,7 @@
           "refId": "A"
         }
       ],
-      "description": "Log lines Loki refused. Any value above zero means lines are being lost — usually rate limiting or a malformed stream — and the logs you are reading are then incomplete."
+      "description": "Log lines Loki refused. Any value above zero means lines are being lost \u2014 usually rate limiting or a malformed stream \u2014 and the logs you are reading are then incomplete."
     },
     {
       "type": "row",
@@ -1078,7 +1078,7 @@
         "orientation": "auto",
         "graphMode": "area"
       },
-      "description": "Time since the backup daemon last completed a full run — capture, encrypt, and upload to R2. Amber at 25h, red at 26h, matching the alert. A run that fails partway never updates this, so the tile ages rather than falsely reporting success."
+      "description": "Time since the backup daemon last completed a full run \u2014 capture, encrypt, and upload to R2. Amber at 25h, red at 26h, matching the alert. A run that fails partway never updates this, so the tile ages rather than falsely reporting success."
     },
     {
       "type": "stat",

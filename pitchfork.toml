@@ -1,5 +1,9 @@
+[settings.general]
+shell = "/bin/sh -c"
+mise = false
+
 [settings.supervisor]
-user = "mac"
+user = "root"
 
 [daemons.caddy]
 user = "svc_caddy"
@@ -20,7 +24,7 @@ run = "/usr/local/bin/node_exporter --web.listen-address=127.0.0.1:9101 --collec
 [daemons.soc_metrics]
 user = "svc_observability"
 boot_start = true
-cron = { schedule = "*/15 * * * * *", retrigger = "finish" }
+cron = { schedule = "0 * * * * *", retrigger = "finish" }
 run = "/Users/mac/Developer/configuration/services/metrics/soc.sh"
 
 [daemons.blackbox]
@@ -39,30 +43,34 @@ boot_start = true
 run = "/usr/local/bin/loki -config.file=/Users/mac/Developer/configuration/services/loki/config.yml"
 
 [daemons.alloy]
-user = "svc_observability"
+user = "root"
 boot_start = true
 depends = ["loki"]
-run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile observability -- /usr/local/bin/alloy run /Users/mac/Developer/configuration/services/alloy/config.alloy --storage.path=/Users/svc_observability/alloy-data --server.http.listen-addr=127.0.0.1:12345"
+run = "/usr/local/libexec/mac-server/secret-service alloy"
 
 [daemons.grafana]
-user = "svc_observability"
+user = "root"
 boot_start = true
 depends = ["prometheus", "loki"]
-run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile grafana,notifications -- /usr/local/bin/grafana server --config=/Users/mac/Developer/configuration/services/grafana/config.ini --homepath=/opt/homebrew/opt/grafana/share/grafana --packaging=brew cfg:default.paths.logs=/Users/svc_observability/grafana-logs cfg:default.paths.data=/Users/svc_observability/grafana-data cfg:default.paths.plugins=/Users/svc_observability/grafana-plugins"
+run = "/usr/local/libexec/mac-server/secret-service grafana"
 
 [daemons.forgejo]
-user = "svc_forgejo"
+user = "root"
 boot_start = true
-env = { HOME = "/Users/svc_forgejo" }
-run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile forgejo -- /Users/mac/Developer/configuration/services/forgejo/start.sh"
+run = "/usr/local/libexec/mac-server/secret-service forgejo"
 
-[daemons.log_shipper]
+[daemons.log_shipper_pitchfork]
+user = "root"
+boot_start = true
+run = "/usr/local/libexec/mac-server/ship-pitchfork.sh"
+
+[daemons.log_shipper_postfix]
 user = "mac"
 boot_start = true
-run = "/Users/mac/Developer/configuration/services/logs/ship.sh"
+run = "/Users/mac/Developer/configuration/services/logs/ship-postfix.sh"
 
 [daemons.backup]
-user = "svc_backup"
+user = "root"
 boot_start = true
 cron = { schedule = "0 0 3 * * *", retrigger = "finish" }
-run = "/usr/local/bin/fnox exec --config /Users/mac/Developer/configuration/fnox.toml --profile backup -- /Users/mac/Developer/configuration/services/backup/backup.sh"
+run = "/usr/local/libexec/mac-server/backup/launch.sh"

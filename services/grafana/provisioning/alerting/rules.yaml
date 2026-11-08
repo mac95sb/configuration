@@ -9,13 +9,13 @@ groups:
     interval: 1m
     rules:
       - uid: endpoint_down
-        title: Public endpoint unreachable
+        title: HTTP probe failed (public edge or local application)
         condition: threshold
         for: 5m
         noDataState: Alerting
         execErrState: Alerting
         annotations:
-          summary: "{{ $labels.instance }} has failed its probe for 5 minutes."
+          summary: "{{ $labels.instance }} has failed its probe for 5 minutes. The dashboard public probe checks only the Access redirect; local health probes check the applications."
         labels:
           severity: critical
         data:
@@ -92,7 +92,7 @@ groups:
       - uid: log_ingestion_failing
         title: Log ingestion is dropping entries
         condition: threshold
-        for: 10m
+        for: 0m
         noDataState: OK
         execErrState: Alerting
         annotations:
@@ -117,7 +117,7 @@ groups:
                 - evaluator: { type: gt, params: [0] }
 
       - uid: disk_space_low
-        title: Root filesystem is running out of space
+        title: System or Data filesystem is running out of space
         condition: threshold
         for: 15m
         noDataState: OK
@@ -132,7 +132,7 @@ groups:
             datasourceUid: prometheus
             model:
               refId: free
-              expr: min by (mountpoint) (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})
+              expr: min by (mountpoint) (node_filesystem_avail_bytes{job="node",mountpoint=~"/|/System/Volumes/Data"} / node_filesystem_size_bytes{job="node",mountpoint=~"/|/System/Volumes/Data"})
               instant: true
           - refId: threshold
             datasourceUid: __expr__
@@ -142,6 +142,115 @@ groups:
               expression: free
               conditions:
                 - evaluator: { type: lt, params: [0.1] }
+
+      - uid: disk_metrics_missing
+        title: System or Data filesystem metrics missing
+        condition: threshold
+        for: 5m
+        # Empty absent() results mean all expected series are present.
+        noDataState: OK
+        execErrState: Alerting
+        annotations:
+          summary: "Expected filesystem capacity or availability metrics are missing for {{ $labels.mountpoint }}."
+        labels:
+          severity: warning
+        data:
+          - refId: missing
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: missing
+              expr: absent(node_filesystem_avail_bytes{job="node",mountpoint="/"}) or absent(node_filesystem_size_bytes{job="node",mountpoint="/"}) or absent(node_filesystem_avail_bytes{job="node",mountpoint="/System/Volumes/Data"}) or absent(node_filesystem_size_bytes{job="node",mountpoint="/System/Volumes/Data"})
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: missing
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+
+      - uid: soc_metrics_stale
+        title: SoC metrics stale or missing
+        condition: threshold
+        for: 0m
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "SoC collection has not completed in 5 minutes, or an expected metric is missing."
+        labels:
+          severity: warning
+        data:
+          - refId: unhealthy
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: unhealthy
+              expr: (time() - node_textfile_mtime_seconds{job="node",file=~"(.*/)?soc[.]prom"} > bool 300) or absent(node_textfile_mtime_seconds{job="node",file=~"(.*/)?soc[.]prom"}) or absent(host_gpu_utilization_ratio{job="node"}) or absent(host_gpu_memory_bytes{job="node"}) or absent(host_ane_busy_seconds_total{job="node"}) or absent(host_power_watts{job="node"}) or absent(host_battery_charge_ratio{job="node"}) or absent(host_memory_free_ratio{job="node"})
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: unhealthy
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+
+      - uid: textfile_collectors_stale
+        title: Textfile collector stale, missing or unreadable
+        condition: threshold
+        for: 0m
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "Textfile collector {{ $labels.file }} is over 26 hours old, has disappeared within 7 days, or node_exporter cannot read textfiles. SoC has a separate 5-minute rule; updates use the review timestamp."
+        labels:
+          severity: warning
+        data:
+          - refId: unhealthy
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: unhealthy
+              expr: (time() - node_textfile_mtime_seconds{job="node",file!~"(.*/)?(soc|updates)[.]prom"} > bool 93600) or ((max_over_time(node_textfile_mtime_seconds{job="node",file!~"(.*/)?updates[.]prom"}[7d]) unless node_textfile_mtime_seconds{job="node"}) * 0 + 1) or node_textfile_scrape_error{job="node"} or absent(node_textfile_scrape_error{job="node"})
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: unhealthy
+              conditions:
+                - evaluator: { type: gt, params: [0] }
+
+      - uid: infrastructure_update_review
+        title: Infrastructure update review overdue
+        condition: threshold
+        for: 0m
+        noDataState: Alerting
+        execErrState: Alerting
+        annotations:
+          summary: "Review infrastructure updates on the Mac. The last completed review is over 30 days old or missing. After review, atomically write infrastructure_updates_last_review_seconds to /Users/svc_observability/textfile/updates.prom; do not refresh it on scrape or boot."
+        labels:
+          severity: warning
+        data:
+          - refId: age
+            relativeTimeRange: { from: 300, to: 0 }
+            datasourceUid: prometheus
+            model:
+              refId: age
+              expr: time() - infrastructure_updates_last_review_seconds{job="node"}
+              instant: true
+          - refId: threshold
+            datasourceUid: __expr__
+            model:
+              refId: threshold
+              type: threshold
+              expression: age
+              conditions:
+                - evaluator: { type: gt, params: [2592000] }
 
   - orgId: 1
     name: backup

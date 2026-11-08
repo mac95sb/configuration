@@ -1,6 +1,16 @@
 #!/bin/sh
 
 set -eu
+umask 077
+new_system=false
+case ${1:-} in
+--new) new_system=true ;;
+'') ;;
+*)
+  printf 'Usage: %s [--new]\n' "$0" >&2
+  exit 2
+  ;;
+esac
 
 say() {
   say_wait=false
@@ -41,7 +51,10 @@ dotfiles=$HOME/Developer/configuration
 mise=$HOME/.local/bin/mise
 if [ ! -x "$mise" ]; then
   say 'Installing mise'
-  curl -fsSL https://mise.run | sh
+  installer=$(mktemp "${TMPDIR:-/tmp}/mise-installer.XXXXXX")
+  curl -fsSL https://mise.run -o "$installer"
+  MISE_VERSION=v2026.11.2 sh "$installer"
+  rm -f "$installer"
 fi
 
 say 'Installing tools, packages, and dotfiles'
@@ -49,6 +62,7 @@ say 'Installing tools, packages, and dotfiles'
 "$mise" -C "$dotfiles" install
 "$mise" -C "$dotfiles" exec -- hk install --global --mise
 "$mise" -C "$dotfiles" exec -- mise bootstrap --yes --force-dotfiles --skip repos
+"$mise" -C "$dotfiles" run updates:pin
 
 say 'Applying macOS preferences'
 sudo_file=/etc/pam.d/sudo_local
@@ -59,8 +73,10 @@ if [ ! -f "$sudo_template" ]; then
   exit 1
 fi
 
-sudo cp "$sudo_template" "$sudo_file"
-sudo sed -i '' 's/^#auth/auth/' "$sudo_file"
+if ! sudo test -f "$sudo_file"; then
+  sudo cp "$sudo_template" "$sudo_file"
+  sudo sed -i '' 's/^#auth/auth/' "$sudo_file"
+fi
 
 defaults write com.apple.dock persistent-apps -array
 
@@ -93,7 +109,11 @@ installed_key=/etc/fnox/operational.key
 staged_key=$HOME/operational.key
 temporary_key=
 
-if [ -f "$installed_key" ]; then
+if sudo test -L /etc/fnox || sudo test -L "$installed_key"; then
+  printf '%s\n' 'Refusing symlinked fnox key paths.' >&2
+  exit 1
+fi
+if sudo test -f "$installed_key"; then
   say "Using the existing operational key at $installed_key"
 else
   if [ ! -f "$staged_key" ]; then
@@ -129,8 +149,8 @@ else
     exit 1
   fi
 
-  sudo install -d -m 750 -o root -g fnox /etc/fnox
-  sudo install -o root -g fnox -m 440 "$staged_key" "$installed_key"
+  sudo install -d -m 700 -o root -g wheel /etc/fnox
+  sudo install -o root -g wheel -m 600 "$staged_key" "$installed_key"
   rm -f "$staged_key"
 fi
 
@@ -139,21 +159,32 @@ if [ -n "$temporary_key" ]; then
   trap - EXIT HUP INT TERM
 fi
 
-say 'Preparing service binaries for restoration'
-"$mise" -C "$dotfiles" run daemon:relink
-sudo chmod o+x /Users/mac
+sudo chown root:wheel /etc/fnox "$installed_key"
+sudo chmod 700 /etc/fnox
+sudo chmod 600 "$installed_key"
 
 forgejo_db=/Users/svc_forgejo/forgejo-data/data/forgejo.db
 grafana_db=/Users/svc_observability/grafana-data/grafana.db
-restored=false
-if [ ! -e "$forgejo_db" ] && [ ! -e "$grafana_db" ]; then
-  say 'Restoring the latest service state'
-  "$dotfiles/services/backup/restore.sh"
-  restored=true
-elif [ ! -e "$forgejo_db" ] || [ ! -e "$grafana_db" ]; then
-  printf '%s\n' 'Only one service database exists; refusing to mix live and restored state.' >&2
+if [ "$new_system" = false ] &&
+  { ! sudo test -f "$forgejo_db" || ! sudo test -f "$grafana_db"; }; then
+  printf '%s\n' 'Service state is missing. Restore first using recover.sh from a temporary checkout outside Developer.' \
+    'Use setup.sh --new only to create genuinely new, empty services.' >&2
   exit 1
 fi
+if [ "$new_system" = true ] &&
+  { sudo test -e "$forgejo_db" || sudo test -e "$grafana_db"; }; then
+  printf '%s\n' '--new refuses existing service databases; use ordinary setup after a complete restore.' >&2
+  exit 1
+fi
+
+say 'Deploying reviewed protected service runtime (services not restarted yet)'
+if sudo test -f /etc/fnox/config.toml; then
+  # A recovered/deployed config can contain credentials newer than Git's copy.
+  /bin/sh "$dotfiles/services/security/deploy.sh" deploy /etc/fnox/config.toml
+else
+  "$mise" -C "$dotfiles" run daemon:install
+fi
+sudo chmod o+x /Users/mac
 
 say 'Configuring the Cloudflare Tunnel'
 cloudflared_config=$dotfiles/services/cloudflared/config.yml
@@ -169,13 +200,13 @@ if [ ! -f "$installed_credentials" ]; then
 
   credential_tmp_dir=$(mktemp -d /private/tmp/cloudflared-credential.XXXXXX)
   credential_tmp=$credential_tmp_dir/credential.json
-  sudo chown svc_backup:staff "$credential_tmp_dir"
+  sudo chown root:wheel "$credential_tmp_dir"
   sudo chmod 700 "$credential_tmp_dir"
-  trap 'sudo -u svc_backup rm -rf "$credential_tmp_dir"' EXIT
+  trap 'sudo rm -rf "$credential_tmp_dir"' EXIT
   trap 'exit 1' HUP INT TERM
-  sudo -u svc_backup /usr/local/bin/age -d -i /etc/fnox/operational.key \
+  sudo /usr/local/bin/age -d -i /etc/fnox/operational.key \
     -o "$credential_tmp" "$encrypted_credentials"
-  restored_tunnel_id=$(sudo -u svc_backup /usr/bin/plutil \
+  restored_tunnel_id=$(sudo /usr/bin/plutil \
     -extract TunnelID raw -o - "$credential_tmp")
   if [ "$restored_tunnel_id" != "$tunnel_id" ]; then
     printf 'Encrypted credentials do not belong to tunnel %s.\n' "$tunnel_id" >&2
@@ -184,15 +215,17 @@ if [ ! -f "$installed_credentials" ]; then
   sudo install -d -m 755 -o root -g wheel /etc/cloudflared
   sudo install -o svc_cloudflared -g staff -m 400 \
     "$credential_tmp" "$installed_credentials"
-  sudo -u svc_backup rm -rf "$credential_tmp_dir"
+  sudo rm -rf "$credential_tmp_dir"
   trap - EXIT HUP INT TERM
 fi
 
 say 'Reusing the existing Cloudflare tunnel, DNS routes, and Access policy'
 
-say 'Installing and starting the pitchfork supervisor'
-"$mise" -C "$dotfiles" run daemon:install
-"$mise" -C "$dotfiles" run daemon:reload
+say 'Enabling server power settings'
+"$mise" -C "$dotfiles" run host:server
+
+say 'Activating the protected root Pitchfork supervisor'
+"$mise" -C "$dotfiles" run daemon:activate
 
 say 'Creating the first Forgejo administrator, if needed'
 forgejo_work_path=/Users/svc_forgejo/forgejo-data
@@ -204,9 +237,12 @@ while [ ! -f "$forgejo_config" ] && [ "$attempt" -lt 15 ]; do
   attempt=$((attempt + 1))
 done
 
-if sudo -u svc_forgejo /usr/local/bin/forgejo admin user list \
-  --work-path "$forgejo_work_path" --config "$forgejo_config" 2>/dev/null |
-  grep -Eq '^[[:space:]]*[0-9]+[[:space:]]+'; then
+if ! users=$(sudo -u svc_forgejo /usr/local/bin/forgejo admin user list \
+  --work-path "$forgejo_work_path" --config "$forgejo_config"); then
+  printf '%s\n' 'Could not list Forgejo users; refusing to treat a service error as an empty database.' >&2
+  exit 1
+fi
+if printf '%s\n' "$users" | grep -Eq '^[[:space:]]*[0-9]+[[:space:]]+'; then
   say 'A Forgejo user already exists; skipping administrator creation'
 else
   say 'Choose the initial Forgejo administrator'
@@ -229,26 +265,34 @@ else
     'Forgejo requires changing it at first login.'
 fi
 
-say 'Pointing the configuration repository at Forgejo'
-forgejo_url=git@git.maclong.dev:mac/configuration.git
-current_origin=$(git -C "$dotfiles" config --get remote.origin.url 2>/dev/null || :)
+unset users
 
-if [ "$current_origin" = "$forgejo_url" ]; then
-  say 'The configuration repository already uses Forgejo as origin'
-elif [ "$restored" = true ]; then
-  git -C "$dotfiles" remote set-url origin "$forgejo_url"
-  say 'Restored Forgejo already contains the configuration repository'
-else
-  say --wait 'Create the empty mac/configuration repository in Forgejo before continuing'
-
-  if [ -n "$current_origin" ]; then
-    git -C "$dotfiles" remote set-url origin "$forgejo_url"
-  else
-    git -C "$dotfiles" remote add origin "$forgejo_url"
-  fi
-
-  git -C "$dotfiles" push origin --all
-  git -C "$dotfiles" push origin --tags
+say 'Preparing Git authentication and signing'
+if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+  ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -C contact@maclong.dev
+  cat "$HOME/.ssh/id_ed25519.pub"
+  say --wait 'Register the public key above with your Forgejo user (authentication and signing)' \
+    'Keep private-key recovery separate; it is not included in a public configuration bundle.'
 fi
 
-say 'System provisioning complete'
+say 'Pointing configuration and robin at Forgejo'
+/bin/sh "$dotfiles/services/git/forgejo.sh"
+if [ "$new_system" = true ]; then
+  say --wait 'Create empty mac/configuration and mac/robin repositories in Forgejo'
+fi
+for name in configuration robin; do
+  checkout=$HOME/Developer/$name
+  GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git -C "$checkout" ls-remote origin HEAD
+  if [ "$new_system" = true ]; then
+    git -C "$checkout" push origin --all
+    git -C "$checkout" push origin --tags
+  fi
+done
+
+say 'Opening the Restic repository without replacing an existing password'
+"$mise" -C "$dotfiles" run recovery:init
+say 'System provisioning complete' \
+  'Commit reviewed configuration changes, then run mise run recovery:checkpoint.' \
+  'Before erasing: verify the exact snapshot from an independent downloaded copy.'

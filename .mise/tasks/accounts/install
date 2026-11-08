@@ -2,11 +2,10 @@
 #MISE description="Create service accounts and their required access groups"
 set -eu
 
-for group in fnox observability; do
-  if ! dscl . -read "/Groups/$group" >/dev/null 2>&1; then
-    sudo dseditgroup -o create "$group"
-  fi
-done
+# Secrets belong to root alone; observability is only for logs and metrics.
+if ! dscl . -read /Groups/observability >/dev/null 2>&1; then
+  sudo dseditgroup -o create observability
+fi
 
 for account in svc_backup:Backup svc_caddy:Caddy svc_cloudflared:Cloudflared svc_forgejo:Forgejo svc_observability:Observability; do
   user=${account%%:*}
@@ -14,9 +13,14 @@ for account in svc_backup:Backup svc_caddy:Caddy svc_cloudflared:Cloudflared svc
     sudo sysadminctl -addUser "$user" -fullName "${account#*:} service account" -shell /usr/bin/false -roleAccount
   fi
 done
-sudo dseditgroup -o edit -a svc_backup -t user fnox
-sudo dseditgroup -o edit -a svc_forgejo -t user fnox
-sudo dseditgroup -o edit -a svc_observability -t user fnox
+# Revoke legacy shared identity access without deleting migration accounts or paths.
+if dscl . -read /Groups/fnox >/dev/null 2>&1; then
+  for user in svc_backup svc_forgejo svc_observability mac; do
+    if dseditgroup -o checkmember -m "$user" fnox >/dev/null 2>&1; then
+      sudo dseditgroup -o edit -d "$user" -t user fnox
+    fi
+  done
+fi
 sudo dseditgroup -o edit -a svc_observability -t user observability
 sudo dseditgroup -o edit -a svc_backup -t user observability
 sudo install -d -m 750 -o svc_backup -g staff /Users/svc_backup/backup-staging

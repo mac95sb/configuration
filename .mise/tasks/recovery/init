@@ -1,0 +1,4 @@
+#!/bin/sh
+#MISE description="Initialize/open restic without replacing an existing password"
+set -eu
+exec sudo /usr/local/libexec/mac-server/backup/launch.sh init "$@"

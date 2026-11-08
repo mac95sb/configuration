@@ -1,5 +1,5 @@
 local.file_match "caddy" {
-	path_targets = [{__path__ = "/var/log/caddy/access.log"}]
+	path_targets = [{__path__ = "/var/log/caddy/access.log", service = "caddy"}]
 	sync_period  = "10s"
 }
 

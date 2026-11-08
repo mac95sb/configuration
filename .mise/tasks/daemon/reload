@@ -1,9 +1,5 @@
 #!/bin/sh
-#MISE description="Install the edited pitchfork.toml as root and restart all daemons"
+#MISE description="Atomically deploy reviewed Pitchfork config and boot plist without restarting services"
 set -eu
-
-if [ ! /Users/mac/Developer/configuration/pitchfork.toml -ef /etc/pitchfork/config.toml ]; then
-  sudo install -o root -g wheel -m 644 \
-    /Users/mac/Developer/configuration/pitchfork.toml /etc/pitchfork/config.toml
-fi
-pitchfork restart --all-global
+repo=$(CDPATH='' cd -- "$(/usr/bin/dirname "$0")/../../.." && pwd -P)
+exec /bin/sh "$repo/services/security/deploy.sh" config "$@"
