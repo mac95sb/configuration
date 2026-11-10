@@ -1,0 +1,30 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2154
+#MISE description="Configure Forgejo Git remotes and signing"
+set -eu
+. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
+setup_mode=${CONFIGURATION_SETUP_MODE:-fresh}
+
+say 'Preparing Git authentication and signing'
+if [ ! -f "$HOME/.ssh/id_ed25519" ]; then
+  mkdir -p "$HOME/.ssh"
+  chmod 700 "$HOME/.ssh"
+  ssh-keygen -t ed25519 -f "$HOME/.ssh/id_ed25519" -C contact@maclong.dev
+  cat "$HOME/.ssh/id_ed25519.pub"
+  say --wait 'Register the public key above with your Forgejo user (authentication and signing)' \
+    'Keep private-key recovery separate; it is not included in a public configuration bundle.'
+fi
+
+say 'Pointing configuration and robin at Forgejo'
+"$mise_bin" -C "$setup_repo" run git:forgejo
+if [ "$setup_mode" = fresh ]; then
+  say --wait 'Create empty mac/configuration and mac/robin repositories in Forgejo'
+fi
+for name in configuration robin; do
+  checkout=$HOME/Developer/$name
+  GIT_SSH_COMMAND='ssh -o BatchMode=yes -o ConnectTimeout=10' git -C "$checkout" ls-remote origin HEAD
+  if [ "$setup_mode" = fresh ]; then
+    git -C "$checkout" push origin --all
+    git -C "$checkout" push origin --tags
+  fi
+done

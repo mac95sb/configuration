@@ -25,10 +25,10 @@ used. HOME/PATH discovery is confined to this explicit deployment step; root run
 startup still uses fixed protected paths and a clean environment.
 
 ```text
-/bin/sh services/security/deploy.sh deploy [reviewed_fnox_config_path]
-/bin/sh services/security/deploy.sh stage [reviewed_fnox_config_path]
-/bin/sh services/security/deploy.sh tools
-/bin/sh services/security/deploy.sh config
+mise run security:deploy -- deploy [reviewed_fnox_config_path]
+mise run security:deploy -- stage [reviewed_fnox_config_path]
+mise run security:deploy -- tools
+mise run security:deploy -- config
 ```
 
 The optional positional config path is accepted only by `deploy` and `stage`.
@@ -62,12 +62,12 @@ Only after verification, provision the protected operational identity and recove
 password files before staging. Then, from the reviewed bootstrap checkout:
 
 ```sh
-/bin/sh services/security/deploy.sh stage /absolute/path/to/capsule-config.toml
+mise run security:deploy -- stage /absolute/path/to/capsule-config.toml
 ```
 
 Replace the example path with the actual reviewed config recovered from the capsule.
 It may differ from Git's `fnox.toml`; do not silently substitute the Git version.
-`recover.sh` should call this same `stage` action with its recovered config path.
+The setup recovery task calls this same `stage` action with the recovered config path.
 
 **`stage` installs tools/Python, secret/backup/logging launcher files, the backup
 helpers, `/etc/fnox/config.toml`, and its environment whitelist only.** It does not
@@ -87,8 +87,8 @@ After recovery has restored the final checkout and required unprivileged service
 files, deploy from that restored checkout, preserving the reviewed recovered config:
 
 ```sh
-/bin/sh services/security/deploy.sh deploy /etc/fnox/config.toml
-/bin/sh .mise/tasks/daemon/activate
+mise run security:deploy -- deploy /etc/fnox/config.toml
+mise run daemon:activate
 ```
 
 Reading and atomically replacing the same protected fnox path is supported. These
@@ -223,19 +223,16 @@ launch.sh restore SNAPSHOT --session SESSION [--repository REPOSITORY] [--offlin
 - Snapshot IDs must be exact 64-character lowercase hex IDs, not `latest`/prefixes.
 - Session names follow the coordinator's `[a-zA-Z0-9_-]+` rule.
 - `--repository` belongs after `verify`/`restore` and is recovery-only. Overrides
-  accept absolute local paths or `rclone:remote:path`, with no control characters
-  or parent traversal. Command-spawning backends such as sftp are not accepted.
+  accept absolute local paths only, with no control characters or parent traversal.
 - `--fixture`, arbitrary commands/options, abbreviated options, and courier
-  dispatch are never accepted by this privileged entry point. Courier tasks should
-  run the installed `backup/courier.py` directly as the unprivileged mac account.
+  dispatch are never accepted by this privileged entry point.
 
 After fnox resolves the fixed `backup` profile, a protected second stage discards
 the identity and all unrelated environment variables. The root coordinator receives
-only fixed root/Pitchfork settings and explicitly declared backup-profile values
-from the installer’s `BACKUP_ENV` allowlist: R2 backend/connection settings and
-R2/AWS credential variables. Inherited application secrets, fnox controls, alternate
-rclone config paths, and restic password commands do not reach it. The coordinator
-still gets its restic password through its protected age/password-file path.
+only fixed root/Pitchfork settings. The iCloud Restic repository is local and needs
+no backend credentials. Inherited application secrets, fnox controls and Restic
+password overrides do not reach the coordinator; it gets its password through the
+protected age/password-file path.
 
 The coordinator's parser and global-service-control path were inspected for this
 integration. A full transitive backup/restore audit remains the backup owner's

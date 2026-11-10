@@ -19,9 +19,9 @@ import pathlib
 for name in ("/etc/fnox", "/etc/fnox/config.toml", "/etc/fnox/operational.key",
              "/usr/local", "/usr/local/bin", "/usr/local/libexec", "/usr/local/libexec/mac-server",
              "/usr/local/libexec/mac-server/backup", "/usr/local/libexec/mac-server/backup/coordinator.py",
-             "/usr/local/libexec/mac-server/backup/courier.py",
+             "/usr/local/libexec/mac-server/backup/metrics.py",
              "/usr/local/bin/python3", "/usr/local/bin/fnox", "/usr/local/bin/age", "/usr/local/bin/restic",
-             "/usr/local/bin/rclone", "/usr/local/bin/pitchfork"):
+             "/usr/local/bin/pitchfork"):
     p = pathlib.Path(name)
     s = p.lstat()
     mask = 0o077 if name.startswith("/etc/fnox") else 0o022

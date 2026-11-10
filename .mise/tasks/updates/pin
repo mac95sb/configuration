@@ -1,9 +1,6 @@
 #!/bin/sh
 #MISE description="Check and pin the installed database-owning Homebrew formulae"
 set -eu
-python3 /Users/mac/Developer/configuration/services/maintenance/check.py
-if ! command -v brew >/dev/null 2>&1; then
-  printf '%s\n' 'Homebrew is missing from PATH; bootstrap/install it before pinning formulae.' >&2
-  exit 1
-fi
+repo=$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)
+"$repo/.mise/tasks/updates/check"
 brew pin forgejo grafana

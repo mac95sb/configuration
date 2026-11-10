@@ -1,4 +1,8 @@
 #!/bin/sh
 #MISE description="Preview restic retention; --apply opts into pruning"
+#USAGE flag "--apply" help="Apply the retention policy instead of previewing it"
 set -eu
-exec sudo /usr/local/libexec/mac-server/backup/launch.sh prune "$@"
+if [ "${usage_apply:-false}" = true ]; then
+  exec sudo /usr/local/libexec/mac-server/backup/launch.sh prune --apply
+fi
+exec sudo /usr/local/libexec/mac-server/backup/launch.sh prune

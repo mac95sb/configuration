@@ -1,0 +1,32 @@
+set nocompatible
+set encoding=utf-8
+set fileencoding=utf-8
+set number
+set ruler
+set showcmd
+set wildmenu
+set incsearch
+set hlsearch
+set ignorecase
+set smartcase
+set hidden
+set backspace=indent,eol,start
+set tabstop=2
+set shiftwidth=2
+set expandtab
+set autoindent
+set history=1000
+
+" Use Vim's built-in filetype detection and syntax highlighting.
+filetype plugin indent on
+syntax on
+
+" Writing-oriented defaults for Markdown and plain-text notes.
+augroup writing
+  autocmd!
+  autocmd FileType markdown,text setlocal wrap linebreak spell
+  autocmd FileType markdown,text setlocal nosmartindent
+augroup END
+
+" Clear search highlighting with <Esc>
+nnoremap <silent> <Esc> :nohlsearch<CR>

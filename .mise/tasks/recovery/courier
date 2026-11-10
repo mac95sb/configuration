@@ -1,4 +1,0 @@
-#!/bin/sh
-#MISE description="Copy recovery artifacts into local iCloud Drive (not a cloud durability check)"
-set -eu
-exec /usr/local/libexec/mac-server/backup/courier.sh "$@"

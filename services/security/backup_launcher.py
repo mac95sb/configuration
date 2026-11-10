@@ -32,14 +32,12 @@ def coordinator_args(argv):
         result.append(args.snapshot)
         if args.repository is not None:
             repository = args.repository
-            # Restic backends can spawn helpers. Limit overrides to data-only local
-            # paths or the existing rclone backend, never sftp/command backends.
+            # Repository overrides are restricted to absolute local paths.
             local = (repository.startswith('/') and not repository.startswith('//') and
                      '..' not in Path(repository).parts)
-            remote = re.fullmatch(r'rclone:[A-Za-z0-9_-]+:[A-Za-z0-9_./-]+', repository)
             if (not repository or any(ord(c) < 32 or ord(c) == 127 for c in repository) or
-                not (local or remote) or '..' in repository.split('/')):
-                parser.error('repository must be an absolute local path or rclone remote:path')
+                not local or '..' in repository.split('/')):
+                parser.error('repository must be an absolute local path')
             result += ['--repository', repository]
         if args.command == 'restore':
             if not re.fullmatch(r'[a-zA-Z0-9_-]+', args.session):
@@ -56,10 +54,10 @@ def validate_backup_runtime():
     validate_runtime()
     for path in (BASE / 'backup_launcher.py', BASE / 'backup_child.py', RUNTIME / 'launch.sh'):
         trusted(path)
-    for name in ('coordinator.py', 'backup.sh', 'restore.sh', 'prune.sh', 'courier.sh',
-                 'courier.py', 'open_capsule.py'):
+    for name in ('coordinator.py', 'backup.sh', 'restore.sh', 'prune.sh',
+                 'metrics.py'):
         trusted(RUNTIME / name)
-    for name in ('restic', 'rclone', 'pitchfork'):
+    for name in ('restic', 'pitchfork'):
         trusted(Path('/usr/local/bin') / name)
 
 

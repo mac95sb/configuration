@@ -1,0 +1,18 @@
+#!/bin/sh
+#MISE description="Refuse fresh setup if service databases already exist"
+set -eu
+
+for path in \
+  /etc/fnox/config.toml \
+  /etc/fnox/operational.key \
+  /Library/LaunchDaemons/pitchfork.plist \
+  /Users/svc_forgejo/forgejo-data \
+  /Users/svc_forgejo/forgejo-data/data/forgejo.db \
+  /Users/svc_observability/grafana-data \
+  /Users/svc_observability/grafana-data/grafana.db; do
+  if sudo test -e "$path"; then
+    printf 'Fresh setup found existing/partial system state at %s; refusing to initialize over it.\n' "$path" >&2
+    printf '%s\n' 'Use setup.sh --recover for restored data, or run maintenance tasks on an existing host.' >&2
+    exit 1
+  fi
+done

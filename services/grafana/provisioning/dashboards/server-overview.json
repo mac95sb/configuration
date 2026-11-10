@@ -1022,7 +1022,7 @@
       "gridPos": {
         "x": 0,
         "y": 51,
-        "w": 12,
+        "w": 24,
         "h": 5
       },
       "datasource": {
@@ -1078,71 +1078,7 @@
         "orientation": "auto",
         "graphMode": "area"
       },
-      "description": "Time since the backup daemon last completed a full run \u2014 capture, encrypt, and upload to R2. Amber at 25h, red at 26h, matching the alert. A run that fails partway never updates this, so the tile ages rather than falsely reporting success."
-    },
-    {
-      "type": "stat",
-      "title": "Since last iCloud courier",
-      "gridPos": {
-        "x": 12,
-        "y": 51,
-        "w": 12,
-        "h": 5
-      },
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "targets": [
-        {
-          "refId": "A",
-          "datasourceUid": "prometheus",
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "expr": "time() - backup_courier_last_success_seconds",
-          "legendFormat": "courier",
-          "instant": false
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "s",
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "#4fb8ac",
-                "value": null
-              },
-              {
-                "color": "orange",
-                "value": 90000
-              },
-              {
-                "color": "red",
-                "value": 93600
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "options": {
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "textMode": "value_and_name",
-        "colorMode": "background",
-        "orientation": "auto",
-        "graphMode": "area"
-      },
-      "description": "Time since encrypted archives were last copied into iCloud Drive. This one lags by design: the courier runs as your user account and cannot run until someone logs in, so after an unattended reboot it will sit stale while R2 stays current."
+      "description": "Time since the backup daemon last completed a verified Restic snapshot in the local iCloud Drive repository. A run that fails partway never updates this, so the tile ages rather than falsely reporting success."
     },
     {
       "type": "row",

@@ -1,0 +1,38 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2154
+#MISE description="Create the initial Forgejo administrator if needed"
+set -eu
+. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
+
+say 'Creating the first Forgejo administrator, if needed'
+forgejo_work_path=/Users/svc_forgejo/forgejo-data
+forgejo_config=$forgejo_work_path/app.ini
+attempt=0
+while [ ! -f "$forgejo_config" ] && [ "$attempt" -lt 15 ]; do
+  sleep 2
+  attempt=$((attempt + 1))
+done
+if ! users=$(sudo -u svc_forgejo /usr/local/bin/forgejo admin user list \
+  --work-path "$forgejo_work_path" --config "$forgejo_config"); then
+  printf '%s\n' 'Could not list Forgejo users; refusing to treat a service error as an empty database.' >&2
+  exit 1
+fi
+if printf '%s\n' "$users" | grep -Eq '^[[:space:]]*[0-9]+[[:space:]]+'; then
+  say 'A Forgejo user already exists; skipping administrator creation'
+else
+  say 'Choose the initial Forgejo administrator'
+  printf '%s' 'Username: '
+  read -r forgejo_username
+  printf '%s' 'Email: '
+  read -r forgejo_email
+  sudo -u svc_forgejo /usr/local/bin/forgejo admin user create \
+    --work-path "$forgejo_work_path" \
+    --config "$forgejo_config" \
+    --username "$forgejo_username" \
+    --email "$forgejo_email" \
+    --random-password \
+    --must-change-password \
+    --admin
+  say --wait 'Save the generated password above' \
+    'Forgejo requires changing it at first login.'
+fi

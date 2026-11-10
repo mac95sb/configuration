@@ -1,0 +1,23 @@
+#!/bin/sh
+setup_repo=$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)
+mise_bin=$HOME/.local/bin/mise
+export setup_repo mise_bin
+
+say() {
+  say_wait=false
+  if [ "${1:-}" = "--wait" ]; then
+    say_wait=true
+    shift
+  fi
+
+  printf '\n==> %s\n' "$1"
+  shift
+  for say_line; do
+    printf '    %s\n' "$say_line"
+  done
+
+  if [ "$say_wait" = true ]; then
+    printf '%s' '    Press enter to continue... '
+    read -r _
+  fi
+}

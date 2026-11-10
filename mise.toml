@@ -4,97 +4,19 @@ dotfiles.root = "~/Developer/configuration/"
 experimental = true
 auto_update = true
 
-[tools]
-# Host services
-"aqua:prometheus/prometheus" = "3.14.0"
-age = "1.3.1"
-caddy = "2.11.4"
-cloudflared = "2026.7.3"
-fnox = "1.31.1"
-"github:grafana/alloy" = "1.18.1"
-"github:grafana/loki" = "3.7.6"
-"github:prometheus/blackbox_exporter" = "0.28.0"
-pitchfork = "2.20.0"
-python = "3.12.14"
-rclone = "1.75.0"
-restic = "0.18.1"
-"ubi:prometheus/node_exporter" = "1.12.1"
-
-# Configuration and shell checks
-hk = "2.8.1"
-pkl = "0.32.2"
-shellcheck = "0.11.0"
-shfmt = "3.14.1"
-taplo = "0.10.0"
-pi = "0.99.2"
-codex = "latest"
-neovim = "latest"
-"npm:pyright" = "latest"
-"npm:@vtsls/language-server" = "latest"
-"npm:@vue/language-server" = "latest"
-"npm:vscode-langservers-extracted" = "latest"
-"npm:yaml-language-server" = "latest"
-"npm:bash-language-server" = "latest"
-
-# Interactive and editor tools
-github-cli = "2.103.2"
-node = "24.21.0"
-
-# Package installer used by mise bootstrap
-mas = "7.0.0"
-lazygit = "latest"
-
 [hooks]
-postinstall = """
-case "$MISE_INSTALLED_TOOLS" in
-  *age*|*alloy*|*blackbox_exporter*|*caddy*|*cloudflared*|*fnox*|*loki*|*node_exporter*|*pitchfork*|*prometheus*|*python*|*rclone*|*restic*) ;;
-  *) exit 0 ;;
-esac
-printf 'mise: infrastructure tools changed; review and run `mise run daemon:install` then `mise run daemon:activate` during maintenance.\n' >&2
-"""
+postinstall = "mise run setup:auto"
+
+[vars]
+mail_test_recipients = "maclong9@icloud.com contact@maclong.dev"
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@git.maclong.dev:mac/configuration.git" }
 "~/Developer/robin" = { url = "git@git.maclong.dev:mac/robin.git" }
 
-[bootstrap.packages]
-# Homebrew apps and services
-"brew-cask:crossover" = "latest"                          # Crossover
-"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
-"brew-cask:font-sf-pro" = "latest"                        # SF Pro
-"brew-cask:mole-app" = "latest"                           # Mole
-"brew-cask:zed" = "latest"
-"brew-cask:rednafi/rexdiff/rexdiff" = "latest"
-"brew:forgejo" = "latest"                                 # Forgejo
-"brew:grafana" = "latest"                                 # Grafana
-"brew:magic-wormhole" = "latest"
-"brew:tree-sitter" = "latest"
-"brew-cask:chatgpt" = "latest"
-
-# Mac App Store
-"mas:1289583905" = "latest" # Pixelmator Pro
-"mas:1662217862" = "latest" # Wipr 2
-"mas:361285480" = "latest"  # Keynote
-"mas:361304891" = "latest"  # Numbers
-"mas:361309726" = "latest"  # Pages
-"mas:424389933" = "latest"  # Final Cut Pro
-"mas:424390742" = "latest"  # Compressor
-"mas:434290957" = "latest"  # Motion
-"mas:497799835" = "latest"  # Xcode
-"mas:634148309" = "latest"  # Logic Pro
-"mas:634159523" = "latest"  # MainStage
-
 [bootstrap.macos.defaults."com.apple.WindowManager"]
 EnableTiledWindowMargins = true
 GloballyEnabled = true
-
-[bootstrap.macos.launchd.agents.backup-courier]
-program = "/usr/local/libexec/mac-server/backup/courier.sh"
-# The courier is non-destructive and refuses an absent completed receipt.
-run_at_load = true
-start_interval = 3600
-stdout_path = "~/Library/Logs/backup-courier.log"
-stderr_path = "~/Library/Logs/backup-courier.log"
 
 [bootstrap.macos.finder]
 preferred_view_style = "column"
@@ -105,31 +27,62 @@ show_pathbar = true
 tap_to_click = true
 three_finger_drag = true
 
-[bootstrap.brew.taps]
-"rednafi/rexdiff" = "https://github.com/rednafi/rexdiff.git"
-
 [dotfiles]
-"~/.config/git/config" = {}
 "~/.config/delta/AGENTS.md" = { source = "~/Developer/configuration/config/delta/AGENTS.md" }
+"~/.config/git/config" = {}
 "~/.config/git/ignore" = {}
 "~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
+"~/.config/vim/vimrc" = {}
 "~/.config/zsh/.p10k.zsh" = {}
 "~/.config/zsh/.zshrc" = {}
-"~/.config/zed/AGENTS.md" = { source = "~/Developer/configuration/.config/zed/AGENTS.md" }
-"~/.config/zed/keymap.json" = { source = "~/Developer/configuration/.config/zed/keymap.json" }
-"~/.config/zed/settings.json" = { source = "~/Developer/configuration/.config/zed/settings.json" }
 "~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
-"~/.config/nvim" = { source = "~/Developer/configuration/.config/nvim" }
 
-[tasks."mail:install"]
-description = "Configure the built-in Postfix for local, direct outbound mail"
-run = "/Users/mac/Developer/configuration/services/mail/install.sh"
+[bootstrap.packages]
+# Homebrew apps and services
+"brew-cask:crossover" = "latest"                          # Crossover
+"brew-cask:zed-delta" = "latest"                          # Delta
+"brew:forgejo" = "latest"                                 # Forgejo
+"brew:grafana" = "latest"                                 # Grafana
+"brew-cask:mole-app" = "latest"                           # Mole
+"brew-cask:font-sf-mono-nerd-font-ligaturized" = "latest" # SF Mono
+"brew-cask:font-sf-pro" = "latest"                        # SF Pro
 
-[tasks."mail:dns"]
-description = "Print the DNS records required for direct outbound mail"
-run = "/Users/mac/Developer/configuration/services/mail/dns.sh"
+# Mac App Store
+"mas:424390742" = "latest"  # Compressor
+"mas:424389933" = "latest"  # Final Cut Pro
+"mas:361285480" = "latest"  # Keynote
+"mas:634148309" = "latest"  # Logic Pro
+"mas:634159523" = "latest"  # MainStage
+"mas:434290957" = "latest"  # Motion
+"mas:361304891" = "latest"  # Numbers
+"mas:361309726" = "latest"  # Pages
+"mas:1289583905" = "latest" # Pixelmator Pro
+"mas:1662217862" = "latest" # Wipr 2
+"mas:497799835" = "latest"  # Xcode
 
-[tasks."mail:test"]
-description = "Send a direct-delivery test message"
-usage = 'arg "[recipient]" help="Email address to receive the test" default="maclong9@icloud.com"'
-run = '/Users/mac/Developer/configuration/services/mail/test.sh "${usage_recipient?}"'
+[tools]
+# Host services
+caddy = "2.11.4"
+cloudflared = "2026.7.3"
+"github:grafana/alloy" = "1.18.1"
+"github:grafana/loki" = "3.7.6"
+"github:prometheus/blackbox_exporter" = "0.28.0"
+"aqua:prometheus/prometheus" = "3.14.0"
+pitchfork = "2.20.0"
+"ubi:prometheus/node_exporter" = "1.12.1"
+
+# Recovery and deployment tools
+age = "1.3.1"
+fnox = "1.31.1"
+restic = "0.18.1"
+
+# Configuration and shell checks
+hk = "latest"
+pkl = "latest"
+shellcheck = "latest"
+shfmt = "latest"
+taplo = "latest"
+
+# Interactive and package tools
+github-cli = "latest"
+mas = "latest"

@@ -1,0 +1,14 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2154
+#MISE description="Deploy the protected runtime and reviewed service configuration"
+set -eu
+. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
+
+say 'Deploying reviewed protected service runtime'
+if sudo test -f /etc/fnox/config.toml; then
+  # A recovered/deployed config can contain credentials newer than Git's copy.
+  "$mise_bin" -C "$setup_repo" run security:deploy -- deploy /etc/fnox/config.toml
+else
+  "$mise_bin" -C "$setup_repo" run daemon:install
+fi
+sudo chmod o+x /Users/mac

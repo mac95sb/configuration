@@ -22,10 +22,10 @@ import tempfile
 import time
 import uuid
 
-REPOSITORY = "rclone:R2:home-backups/restic-v1"
-REMOTE = "R2:home-backups/recovery-v1"
+ICLOUD = Path("/Users/mac/Library/Mobile Documents/com~apple~CloudDocs/Backups/configuration/recovery-v1")
+REPOSITORY = str(ICLOUD / "restic-v1")
 EXCLUDES = {"node_modules", ".build", "__pycache__", ".cache", "Caches"}
-TOOLS = {n: "/usr/local/bin/" + n for n in ("restic", "rclone", "age", "fnox", "pitchfork")}
+TOOLS = {n: "/usr/local/bin/" + n for n in ("restic", "age", "fnox", "pitchfork")}
 RUNTIME = Path("/usr/local/libexec/mac-server/backup")
 METRICS = Path("/Users/svc_observability/textfile")
 SERVICE_ENV = {"PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
@@ -34,7 +34,7 @@ SERVICE_ENV = {"PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin",
                "XDG_CONFIG_HOME": "/etc"}
 # -I intentionally excludes the script directory. Add only this root-controlled runtime.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from courier import write_metric
+from metrics import write_metric
 
 
 def run(args, **kwargs):
@@ -154,7 +154,7 @@ class Coordinator:
         self.developer = Path("/Users/mac/Developer")
         self.forgejo = Path("/Users/svc_forgejo/forgejo-data")
         self.grafana = Path("/Users/svc_observability/grafana-data")
-        self.export = Path("/var/db/home-backup-export/recovery-v1")
+        self.export = ICLOUD
         self.repository = REPOSITORY
         self.service_adapter = None
         self.metrics = METRICS
@@ -185,8 +185,6 @@ class Coordinator:
         if not self.fixture and os.path.lexists(self.password):
             private(self.password)
         self.env = dict(os.environ)
-        if self.fixture:
-            self.env["RCLONE_CONFIG"] = os.devnull
         # Never let inherited restic password/repository overrides bypass the coordinator.
         for key in list(self.env):
             if key.startswith("RESTIC_"):
@@ -224,19 +222,11 @@ class Coordinator:
         run(args + ["-o", dst, src])
 
     def repository_empty(self):
-        if self.repository.startswith("rclone:"):
-            remote = self.repository[len("rclone:"):]
-            parent, leaf = remote.rsplit("/", 1)
-            # List the existing bucket, not a possibly nonexistent object prefix. Listing errors
-            # (including auth/network failures) are fatal, never interpreted as an empty repo.
-            entries = json.loads(output([self.tools["rclone"], "lsjson", parent,
-                                         "--recursive", "--files-only", "--include", "/" + leaf + "/**"],
-                                        env=self.env))
-            return not entries
         p = Path(self.repository)
         return not p.exists() or not any(p.iterdir())
 
     def init(self):
+        self.prepare_export()
         if not self.password.exists():
             # Probe storage without a password. Only an explicitly empty prefix can get a new key.
             # Network/auth/list errors fail closed; do not infer absence from restic failure.
@@ -357,19 +347,24 @@ class Coordinator:
                     signal.signal(s, handler)
             require(not errors, "SERVICE RESUME FAILED: " + "; ".join(errors))
 
-    def database(self, path, snapshot=False):
+    def database(self, path, snapshot=False, destination=None):
         require(path.is_file() and not path.is_symlink(), "missing/linked database: " + str(path))
-        # A stopped database may still have WAL. Fold it into a standalone database before excluding sidecars.
+        # SQLite's online backup API includes committed WAL data in a consistent copy.
         with contextlib.closing(sqlite3.connect("file:" + str(path) +
                                                        ("?mode=ro" if snapshot else "?mode=ro&immutable=1"), uri=True)) as db:
-            require(db.execute("PRAGMA integrity_check").fetchall() == [("ok",)],
-                    "SQLite integrity check failed: " + str(path))
-            if snapshot:
+            if destination is not None:
+                with contextlib.closing(sqlite3.connect(str(destination))) as dest:
+                    db.backup(dest)
+                    dest.execute("PRAGMA journal_mode=DELETE")
+            else:
+                require(db.execute("PRAGMA integrity_check").fetchall() == [("ok",)],
+                        "SQLite integrity check failed: " + str(path))
+            if snapshot and destination is None:
                 target = path.with_name(".sqlite-snapshot-" + uuid.uuid4().hex)
                 with contextlib.closing(sqlite3.connect(str(target))) as dest:
                     db.backup(dest)
                     dest.execute("PRAGMA journal_mode=DELETE")
-        if snapshot:
+        if snapshot and destination is None:
             shutil.copystat(path, target)
             s = path.stat()
             os.chown(target, s.st_uid, s.st_gid)
@@ -392,9 +387,12 @@ class Coordinator:
                         "checkpoint captured a dirty checkout: " + name)
         with self.quiesced():
             copy_tree(self.forgejo, payload / "forgejo")
-            copy_tree(self.grafana, payload / "grafana")
+        copy_tree(self.grafana, payload / "grafana")
         self.database(payload / "forgejo/data/forgejo.db", snapshot=True)
-        self.database(payload / "grafana/grafana.db", snapshot=True)
+        grafana_db = payload / "grafana/grafana.db"
+        self.database(self.grafana / "grafana.db", snapshot=True, destination=grafana_db)
+        for suffix in ("-wal", "-shm"):
+            grafana_db.with_name(grafana_db.name + suffix).unlink(missing_ok=True)
         require(self.sources(clean) == heads, "checkout revision changed during capture")
         files = inventory(payload, manifest=True)
         manifest = {"schema": 2, "created": time.time(), "heads": heads, "clean_checkouts": clean,
@@ -449,51 +447,24 @@ class Coordinator:
     def prepare_export(self):
         self.export.parent.mkdir(parents=True, exist_ok=True, mode=0o755)
         self.export.mkdir(exist_ok=True, mode=0o755)
-        if not self.fixture:
-            for path in (self.export.parent, self.export):
-                s = path.lstat()
-                require(stat.S_ISDIR(s.st_mode) and not path.is_symlink() and
-                        s.st_uid == 0 and not s.st_mode & 0o022,
-                        "export must be root-controlled: " + str(path))
-        self.export.parent.chmod(0o755)
+        require(self.export.is_dir() and not self.export.is_symlink(),
+                "iCloud backup destination must be a real directory")
         self.export.chmod(0o755)
 
-    def mirror(self, snapshot, work):
+    def verify_icloud_repository(self, snapshot, work):
         self.prepare_export()
-        mirror = self.export / "restic-v1"
-        mirror.mkdir(exist_ok=True, mode=0o755)
-        if self.fixture:
-            # Use the same immutable merge policy as rclone without network access.
-            for src in Path(self.repository).rglob("*"):
-                rel = src.relative_to(self.repository)
-                if src.is_file() and rel.parts[0] != "locks":
-                    dst = mirror / rel
-                    dst.parent.mkdir(parents=True, exist_ok=True)
-                    if dst.exists():
-                        require(digest(src) == digest(dst), "immutable repository object changed")
-                    else:
-                        shutil.copyfile(src, dst)
-        else:
-            run([self.tools["rclone"], "copy", "--immutable", "--exclude", "/locks/**",
-                 self.repository[len("rclone:"):], mirror])
-        original = self.repository
-        try:
-            self.repository = str(mirror)
-            verify = work / "verify-mirror"
-            verify.mkdir()
-            self.restore_data(snapshot, verify)
-        finally:
-            self.repository = original
-        mirror.chmod(0o755)
-        files = {}
-        for path in mirror.rglob("*"):
-            require(not path.is_symlink(), "repository mirror contains symlink")
+        repo = Path(self.repository)
+        require(repo.is_dir() and not repo.is_symlink(), "iCloud Restic repository is missing")
+        verify = work / "verify-icloud"
+        verify.mkdir()
+        self.restore_data(snapshot, verify)
+        for path in repo.rglob("*"):
+            require(not path.is_symlink(), "Restic repository contains symlink")
             if path.is_dir():
                 path.chmod(0o755)
-            elif path.is_file() and path.relative_to(mirror).parts[0] != "locks":
+            elif path.is_file():
                 path.chmod(0o644)
-                files[str(path.relative_to(self.export))] = digest(path)
-        return files
+        return {}
 
     def publish(self, src, name):
         self.prepare_export()
@@ -521,7 +492,7 @@ class Coordinator:
         for name, path in self.tools.items():
             copy = tools / name
             shutil.copy2(path, copy)
-            version = output([path, "version"] if name in ("restic", "rclone") else [path, "--version"]).decode().strip()
+            version = output([path, "version"] if name == "restic" else [path, "--version"]).decode().strip()
             metadata["tools"][name] = {"version": version, "sha256": digest(copy)}
         scripts = capsule / "scripts"
         shutil.copytree(Path(__file__).resolve().parent, scripts,
@@ -555,23 +526,12 @@ class Coordinator:
             name = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime()) + "-" + snapshot
             bundle = self.publish(work / "payload/bundles/configuration.bundle", "configuration-" + name + ".bundle")
             capsule = self.publish(self.capsule(work, snapshot, manifest["accounts"]), "capsule-" + name + ".tar.age")
-            repository_files = self.mirror(snapshot, work)
+            self.verify_icloud_repository(snapshot, work)
             receipt = work / "receipt.json"
             atomic_json(receipt, {"snapshot": snapshot, "heads": manifest["heads"],
                                   "created": manifest["created"],
-                                  "repository_files": repository_files,
                                   "artifacts": {p.name: digest(p) for p in (bundle, capsule)}})
             published = self.publish(receipt, "receipt-" + name + ".json")
-            if not self.fixture:
-                for path in (bundle, capsule, published):
-                    # copyto --immutable refuses to replace different bytes; never sync or delete.
-                    run([self.tools["rclone"], "copyto", "--immutable", path, REMOTE + "/" + path.name])
-                    run([self.tools["rclone"], "check", "--download", "--one-way", "--include", path.name,
-                         self.export, REMOTE])
-            if checkpoint and not self.fixture:
-                run(["/usr/bin/sudo", "-H", "-u", "mac",
-                     RUNTIME / "courier.sh", "--snapshot", snapshot], stdout=sys.stderr,
-                    env={"PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"})
             completed = json.loads(receipt.read_text())
             recovery_record = {
                 "schema": 1, "snapshot": snapshot,

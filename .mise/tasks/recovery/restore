@@ -1,4 +1,15 @@
 #!/bin/sh
 #MISE description="Restore an exact snapshot; --session NAME required; --offline supports fresh hosts"
+#USAGE arg "<snapshot>" help="Full Restic snapshot ID"
+#USAGE flag "--session <name>" required=#true help="Unique restore session name"
+#USAGE flag "--offline" help="Restore on a fresh host without running services"
+#USAGE flag "--repository <path>" help="Use an explicit local recovery repository"
 set -eu
-exec sudo /usr/local/libexec/mac-server/backup/launch.sh restore "$@"
+set -- restore "${usage_snapshot?}" --session "${usage_session?}"
+if [ "${usage_offline:-false}" = true ]; then
+  set -- "$@" --offline
+fi
+if [ -n "${usage_repository:-}" ]; then
+  set -- "$@" --repository "$usage_repository"
+fi
+exec sudo /usr/local/libexec/mac-server/backup/launch.sh "$@"

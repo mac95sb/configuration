@@ -1,0 +1,4 @@
+#!/bin/sh
+#MISE description="Run the Restic and direct-mail smoke tests"
+#MISE depends=["test:restic", "test:mail"]
+set -eu

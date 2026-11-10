@@ -43,6 +43,9 @@ local linters = new Mapping<String, Step> {
     glob = List("services/alloy/config.alloy")
     check = "alloy validate services/alloy/config.alloy"
   }
+  ["mise-test"] {
+    check = "mise run test"
+  }
 }
 
 hooks {

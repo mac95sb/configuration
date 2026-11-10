@@ -20,7 +20,7 @@ from unittest import mock
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import coordinator as m
-import courier
+import metrics
 import open_capsule
 
 
@@ -93,15 +93,15 @@ else:
     s[name] = 'running' if action == 'start' else 'stopped'
     states.write_text(json.dumps(s))
 ''')
-        tools = {name: shutil.which(name) for name in ('age', 'fnox', 'rclone', 'pitchfork')}
+        tools = {name: shutil.which(name) for name in ('age', 'fnox', 'pitchfork')}
         tools['restic'] = str(Path(self.restic).resolve())
         if not all(tools.values()):
-            raise RuntimeError('capsule fixture needs installed fnox/rclone/pitchfork for metadata only')
+            raise RuntimeError('capsule fixture needs installed fnox/pitchfork for metadata only')
         self.cfg = self.root / 'fixture.json'
         self.cfg.write_text(json.dumps({
             'base': str(self.root / 'private'), 'etc': str(self.etc),
             'developer': str(self.developer), 'forgejo': str(self.forgejo), 'grafana': str(self.grafana),
-            'export': str(self.root / 'export'), 'repository': str(self.root / 'restic'),
+            'export': str(self.root / 'export'), 'repository': str(self.root / 'export/restic-v1'),
             'tools': tools, 'service_adapter': [sys.executable, str(adapter), str(self.states), str(self.log)]}))
         self.c = m.Coordinator(str(self.cfg))
         self.old_umask = os.umask(0o077)
@@ -187,27 +187,10 @@ else:
             self.c.restore(snapshot, session='clean')
         state['ownership']['uid'] = original_mapping
         m.atomic_json(state_path, state)
-        # Independent artifacts only, no deletion; collision refuses overwrite.
-        destination = self.root / 'icloud'
-        courier.courier(self.c.export, destination, snapshot, self.c.metrics, os.getgid())
-        courier_metric = self.c.metrics / 'backup_courier_last_success_seconds.prom'
-        self.assertRegex(courier_metric.read_text(), r'^backup_courier_last_success_seconds [0-9]+\n$')
-        metric_before = courier_metric.read_bytes()
-        unrelated = destination / 'legacy-backup.age'
-        unrelated.write_text('keep me')
-        courier.courier(self.c.export, destination, snapshot)
-        self.assertTrue(unrelated.exists())
-        primary = self.c.repository
-        self.c.repository = str(destination / 'restic-v1')
-        try:
-            self.c.restore(snapshot, verify_only=True)
-        finally:
-            self.c.repository = primary
-        bundle = next(destination.glob('configuration-*.bundle'))
-        bundle.write_text('changed')
-        with self.assertRaisesRegex(RuntimeError, 'immutable destination differs'):
-            courier.courier(self.c.export, destination, snapshot, self.c.metrics, os.getgid())
-        self.assertEqual(courier_metric.read_bytes(), metric_before)
+        # The repository and recovery artifacts are written directly to iCloud's local directory.
+        self.assertTrue((self.c.export / 'restic-v1/config').is_file())
+        self.assertTrue(next(self.c.export.glob('configuration-*.bundle')).is_file())
+        self.c.restore(snapshot, verify_only=True)
         self.c.prune(False)
         self.c.prune(True)
         self.c.exact_snapshot(snapshot)
@@ -232,14 +215,21 @@ else:
 
     def test_capture_failure_resumes_only_previously_running(self):
         original = m.copy_tree
+        called = []
         def fail(src, dst, excluded=False):
-            if Path(src) == self.forgejo:
+            called.append(Path(src))
+            if Path(src).resolve() == self.forgejo.resolve():
                 raise OSError('fixture copy failure')
             return original(src, dst, excluded)
         stderr = io.StringIO()
         with mock.patch.object(m, 'copy_tree', fail), contextlib.redirect_stderr(stderr):
-            with self.assertRaisesRegex(OSError, 'fixture copy failure'):
+            try:
                 self.backup()
+            except OSError as error:
+                self.assertRegex(str(error), 'fixture copy failure')
+            else:
+                self.fail('backup did not attempt to copy Forgejo: ' + repr(called))
+        self.assertIn(self.forgejo.resolve(), called)
         self.assertNotIn('OFFLINE_RECOVERY_RECORD ', stderr.getvalue())
         self.assertEqual(self.log.read_text().splitlines(), ['stop forgejo', 'start forgejo'])
         self.assertFalse((self.c.base / 'last-success.json').exists())
@@ -296,22 +286,11 @@ else:
         self.c.git(repo, 'status', '--porcelain')
         self.assertFalse(sentinel.exists())
 
-    def test_repository_prefix_listing_is_scoped_and_fails_closed(self):
-        bucket = self.root / 'bucket'
-        bucket.mkdir()
-        (bucket / 'legacy-backup.age').write_text('preserve legacy')
-        self.c.repository = 'rclone:' + str(bucket / 'restic-v1')
-        self.assertTrue(self.c.repository_empty())
-        (bucket / 'restic-v1').mkdir()
-        (bucket / 'restic-v1/config').write_text('existing repository')
-        self.assertFalse(self.c.repository_empty())
-        self.assertEqual((bucket / 'legacy-backup.age').read_text(), 'preserve legacy')
-
-    def test_init_listing_failure_is_not_empty_repository(self):
+    def test_init_refuses_nonempty_local_repository_without_password(self):
         self.c.password.unlink()
-        self.c.repository = m.REPOSITORY
-        with mock.patch.object(m, 'output', side_effect=subprocess.CalledProcessError(1, ['fixture-auth-failure'])):
-            with self.assertRaises(subprocess.CalledProcessError):
+        Path(self.c.repository, 'unexpected-object').write_text('preserve')
+        with self.assertRaisesRegex(RuntimeError, 'repository is not empty'):
+            with self.c.lock():
                 self.c.init()
         self.assertFalse(self.c.password.exists())
 
@@ -336,82 +315,6 @@ else:
             m.rename_exclusive(source, target)
         self.assertTrue(source.is_dir())
         self.assertTrue(target.is_dir())
-
-
-class CourierReceipts(unittest.TestCase):
-    def setUp(self):
-        self.tmp = tempfile.TemporaryDirectory(prefix='courier-receipts-')
-        self.addCleanup(self.tmp.cleanup)
-        self.root = Path(self.tmp.name)
-        self.source = self.root / 'source'
-        self.destination = self.root / 'destination'
-        (self.source / 'restic-v1').mkdir(parents=True)
-        (self.source / 'restic-v1/config').write_bytes(b'encrypted repository')
-
-    def receipt(self, name, created, snapshot, obsolete=False):
-        bundle = name + '.bundle'
-        (self.source / bundle).write_bytes(b'bootstrap ciphertext-only bundle')
-        repository_file = 'restic-v1/obsolete' if obsolete else 'restic-v1/config'
-        data = {'created': created, 'snapshot': snapshot,
-                'repository_files': {repository_file: courier.sha(self.source / 'restic-v1/config')},
-                'artifacts': {bundle: courier.sha(self.source / bundle)}}
-        path = self.source / ('receipt-' + name + '.json')
-        path.write_text(json.dumps(data))
-        return path
-
-    def test_default_selects_numeric_newest_and_checks_repository_once(self):
-        old = self.receipt('z-old', 2, 'old', obsolete=True)
-        self.receipt('middle', 9, 'middle', obsolete=True)
-        newest = self.receipt('a-new', 10, 'new')
-        (self.destination / 'restic-v1').mkdir(parents=True)
-        shutil.copyfile(self.source / 'restic-v1/config', self.destination / 'restic-v1/config')
-        legacy = self.destination / 'legacy.age'
-        legacy.write_bytes(b'keep legacy data')
-        previous_receipt = self.destination / old.name
-        previous_receipt.write_bytes(b'keep existing historical receipt')
-        with mock.patch.object(courier, 'sha', wraps=courier.sha) as hashes:
-            courier.courier(self.source, self.destination)
-        paths = [call.args[0] for call in hashes.call_args_list]
-        self.assertEqual(paths.count(self.source / 'restic-v1/config'), 1)
-        self.assertEqual(paths.count(self.destination / 'restic-v1/config'), 1)
-        self.assertNotIn(old, paths)
-        self.assertEqual((self.destination / newest.name).read_bytes(), newest.read_bytes())
-        self.assertEqual(legacy.read_bytes(), b'keep legacy data')
-        self.assertEqual(previous_receipt.read_bytes(), b'keep existing historical receipt')
-        self.assertFalse((self.destination / 'z-old.bundle').exists())
-        self.assertFalse((self.destination / 'middle.bundle').exists())
-
-    def test_explicit_snapshot_selects_only_unique_matching_receipt(self):
-        chosen = self.receipt('old', 2, 'chosen')
-        self.receipt('latest', 10, 'latest', obsolete=True)
-        courier.courier(self.source, self.destination, 'chosen')
-        self.assertTrue((self.destination / chosen.name).exists())
-        self.assertFalse((self.destination / 'latest.bundle').exists())
-        self.receipt('duplicate', 3, 'chosen')
-        with mock.patch.object(courier, 'sha') as hashes:
-            with self.assertRaisesRegex(RuntimeError, 'ambiguous'):
-                courier.courier(self.source, self.destination, 'chosen')
-            hashes.assert_not_called()
-        with self.assertRaisesRegex(RuntimeError, 'no matching'):
-            courier.courier(self.source, self.destination, 'missing')
-
-    def test_created_timestamp_must_be_finite_nonnegative_number(self):
-        for created in ('10', True, None, float('nan'), float('inf'), -1):
-            with self.subTest(created=created):
-                receipt = self.receipt('invalid', created, 'invalid')
-                with mock.patch.object(courier, 'sha') as hashes:
-                    with self.assertRaisesRegex(RuntimeError, 'invalid receipt created timestamp'):
-                        courier.courier(self.source, self.destination)
-                    hashes.assert_not_called()
-                receipt.unlink()
-
-    def test_equal_newest_timestamps_refuse_ambiguous_default(self):
-        self.receipt('one', 10.5, 'one')
-        self.receipt('two', 10.5, 'two')
-        with self.assertRaisesRegex(RuntimeError, 'ambiguous'):
-            courier.courier(self.source, self.destination)
-        courier.courier(self.source, self.destination, 'one')
-        self.assertFalse((self.destination / 'two.bundle').exists())
 
 
 class Contracts(unittest.TestCase):
@@ -462,10 +365,6 @@ class Contracts(unittest.TestCase):
         for name in ('init', 'checkpoint', 'restore', 'verify', 'prune'):
             text = (HERE.parent.parent / '.mise/tasks/recovery' / name).read_text()
             self.assertIn('/usr/local/libexec/mac-server/backup/launch.sh ' + name + ' "$@"', text)
-        text = (HERE.parent.parent / '.mise/tasks/recovery/courier').read_text()
-        self.assertIn('/usr/local/libexec/mac-server/backup/courier.sh "$@"', text)
-        text = (HERE / 'courier.sh').read_text()
-        self.assertIn('/usr/local/bin/python3 -I /usr/local/libexec/mac-server/backup/courier.py "$@"', text)
         rejected = subprocess.run(['/bin/sh', str(HERE / 'launch.sh'), 'courier'], capture_output=True)
         self.assertEqual(rejected.returncode, 2)
 
@@ -549,17 +448,17 @@ class Contracts(unittest.TestCase):
             unrelated.write_text('do not change')
             metric = directory / 'backup_last_success_seconds.prom'
             metric.symlink_to(unrelated)
-            with mock.patch.object(courier.pwd, 'getpwnam', return_value=SimpleNamespace(pw_gid=os.getgid())) as lookup:
-                courier.write_metric(directory, 'backup_last_success_seconds')
+            with mock.patch.object(metrics.pwd, 'getpwnam', return_value=SimpleNamespace(pw_gid=os.getgid())) as lookup:
+                metrics.write_metric(directory, 'backup_last_success_seconds')
                 lookup.assert_called_once_with('svc_observability')
             self.assertFalse(metric.is_symlink())
             self.assertEqual(unrelated.read_text(), 'do not change')
             self.assertEqual(metric.stat().st_mode & 0o777, 0o640)
             self.assertEqual(metric.stat().st_gid, os.getgid())
             old = metric.read_bytes()
-            with mock.patch.object(courier.os, 'replace', side_effect=OSError('fixture failure')):
+            with mock.patch.object(metrics.os, 'replace', side_effect=OSError('fixture failure')):
                 with self.assertRaisesRegex(OSError, 'fixture failure'):
-                    courier.write_metric(directory, 'backup_last_success_seconds', os.getgid())
+                    metrics.write_metric(directory, 'backup_last_success_seconds', os.getgid())
             self.assertEqual(metric.read_bytes(), old)
             self.assertEqual(sorted(p.name for p in directory.iterdir()),
                              ['backup_last_success_seconds.prom', 'unrelated'])

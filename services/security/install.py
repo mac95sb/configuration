@@ -17,17 +17,11 @@ BASE = Path('/usr/local/libexec/mac-server')
 BIN = Path('/usr/local/bin')
 REPO = Path(__file__).resolve().parents[2]
 TOOLS = ('age', 'alloy', 'blackbox_exporter', 'caddy', 'cloudflared', 'fnox', 'loki',
-         'node_exporter', 'pitchfork', 'prometheus', 'rclone', 'restic')
+         'node_exporter', 'pitchfork', 'prometheus', 'restic')
 PROFILES = {'forgejo': ('forgejo',), 'alloy': ('observability',),
             'grafana': ('grafana', 'notifications')}
 BACKUP_FILES = ('coordinator.py', 'backup.sh', 'restore.sh', 'prune.sh',
-                'courier.sh', 'courier.py', 'open_capsule.py', 'README.md')
-BACKUP_ENV = {'RCLONE_CONFIG_R2_TYPE', 'RCLONE_CONFIG_R2_PROVIDER', 'RCLONE_CONFIG_R2_REGION',
-              'RCLONE_CONFIG_R2_ENDPOINT', 'RCLONE_CONFIG_R2_ACCESS_KEY_ID',
-              'RCLONE_CONFIG_R2_SECRET_ACCESS_KEY', 'RCLONE_CONFIG_R2_SESSION_TOKEN',
-              'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN'}
-
-
+                'metrics.py', 'README.md')
 def trusted_dir(path, private=False):
     path = Path(path)
     # macOS has OS-owned /etc -> private/etc and /var -> private/var aliases.
@@ -228,13 +222,11 @@ def environment_names(config):
         if not names:
             raise ValueError('No explicit secrets for ' + service)
         result[service] = sorted(names)
-    # The coordinator gets only the backup profile's recognized backend credentials
-    # and connection settings, never inherited unrelated secrets or fnox controls.
-    backup_names = set(config['profiles']['backup'].get('secrets', {}))
+    # Local iCloud repositories require no backend credentials. Keep the profile
+    # present but pass no secrets to the backup process.
+    backup_names = set(config['profiles'].get('backup', {}).get('secrets', {}))
     validate_environment_names(backup_names)
-    result['backup'] = sorted(backup_names & BACKUP_ENV)
-    if not result['backup']:
-        raise ValueError('Declare backup backend credentials explicitly in the backup profile')
+    result['backup'] = []
     return result
 
 

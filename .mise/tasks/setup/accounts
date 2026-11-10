@@ -1,0 +1,10 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2154
+#MISE description="Create service accounts and configure local outbound mail"
+set -eu
+. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
+
+say 'Creating service accounts and access groups'
+"$mise_bin" -C "$setup_repo" run accounts:install
+say 'Configuring local outbound mail'
+"$mise_bin" -C "$setup_repo" run mail:install

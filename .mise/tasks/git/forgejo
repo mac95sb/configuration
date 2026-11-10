@@ -1,4 +1,37 @@
 #!/bin/sh
 #MISE description="Set configuration and robin origin to Forgejo; preserve previous remotes"
 set -eu
-exec /bin/sh /Users/mac/Developer/configuration/services/git/forgejo.sh
+for name in configuration robin; do
+  checkout=/Users/mac/Developer/$name
+  url=git@git.maclong.dev:mac/$name.git
+  test -d "$checkout/.git" || {
+    printf 'Missing checkout: %s\n' "$checkout" >&2
+    exit 1
+  }
+  origin=$(git -C "$checkout" config --get remote.origin.url || :)
+  if [ -n "$origin" ] && [ "$origin" != "$url" ] && [ "$origin" != "ssh://git@127.0.0.1:2222/mac/$name.git" ]; then
+    case "$origin" in
+    entire://*) previous=entire ;;
+    *) previous='previous-origin' ;;
+    esac
+    saved=$(git -C "$checkout" config --get "remote.$previous.url" || :)
+    if [ -n "$saved" ] && [ "$saved" != "$origin" ]; then
+      printf 'Refusing to replace remote %s in %s. Resolve it manually.\n' "$previous" "$checkout" >&2
+      exit 1
+    elif [ -z "$saved" ]; then
+      git -C "$checkout" remote add "$previous" "$origin"
+    fi
+  fi
+  if [ -n "$origin" ]; then
+    git -C "$checkout" remote set-url origin "$url"
+  else
+    git -C "$checkout" remote add origin "$url"
+  fi
+  git -C "$checkout" config --unset-all remote.origin.pushurl || test "$?" = 5
+  git -C "$checkout" config remote.pushDefault origin
+  git -C "$checkout" config branch.main.remote origin
+  git -C "$checkout" config branch.main.merge refs/heads/main
+  printf '%s: origin -> %s (previous remotes preserved)\n' "$name" "$url"
+done
+printf '%s\n' 'Uses the local SSH URL rewrite in .config/git/config on this Mac.' \
+  'No commits, pushes, key registration or remote repository creation were performed.'

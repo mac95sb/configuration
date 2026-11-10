@@ -1,0 +1,177 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2154
+#MISE description="Restore the newest trusted Restic backup from iCloud Drive"
+set -eu
+umask 077
+. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
+
+icloud=$HOME/Library/Mobile\ Documents/com~apple~CloudDocs/Backups/configuration/recovery-v1
+repository=$icloud/restic-v1
+if [ ! -d "$icloud" ] || [ ! -f "$repository/config" ]; then
+  printf 'The iCloud backup repository is unavailable: %s\n' "$repository" >&2
+  exit 1
+fi
+
+latest_capsule=$(printf '%s\n' "$icloud"/capsule-*.tar.age | LC_ALL=C sort | tail -n 1)
+if [ ! -f "$latest_capsule" ]; then
+  printf 'No timestamped recovery capsule exists in %s\n' "$icloud" >&2
+  exit 1
+fi
+
+tmp=$(mktemp -d /private/tmp/setup-recovery.XXXXXX)
+trap 'stty echo 2>/dev/null || :; rm -rf "$tmp"' 0
+trap 'exit 1' HUP INT TERM
+record=$tmp/recovery-record.json
+
+say 'Trusted recovery record required' \
+  'Paste the independently retained OFFLINE_RECOVERY_RECORD line or its JSON object.'
+IFS= read -r pasted_record
+case "$pasted_record" in
+'OFFLINE_RECOVERY_RECORD '*) pasted_record=${pasted_record#OFFLINE_RECOVERY_RECORD } ;;
+esac
+printf '%s\n' "$pasted_record" >"$record"
+unset pasted_record
+
+record_object_field() {
+  sed -n "s/.*\"$1\":{[^}]*\"$2\":\"\([^\"]*\)\".*/\1/p" "$record"
+}
+schema=$(sed -n 's/.*"schema":\([0-9][0-9]*\).*/\1/p' "$record")
+snapshot=$(sed -n 's/.*"snapshot":"\([^"]*\)".*/\1/p' "$record")
+capsule_name=$(record_object_field capsule filename)
+capsule_sha=$(record_object_field capsule sha256)
+bundle_name=$(record_object_field bootstrap_bundle filename)
+bundle_sha=$(record_object_field bootstrap_bundle sha256)
+receipt_name=$(record_object_field receipt filename)
+receipt_sha=$(record_object_field receipt sha256)
+
+if [ "$schema" != 1 ] ||
+  ! printf '%s' "$snapshot" | grep -Eq '^[0-9a-f]{64}$' ||
+  ! printf '%s' "$capsule_sha" | grep -Eq '^[0-9a-f]{64}$' ||
+  ! printf '%s' "$bundle_sha" | grep -Eq '^[0-9a-f]{64}$' ||
+  ! printf '%s' "$receipt_sha" | grep -Eq '^[0-9a-f]{64}$'; then
+  printf '%s\n' 'Recovery record has an invalid schema, snapshot ID, or SHA-256.' >&2
+  exit 1
+fi
+if [ "${latest_capsule##*/}" != "$capsule_name" ]; then
+  printf '%s\n' 'The newest iCloud capsule does not match the independently retained recovery record; refusing recovery.' >&2
+  exit 1
+fi
+
+for name in "$capsule_name" "$bundle_name" "$receipt_name"; do
+  case "$name" in
+  '' | */* | .* | *..*)
+    printf 'Unsafe recovery artifact filename: %s\n' "$name" >&2
+    exit 1
+    ;;
+  esac
+done
+capsule=$icloud/$capsule_name
+bundle=$icloud/$bundle_name
+receipt=$icloud/$receipt_name
+for path in "$capsule" "$bundle" "$receipt"; do
+  if [ ! -f "$path" ] || [ -L "$path" ]; then
+    printf 'Recovery artifact is missing or linked: %s\n' "$path" >&2
+    exit 1
+  fi
+done
+for pair in "$capsule:$capsule_sha" "$bundle:$bundle_sha" "$receipt:$receipt_sha"; do
+  path=${pair%:*}
+  expected=${pair##*:}
+  actual=$(shasum -a 256 "$path" | awk '{print $1}')
+  if [ "$actual" != "$expected" ]; then
+    printf 'Recovery artifact hash differs from the trusted record: %s\n' "$path" >&2
+    exit 1
+  fi
+done
+
+say 'Offline age identity required' \
+  'Paste the AGE-SECRET-KEY value below; input is hidden and stored temporarily only.'
+identity=$tmp/identity
+printf '%s' '    Key: '
+stty -echo
+if ! IFS= read -r age_identity; then
+  exit 1
+fi
+stty echo
+printf '\n'
+printf '%s\n' "$age_identity" >"$identity"
+unset age_identity
+"$mise_bin" -C "$setup_repo" exec -- age-keygen -y "$identity" >/dev/null
+
+say 'Restoring the latest trusted iCloud backup'
+if [ "$(id -un)" != mac ] || [ "$HOME" != /Users/mac ]; then
+  printf '%s\n' 'Recovery currently targets the mac account at /Users/mac.' >&2
+  exit 1
+fi
+case "$setup_repo/" in
+/Users/mac/Developer/*)
+  printf '%s\n' 'Run recovery from a trusted temporary checkout outside /Users/mac/Developer.' >&2
+  exit 1
+  ;;
+esac
+if [ -e /Users/mac/Developer ]; then
+  printf '%s\n' 'Developer already exists; refusing to overwrite recovered targets.' >&2
+  exit 1
+fi
+if ! xcode-select -p >/dev/null 2>&1; then
+  printf '%s\n' 'Install Command Line Tools with xcode-select --install, then rerun setup.sh --recover.' >&2
+  exit 1
+fi
+
+"$mise_bin" -C "$setup_repo" exec -- age -d -i "$identity" \
+  -o "$tmp/capsule.tar" "$capsule"
+/usr/bin/tar -tf "$tmp/capsule.tar" >"$tmp/capsule-members"
+/usr/bin/tar -tvf "$tmp/capsule.tar" >"$tmp/capsule-verbose"
+if ! awk 'substr($1, 1, 1) != "-" && substr($1, 1, 1) != "d" { exit 1 }' \
+  "$tmp/capsule-verbose"; then
+  printf '%s\n' 'Capsule contains a link or special file; refusing extraction.' >&2
+  exit 1
+fi
+for member in capsule/config.toml.age capsule/restic-password.age capsule/metadata.json; do
+  if [ "$(grep -Fxc "$member" "$tmp/capsule-members")" != 1 ]; then
+    printf 'Capsule is missing or repeats required member: %s\n' "$member" >&2
+    exit 1
+  fi
+done
+"$mise_bin" -C "$setup_repo" exec -- tar -xOf "$tmp/capsule.tar" \
+  capsule/config.toml.age >"$tmp/config.toml.age"
+"$mise_bin" -C "$setup_repo" exec -- tar -xOf "$tmp/capsule.tar" \
+  capsule/restic-password.age >"$tmp/restic-password.age"
+"$mise_bin" -C "$setup_repo" exec -- tar -xOf "$tmp/capsule.tar" \
+  capsule/metadata.json >"$tmp/metadata.json"
+if ! grep -Eq '"snapshot"[[:space:]]*:[[:space:]]*"'"$snapshot"'"' "$tmp/metadata.json"; then
+  printf '%s\n' 'Capsule metadata does not match the trusted snapshot ID.' >&2
+  exit 1
+fi
+"$mise_bin" -C "$setup_repo" exec -- age -d -i "$identity" \
+  -o "$tmp/config.toml" "$tmp/config.toml.age"
+
+/bin/sh "$setup_repo/.mise/tasks/accounts/install"
+if sudo test -L /etc/fnox || sudo test -L /etc/fnox/operational.key || sudo test -L /etc/fnox/restic-password.age; then
+  printf '%s\n' 'Refusing symlinked secret paths.' >&2
+  exit 1
+fi
+sudo install -d -o root -g wheel -m 700 /etc/fnox
+for name in operational.key restic-password.age; do
+  case "$name" in
+  operational.key) source=$identity ;;
+  restic-password.age) source=$tmp/restic-password.age ;;
+  esac
+  if sudo test -e "/etc/fnox/$name"; then
+    sudo cmp -s "$source" "/etc/fnox/$name" || {
+      printf 'Existing %s differs; refusing to replace recovery credentials.\n' "$name" >&2
+      exit 1
+    }
+  else
+    sudo install -o root -g wheel -m 600 "$source" "/etc/fnox/$name"
+  fi
+done
+
+# Stage installs the runtime/config but never registers or starts server jobs.
+"$mise_bin" -C "$setup_repo" run security:deploy -- stage "$tmp/config.toml"
+sudo /usr/local/libexec/mac-server/backup/launch.sh verify "$snapshot" \
+  --repository "$repository"
+sudo /usr/local/libexec/mac-server/backup/launch.sh restore "$snapshot" \
+  --session reinstall-1 --offline --repository "$repository"
+say 'Recovery installed and verified all targets' \
+  'Services remain stopped until the setup sequence activates the server.'

@@ -42,8 +42,7 @@ def fixture_config():
             'default_provider': 'age',
             'profiles': {name: {'secrets': {key: {'value': 'fixture ciphertext'}}}
         for name, key in [('forgejo', 'FORGEJO_SECRET'), ('observability', 'ALLOY_SECRET'),
-                          ('grafana', 'GRAFANA_SECRET'), ('notifications', 'NOTIFY_SECRET'),
-                                                    ('backup', 'RCLONE_CONFIG_R2_SECRET_ACCESS_KEY')]}}
+                          ('grafana', 'GRAFANA_SECRET'), ('notifications', 'NOTIFY_SECRET')]}}
 
 
 class SecurityTests(unittest.TestCase):
@@ -399,7 +398,7 @@ class SecurityTests(unittest.TestCase):
         cases = [[], ['init'], ['backup'], ['checkpoint'], ['prune'], ['prune', '--apply'],
                  ['verify', snapshot], ['verify', snapshot, '--repository', '/Volumes/Recovery/repo'],
                  ['restore', snapshot, '--session', 'recovery_1'],
-                 ['restore', snapshot, '--session=-resume', '--repository', 'rclone:R2:home-backups/restic-v1', '--offline']]
+                 ['restore', snapshot, '--session=-resume', '--repository', '/Volumes/iCloud/restic-v1', '--offline']]
         for argv in cases:
             with self.subTest(argv=argv):
                 canonical = backup.coordinator_args(argv)
@@ -449,13 +448,15 @@ class SecurityTests(unittest.TestCase):
         self.assertNotIn('FORGEJO_SECRET', env)
         self.assertNotIn('fixture-backup-credential', ' '.join(argv))
 
-    def test_backup_whitelist_ignores_other_profiles_and_control_variables(self):
+    def test_backup_profile_rejects_remote_credentials_and_exports_none(self):
         config = fixture_config()
+        config['profiles']['backup'] = {'secrets': {}}
         config['secrets'] = {'INHERITED_UNRELATED': {}}
         config['profiles']['backup']['secrets'].update({'UNRELATED_PROFILE_SECRET': {}})
-        self.assertEqual(installer.environment_names(config)['backup'], ['RCLONE_CONFIG_R2_SECRET_ACCESS_KEY'])
+        self.assertEqual(installer.environment_names(config)['backup'], [])
         for name in ('FNOX_AGE_KEY', 'DYLD_INSERT_LIBRARIES', 'RESTIC_PASSWORD_COMMAND', 'RCLONE_CONFIG'):
             changed = fixture_config()
+            changed['profiles']['backup'] = {'secrets': {}}
             changed['profiles']['backup']['secrets'][name] = {}
             with self.subTest(name=name), self.assertRaises(ValueError):
                 installer.environment_names(changed)

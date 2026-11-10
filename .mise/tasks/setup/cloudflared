@@ -1,0 +1,38 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2154
+#MISE description="Install the existing Cloudflare Tunnel credentials"
+set -eu
+. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
+
+say 'Configuring the Cloudflare Tunnel'
+cloudflared_config=$setup_repo/services/cloudflared/config.yml
+tunnel_id=$(awk '/^tunnel:/ { print $2; exit }' "$cloudflared_config")
+encrypted_credentials=$setup_repo/services/cloudflared/credentials.json.age
+installed_credentials=/etc/cloudflared/$tunnel_id.json
+if [ ! -f "$installed_credentials" ]; then
+  if [ ! -f "$encrypted_credentials" ]; then
+    printf 'Encrypted credentials for tunnel %s are missing.\n' "$tunnel_id" >&2
+    exit 1
+  fi
+
+  credential_tmp_dir=$(mktemp -d /private/tmp/cloudflared-credential.XXXXXX)
+  credential_tmp=$credential_tmp_dir/credential.json
+  sudo chown root:wheel "$credential_tmp_dir"
+  sudo chmod 700 "$credential_tmp_dir"
+  trap 'sudo rm -rf "$credential_tmp_dir"' 0
+  trap 'exit 1' HUP INT TERM
+  sudo /usr/local/bin/age -d -i /etc/fnox/operational.key \
+    -o "$credential_tmp" "$encrypted_credentials"
+  restored_tunnel_id=$(sudo /usr/bin/plutil \
+    -extract TunnelID raw -o - "$credential_tmp")
+  if [ "$restored_tunnel_id" != "$tunnel_id" ]; then
+    printf 'Encrypted credentials do not belong to tunnel %s.\n' "$tunnel_id" >&2
+    exit 1
+  fi
+  sudo install -d -m 755 -o root -g wheel /etc/cloudflared
+  sudo install -o svc_cloudflared -g staff -m 400 \
+    "$credential_tmp" "$installed_credentials"
+  sudo rm -rf "$credential_tmp_dir"
+  trap - 0 HUP INT TERM
+fi
+say 'Reusing the existing Cloudflare tunnel, DNS routes, and Access policy'

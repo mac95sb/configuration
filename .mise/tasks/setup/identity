@@ -1,0 +1,51 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2154
+#MISE description="Install the root-only operational age identity"
+set -eu
+. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
+
+say 'Installing the operational age key'
+installed_key=/etc/fnox/operational.key
+temporary_key=
+if sudo test -L /etc/fnox || sudo test -L "$installed_key"; then
+  printf '%s\n' 'Refusing symlinked fnox key paths.' >&2
+  exit 1
+fi
+if sudo test -f "$installed_key"; then
+  say "Using the existing operational key at $installed_key"
+else
+  say 'Operational age key required' \
+    'Paste the matching AGE-SECRET-KEY value below; input is hidden.' \
+    'It will be kept only in a private temporary file, then installed root-only.' \
+    'Its public recipient must already be present in fnox.toml.'
+  temporary_key=$(mktemp /private/tmp/operational-key.XXXXXX)
+  chmod 600 "$temporary_key"
+  trap 'stty echo 2>/dev/null || :; rm -f "$temporary_key"' 0
+  trap 'exit 1' HUP INT TERM
+  printf '%s' '    Key: '
+  stty -echo
+  if ! IFS= read -r operational_identity; then
+    exit 1
+  fi
+  stty echo
+  printf '\n'
+  printf '%s\n' "$operational_identity" >"$temporary_key"
+  unset operational_identity
+
+  operational_recipient=$("$mise_bin" -C "$setup_repo" exec -- age-keygen -y "$temporary_key")
+  if ! grep -Fq "\"$operational_recipient\"" "$setup_repo/fnox.toml"; then
+    printf '%s\n' \
+      "The staged key's recipient ($operational_recipient) is not in fnox.toml." \
+      'Re-encrypt the fnox secrets for this recipient before continuing.' >&2
+    exit 1
+  fi
+
+  sudo install -d -m 700 -o root -g wheel /etc/fnox
+  sudo install -o root -g wheel -m 600 "$temporary_key" "$installed_key"
+  rm -f "$temporary_key"
+  trap - 0 HUP INT TERM
+fi
+
+sudo chown root:wheel /etc/fnox "$installed_key"
+sudo chmod 700 /etc/fnox
+sudo chmod 600 "$installed_key"

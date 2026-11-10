@@ -1,0 +1,7 @@
+#!/bin/sh
+# shellcheck disable=SC1091,SC2154
+#MISE description="Open or initialize the local iCloud Restic repository"
+set -eu
+. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
+say 'Opening the Restic repository without replacing an existing password'
+"$mise_bin" -C "$setup_repo" run recovery:init

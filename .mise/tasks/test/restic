@@ -1,0 +1,22 @@
+#!/bin/sh
+#MISE description="Smoke-test Restic with a temporary local repository"
+set -eu
+
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/configuration-test.XXXXXX")
+trap 'rm -rf "$tmp"' 0
+mkdir -p "$tmp/source"
+printf '%s\n' 'Restic smoke test' >"$tmp/source/check.txt"
+
+run_restic() {
+  env -i PATH="$PATH" HOME="$HOME" RESTIC_REPOSITORY="$tmp/repository" \
+    RESTIC_PASSWORD=fixture-only-password RESTIC_CACHE_DIR="$tmp/cache" restic "$@"
+}
+
+(
+  cd "$tmp"
+  run_restic init
+  run_restic backup source
+  run_restic check
+  run_restic restore latest --target "$tmp/restored"
+)
+cmp "$tmp/source/check.txt" "$tmp/restored/source/check.txt"

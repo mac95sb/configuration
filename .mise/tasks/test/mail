@@ -1,0 +1,31 @@
+#!/bin/sh
+#MISE description="Send a direct-delivery mail smoke test"
+#MISE env={MAIL_TEST_RECIPIENTS = "{{ vars.mail_test_recipients }}"}
+set -eu
+
+# This list is maintained as whitespace-separated addresses in mise.toml.
+# shellcheck disable=SC2086
+set -- $MAIL_TEST_RECIPIENTS
+if [ "$#" -eq 0 ]; then
+  printf '%s\n' 'Set mail_test_recipients in mise.toml before running this task.' >&2
+  exit 1
+fi
+
+printf '%s\n' \
+  'This is a direct-delivery test from the maclong.dev server.' \
+  "Sent at $(date -u '+%Y-%m-%d %H:%M:%S UTC')." |
+  /usr/bin/mail -v -s 'maclong.dev mail test' "$@"
+
+printf '%s\n' "Queued a test message for: $MAIL_TEST_RECIPIENTS"
+
+attempt=0
+while ! queue=$(/usr/bin/mailq 2>&1); do
+  attempt=$((attempt + 1))
+  if [ "$attempt" -ge 10 ]; then
+    printf '%s\n' "$queue" >&2
+    exit 1
+  fi
+  sleep 1
+done
+
+printf '%s\n' "$queue"

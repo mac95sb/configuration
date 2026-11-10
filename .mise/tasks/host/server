@@ -1,4 +1,10 @@
 #!/bin/sh
 #MISE description="Disable sleep for hosting and enable restart after power loss (mains power)"
 set -eu
-exec /bin/sh /Users/mac/Developer/configuration/services/host/power.sh server
+printf '%s\n' 'Server mode disables system sleep, including the global lid-sleep override.' \
+  'Use mains power and ventilation. Do not put the running Mac in a closed bag.' \
+  'The lid override is macOS-version-dependent: test physical lid close after deployment.'
+sudo /usr/bin/pmset -c sleep 0 disksleep 0 womp 1 autorestart 1
+sudo /usr/bin/pmset -a disablesleep 1
+/usr/bin/pmset -g custom
+/usr/bin/pmset -g

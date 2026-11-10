@@ -1,4 +1,66 @@
 #!/bin/sh
 #MISE description="Check the reviewed Forgejo/Grafana baseline without modifying packages"
 set -eu
-exec python3 /Users/mac/Developer/configuration/services/maintenance/check.py
+
+repo=$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)
+failures=0
+baseline=$(awk '
+  /^\[homebrew\]$/ { section = 1; next }
+  /^\[/ { section = 0 }
+  section && /^[[:space:]]*(#|$)/ { next }
+  section {
+    if ($0 !~ /^[[:space:]]*(forgejo|grafana)[[:space:]]*=[[:space:]]*"[0-9]+\.[0-9]+\.[0-9]+"[[:space:]]*(#.*)?$/) {
+      bad = 1
+      next
+    }
+    split($0, parts, "=")
+    name = parts[1]
+    gsub(/[[:space:]]/, "", name)
+    value = parts[2]
+    gsub(/[[:space:]"]/, "", value)
+    sub(/#.*/, "", value)
+    if (name in versions) bad = 1
+    versions[name] = value
+  }
+  END {
+    if (bad || !("forgejo" in versions) || !("grafana" in versions)) {
+      print "Invalid Homebrew version baseline" > "/dev/stderr"
+      exit 1
+    }
+    print "forgejo", versions["forgejo"]
+    print "grafana", versions["grafana"]
+  }
+' "$repo/services/maintenance/versions.toml")
+
+while IFS=' ' read -r name expected; do
+  [ -n "$name" ] || continue
+  binary=/opt/homebrew/bin/$name
+  if [ ! -x "$binary" ]; then
+    printf '%s: executable not found\n' "$name" >&2
+    failures=1
+    continue
+  fi
+
+  text=$("$binary" --version 2>&1) || {
+    printf '%s: cannot inspect installed version\n' "$name" >&2
+    failures=1
+    continue
+  }
+  actual=$(printf '%s\n' "$text" |
+    sed -nE 's/.*[Vv]ersion[[:space:]]+v?([0-9]+\.[0-9]+\.[0-9]+).*/\1/p')
+  if [ -z "$actual" ]; then
+    printf '%s: unrecognized version output\n' "$name" >&2
+    failures=1
+    continue
+  fi
+
+  printf '%s: installed %s; reviewed %s\n' "$name" "$actual" "$expected"
+  if [ "$actual" != "$expected" ]; then
+    printf '%s: review version and database compatibility before activation\n' "$name" >&2
+    failures=1
+  fi
+done <<EOF
+$baseline
+EOF
+
+exit "$failures"
