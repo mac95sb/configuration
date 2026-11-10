@@ -1,9 +1,13 @@
 #!/bin/sh
 # shellcheck disable=SC1091,SC2154
 #MISE description="Bootstrap Mise tools, packages, dotfiles, and reviewed app pins"
+#MISE interactive=true
+#MISE extends="uncached"
 set -eu
+[ "$#" = 0 ] || exit 2
+export MISE_SETUP_IN_PROGRESS=1
 . "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
 
 "$mise_bin" -C "$setup_repo" exec -- hk install --global --mise
-"$mise_bin" -C "$setup_repo" exec -- mise bootstrap --yes --force-dotfiles --skip repos
+"$mise_bin" -C "$setup_repo" exec -- mise --no-hooks bootstrap --yes --force-dotfiles --skip repos
 "$mise_bin" -C "$setup_repo" run updates:pin

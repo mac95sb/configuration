@@ -1,0 +1,93 @@
+#!/bin/sh
+#MISE description="Internal backup engine; invoke backup:run for argument help"
+#MISE hide=true
+#MISE raw_args=true
+set -eu
+base=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd -P)
+# shellcheck source=.mise/tasks/_common
+. "$base/tasks/_common"
+# shellcheck source=.mise/tasks/backup/_common
+. "$base/tasks/backup/_common"
+# Fixed tuple from the public Mise task: operation, snapshot, repository, destination, apply.
+validate_backup "$@"
+umask 077
+fixture=false
+if [ "$(id -u)" != 0 ]; then
+  [ -n "${BACKUP_FIXTURE_ROOT:-}" ] || die 'Use mise run backup:run.'
+  fixture=true
+  state=$BACKUP_FIXTURE_ROOT/state
+  etc=$BACKUP_FIXTURE_ROOT/etc
+  developer=$BACKUP_FIXTURE_ROOT/Developer
+  forgejo=$BACKUP_FIXTURE_ROOT/forgejo
+  grafana=$BACKUP_FIXTURE_ROOT/grafana
+  icloud=$BACKUP_FIXTURE_ROOT/icloud
+  metrics=$BACKUP_FIXTURE_ROOT/metrics
+  pitchfork=$BACKUP_FIXTURE_ROOT/pitchfork
+  mkdir -p "$state" "$metrics"
+else
+  [ -z "${BACKUP_FIXTURE_ROOT:-}" ] || die 'Fixture mode is forbidden as root.'
+  state=/var/db/home-backup
+  etc=/etc/fnox
+  developer=/Users/mac/Developer
+  forgejo=/Users/svc_forgejo/forgejo-data
+  grafana=/Users/svc_observability/grafana-data
+  icloud='/Users/mac/Library/Mobile Documents/com~apple~CloudDocs/Backups/configuration/restic-sh-v1'
+  metrics=/Users/svc_observability/textfile
+  pitchfork=/usr/local/bin/pitchfork
+  for path in "$base/tasks/backup/operate" "$base/tasks/backup/_common" /usr/local/bin/restic /usr/local/bin/age /usr/local/bin/taplo /usr/local/bin/pitchfork; do trusted "$path"; done
+  private_file "$etc/operational.key"
+  private_file "$etc/config.toml"
+  if [ -e "$etc/restic-password.age" ] || [ -L "$etc/restic-password.age" ]; then private_file "$etc/restic-password.age"; fi
+  directory "$state" 700
+  [ "$(stat -f %Lp "$state")" = 700 ] || die 'Backup state must have mode 700.'
+  directory /var/db/home-backup-handoff
+fi
+repository=${repository_override:-$icloud/repository}
+export PITCHFORK_USER=root PITCHFORK_SUPERVISOR_AUTO_START=false XDG_CONFIG_HOME=/etc
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null GIT_NO_LAZY_FETCH=1
+unset RESTIC_PASSWORD RESTIC_PASSWORD_COMMAND RESTIC_REPOSITORY RESTIC_PASSWORD_FILE
+mkdir "$state/shell.lock" || die "Backup operation already locked; inspect $state/shell.lock before removing a stale lock."
+work='' transfer='' resume=''
+trap backup_cleanup EXIT
+trap 'exit 1' HUP INT TERM
+work=$(mktemp -d "$state/work.XXXXXX")
+if [ "$fixture" = true ]; then
+  transfer=$(mktemp -d "$state/handoff.XXXXXX")
+else
+  transfer=$(mktemp -d /var/db/home-backup-handoff/session.XXXXXX)
+  chown mac:staff "$transfer"
+fi
+case $command in
+init) init_repository ;;
+checkpoint)
+  open_password
+  taplo get -f "$etc/config.toml" providers.age.recipients >"$work/recipients"
+  checkpoint
+  ;;
+verify)
+  open_password
+  verify_snapshot "$transfer/restored"
+  ;;
+restore)
+  # Restore only to a new private staging tree, never into live data or the bootstrap.
+  local_path "$destination"
+  if [ "$fixture" = false ]; then trusted "$(dirname "$destination")"; fi
+  absent "$destination"
+  open_password
+  verify_snapshot "$transfer/restored"
+  mkdir -m 700 "$destination"
+  cp -Rp "$transfer/restored/payload" "$destination/payload"
+  printf '%s\n' "$snapshot" >"$destination/snapshot.id"
+  printf '%s\n' 'Verified staged restore. Services and live targets were not changed.' \
+    "Inspect $destination, then use recovery:install explicitly."
+  ;;
+prune)
+  open_password
+  restic_cmd check
+  if [ "$apply" = true ]; then
+    restic_cmd forget --host home-mac --tag home-sh-v1 --group-by host --keep-last 1 --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --prune
+  else
+    restic_cmd forget --host home-mac --tag home-sh-v1 --group-by host --keep-last 1 --keep-daily 7 --keep-weekly 5 --keep-monthly 12 --dry-run
+  fi
+  ;;
+esac

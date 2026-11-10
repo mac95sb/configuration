@@ -1,9 +1,20 @@
 #!/bin/sh
 #MISE description="Acknowledge a completed infrastructure update review for Grafana/ntfy"
+#MISE interactive=true
+#MISE extends="uncached"
 set -eu
+[ "$#" = 0 ] || exit 2
 mise run updates:check
 printf '%s\n' 'Confirm you reviewed mise.toml, services/maintenance/versions.toml and the README update checklist.'
 printf '%s' 'Type reviewed to reset the 30-day reminder: '
 read -r confirmation
 [ "$confirmation" = reviewed ] || exit 1
-exec sudo -u svc_observability /bin/sh /Users/mac/Developer/configuration/services/metrics/updates-reviewed.sh
+sudo -u svc_observability /bin/sh -eu <<'EOF'
+output=/Users/svc_observability/textfile/updates.prom
+tmp=$(mktemp "$output.XXXXXX")
+trap 'rm -f "$tmp"' EXIT
+trap 'exit 1' HUP INT TERM
+printf '# TYPE infrastructure_updates_last_review_seconds gauge\ninfrastructure_updates_last_review_seconds %s\n' "$(date +%s)" >"$tmp"
+chmod 640 "$tmp"
+mv "$tmp" "$output"
+EOF

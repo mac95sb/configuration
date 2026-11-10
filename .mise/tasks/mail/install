@@ -1,6 +1,9 @@
 #!/bin/sh
 #MISE description="Configure the built-in Postfix for local, direct outbound mail"
+#MISE interactive=true
+#MISE extends="uncached"
 set -eu
+[ "$#" = 0 ] || exit 2
 
 while IFS='|' read -r name value; do
   sudo /usr/sbin/postconf -e "$name = $value"

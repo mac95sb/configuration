@@ -1,0 +1,15 @@
+#!/bin/sh
+#MISE description="Install inspected recovery data; preserve the current Developer tree in an explicit new container"
+#MISE extends="uncached"
+#MISE interactive=true
+#MISE confirm={ message="Install restored data? Server jobs must be stopped. The current Developer tree will be preserved, and verified staging retained.", default="no" }
+#USAGE arg "<stage>" help="Root-private verified directory from backup:run restore"
+#USAGE flag "--preserve-developer <dir>" required=#true help="Absent container, e.g. /Users/mac/Developer.before-restore-1; old files remain inside its Developer child"
+set -eu
+# shellcheck source=.mise/tasks/_common
+. "${MISE_CONFIG_ROOT:?}/.mise/tasks/_common"
+local_path "${usage_stage:?}"
+local_path "${usage_preserve_developer:?}"
+exec sudo /usr/bin/env -i PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin HOME=/var/root \
+  /bin/sh /usr/local/libexec/mac-server/tasks/recovery/install-runtime \
+  "$usage_stage" "$usage_preserve_developer"

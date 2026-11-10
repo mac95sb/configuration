@@ -1,5 +1,0 @@
-#!/bin/sh
-#MISE description="Atomically copy current mise tools and an isolated Python runtime to protected paths"
-set -eu
-repo=$(CDPATH='' cd -- "$(/usr/bin/dirname "$0")/../../.." && pwd -P)
-exec "$HOME/.local/bin/mise" -C "$repo" run security:deploy -- tools "$@"

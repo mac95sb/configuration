@@ -1,6 +1,7 @@
 #!/bin/sh
 #MISE description="Check and pin the installed database-owning Homebrew formulae"
 set -eu
+[ "$#" = 0 ] || exit 2
 repo=$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)
 "$repo/.mise/tasks/updates/check"
 brew pin forgejo grafana

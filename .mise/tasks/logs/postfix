@@ -1,0 +1,19 @@
+#!/bin/sh
+#MISE description="Capture macOS Postfix log stream into its rotated sink as mac"
+#MISE extends="uncached"
+set -eu
+[ "$#" = 0 ] || exit 2
+work=$(mktemp -d "${TMPDIR:-/tmp}/postfix-logs.XXXXXX")
+producer=
+trap '[ -z "$producer" ] || kill "$producer" 2>/dev/null || :; rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+mkfifo "$work/stream"
+/usr/bin/log stream --info --style syslog --predicate \
+  'process == "postfix" OR process == "master" OR process == "pickup" OR process == "cleanup" OR process == "qmgr" OR process == "smtp" OR process == "bounce" OR process == "defer" OR process == "local"' >"$work/stream" &
+producer=$!
+while IFS= read -r line; do
+  [ ! -L /var/log/services/postfix.log ] || exit 1
+  printf '%s\n' "$line" >>/var/log/services/postfix.log
+done <"$work/stream"
+wait "$producer"
+exit 1

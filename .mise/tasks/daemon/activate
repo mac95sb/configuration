@@ -1,27 +1,18 @@
 #!/bin/sh
-#MISE description="Maintenance: gracefully stop legacy supervisors and activate the deployed root Pitchfork boot job"
+#MISE description="Stop legacy supervisors gracefully and activate the deployed root boot job"
+#MISE interactive=true
+#MISE extends="uncached"
 set -eu
-[ "$#" = 0 ] || exit 64
-cd /var/empty
-# Validate the installed entry chain with the OS interpreter before executing it.
-# In particular, do not follow a pre-deployment python3 symlink into a user's mise tree.
-exec /usr/bin/sudo /usr/bin/env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME=/var/root \
-  /usr/bin/python3 -I -S -c '
-import os, pathlib, stat, subprocess
-for name in ("/usr", "/usr/local", "/usr/local/bin", "/usr/local/libexec",
-             "/usr/local/libexec/mac-server", "/usr/local/bin/python3",
-             "/usr/local/libexec/mac-server/activate.py",
-                          "/usr/local/libexec/mac-server/install.py",
-                          "/usr/local/libexec/mac-server/secret_launcher.py"):
-    p = pathlib.Path(name)
-    s = p.lstat()
-    kind = stat.S_ISREG if p.name == "python3" or p.suffix == ".py" else stat.S_ISDIR
-    if not kind(s.st_mode) or s.st_uid != 0 or s.st_mode & 0o022:
-        raise SystemExit("Unsafe activation entry chain: " + name)
-    if "+" in subprocess.check_output(["/bin/ls", "-lde", name], text=True).split()[0]:
-        raise SystemExit("ACL on activation entry chain: " + name)
-os.execve("/usr/local/bin/python3", ["python3", "-I", "-S",
-    "/usr/local/libexec/mac-server/activate.py"],
-    {"PATH": "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin", "HOME": "/var/root",
-     "USER": "root", "LOGNAME": "root"})
+[ "$#" = 0 ] || exit 2
+exec sudo /usr/bin/env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME=/var/root \
+  /bin/sh -eu -c '
+  p=/usr/local/libexec/mac-server/tasks/daemon/activate-runtime
+  for f in /usr /usr/local /usr/local/libexec /usr/local/libexec/mac-server /usr/local/libexec/mac-server/tasks /usr/local/libexec/mac-server/tasks/daemon "$p"; do
+    [ ! -L "$f" ] && [ "$(stat -f %u "$f")" = 0 ] || exit 1
+    m=$(stat -f %Lp "$f")
+    [ "$((0$m & 022))" = 0 ] || exit 1
+    a=$(ls -lde "$f")
+    case ${a%% *} in *+*) exit 1 ;; esac
+  done
+  exec /bin/sh "$p"
 '

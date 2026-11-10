@@ -1,0 +1,36 @@
+#!/bin/sh
+#MISE description="Test SoC metrics with synthetic hardware inputs"
+#MISE extends="uncached"
+set -eu
+[ "$#" = 0 ] || exit 2
+base=$(CDPATH='' cd -- "$(dirname "$0")" && pwd -P)
+work=$(mktemp -d "${TMPDIR:-/tmp}/soc-metrics.XXXXXX")
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+cat >"$work/ioreg" <<'EOF'
+#!/bin/sh
+cat <<'DATA'
+"Device Utilization %"=25
+"In use system memory"=1048576
+busy 0 (2000 ms)
+"SystemLoad"=12500
+"CurrentCapacity" = 80
+DATA
+EOF
+cat >"$work/memory_pressure" <<'EOF'
+#!/bin/sh
+printf 'System-wide memory free percentage: 40%%\n'
+EOF
+chmod +x "$work/ioreg" "$work/memory_pressure"
+IOREG_BIN=$work/ioreg MEMORY_PRESSURE_BIN=$work/memory_pressure METRICS_FILE=$work/soc.prom /bin/sh "$base/soc"
+for sample in 'host_gpu_utilization_ratio 0.25' 'host_gpu_memory_bytes 1048576' 'host_ane_busy_seconds_total 2' 'host_power_watts 12.5' 'host_battery_charge_ratio 0.8' 'host_memory_free_ratio 0.4'; do
+  grep -Fx "$sample" "$work/soc.prom"
+done
+cp "$work/soc.prom" "$work/previous"
+printf '#!/bin/sh\necho invalid\n' >"$work/memory_pressure"
+if IOREG_BIN=$work/ioreg MEMORY_PRESSURE_BIN=$work/memory_pressure METRICS_FILE=$work/soc.prom /bin/sh "$base/soc"; then
+  echo 'Invalid metric input must fail.' >&2
+  exit 1
+fi
+cmp "$work/previous" "$work/soc.prom"
+promtool check metrics <"$work/soc.prom"

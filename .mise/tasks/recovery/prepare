@@ -1,0 +1,54 @@
+#!/bin/sh
+#MISE description="Stage supplied recovery credentials and protected tools without starting services"
+#MISE extends="uncached"
+#MISE interactive=true
+#USAGE flag "--identity <file>" required=#true help="Offline age identity, supplied independently"
+#USAGE flag "--password <file>" required=#true help="Original restic-password.age from the hash-verified recovery artifacts"
+#USAGE flag "--config <file>" required=#true help="Original config.toml.age from the hash-verified recovery artifacts"
+set -eu
+[ "$(id -un)" = mac ] && [ "$HOME" = /Users/mac ] || {
+  echo 'Recovery currently targets the mac account at /Users/mac.' >&2
+  exit 1
+}
+for file in "${usage_identity:?}" "${usage_password:?}" "${usage_config:?}"; do
+  [ -f "$file" ] && [ ! -L "$file" ] || {
+    echo "Missing or linked recovery input: $file" >&2
+    exit 1
+  }
+done
+repo=${MISE_CONFIG_ROOT:?}
+mise run accounts:install
+work=$(sudo mktemp -d /private/tmp/recovery-credentials.XXXXXX)
+trap 'sudo rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+sudo chmod 700 "$work"
+age=$(mise which age)
+sudo /usr/bin/env -i PATH=/usr/bin:/bin HOME=/var/root "$age" -d \
+  -i "$usage_identity" -o "$work/config.toml" "$usage_config"
+# Compare before installing. Neither a lost password nor a different identity
+# grants permission to replace an existing credential.
+sudo /bin/sh -eu -c '
+  repo=$1 identity=$2 password=$3 config=$4
+  . "$repo/.mise/tasks/_common"
+  directory /etc/fnox 700
+  for name in operational.key restic-password.age config.toml; do
+    case $name in operational.key) source=$identity ;; restic-password.age) source=$password ;; config.toml) source=$config ;; esac
+    target=/etc/fnox/$name
+    if [ -e "$target" ] || [ -L "$target" ]; then
+      private_file "$target"
+      cmp -s "$source" "$target" || die "Existing $target differs; refusing credential replacement."
+    fi
+  done
+  for name in operational.key restic-password.age config.toml; do
+    case $name in operational.key) source=$identity ;; restic-password.age) source=$password ;; config.toml) source=$config ;; esac
+    target=/etc/fnox/$name
+    if [ ! -e "$target" ]; then
+      temp=$(mktemp /etc/fnox/.credential.XXXXXX)
+      install -m 600 -o root -g wheel "$source" "$temp"
+      ln "$temp" "$target"
+      rm -f "$temp"
+    fi
+  done
+' sh "$repo" "$usage_identity" "$usage_password" "$work/config.toml"
+mise run daemon:install --stage
+printf '%s\n' 'Recovery runtime staged; no server started. Use backup:run verify, then backup:run restore.'

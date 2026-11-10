@@ -1,0 +1,71 @@
+#!/bin/sh
+#MISE description="Internal protected root supervisor activation"
+#MISE hide=true
+#MISE raw_args=true
+set -eu
+[ "$#" = 0 ] || exit 2
+base=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd -P)
+# shellcheck source=.mise/tasks/_common
+. "$base/tasks/_common"
+root_only
+directory /var/db/home-backup 700
+mkdir /var/db/home-backup/shell.lock || die 'A backup or maintenance operation holds the lock.'
+trap 'rmdir /var/db/home-backup/shell.lock' EXIT
+trap 'exit 1' HUP INT TERM
+work=$(mktemp -d /var/db/home-backup/activation.XXXXXX)
+trap 'rm -rf "$work"; rmdir /var/db/home-backup/shell.lock' EXIT
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin HOME=/var/root
+export PITCHFORK_USER=root PITCHFORK_SUPERVISOR_AUTO_START=false XDG_CONFIG_HOME=/etc
+cd /var/empty
+for file in /usr/local/bin/pitchfork /etc/pitchfork/config.toml /Library/LaunchDaemons/pitchfork.plist; do trusted "$file"; done
+client() {
+  if [ "$user" = mac ]; then
+    sudo -n -H -u mac -- /usr/bin/env -i PATH="$PATH" HOME=/Users/mac \
+      PITCHFORK_USER=mac PITCHFORK_SUPERVISOR_AUTO_START=false XDG_CONFIG_HOME=/Users/mac/.config \
+      /usr/local/bin/pitchfork "$@"
+  else
+    /usr/local/bin/pitchfork "$@"
+  fi
+}
+status() {
+  client supervisor status --json >"$work/status.json" || return 1
+  state=$(json_value "$work/status.json" status string) || return 1
+  case $state in up | down) printf '%s\n' "$state" ;; *) return 1 ;; esac
+}
+for user in mac root; do status >/dev/null; done
+for domain in "gui/$(id -u mac)/pitchfork" system/pitchfork; do
+  if launchctl print "$domain" >/dev/null 2>&1; then launchctl disable "$domain"; fi
+done
+for user in mac root; do
+  state=$(status)
+  if [ "$state" = up ]; then
+    client stop --all
+    client supervisor stop
+    attempt=0
+    while :; do
+      state=$(status)
+      [ "$state" != down ] || break
+      attempt=$((attempt + 1))
+      [ "$attempt" -lt 30 ] || die "Supervisor did not stop: $user"
+      sleep 1
+    done
+  fi
+done
+for domain in "gui/$(id -u mac)/pitchfork" system/pitchfork; do
+  if launchctl print "$domain" >/dev/null 2>&1; then launchctl bootout "$domain"; fi
+done
+legacy="gui/$(id -u mac)/backup-courier"
+if launchctl print "$legacy" >/dev/null 2>&1; then
+  launchctl disable "$legacy"
+  launchctl bootout "$legacy"
+fi
+launchctl enable system/pitchfork
+launchctl bootstrap system /Library/LaunchDaemons/pitchfork.plist
+user=root attempt=0
+while :; do
+  state=$(status)
+  [ "$state" != up ] || break
+  attempt=$((attempt + 1))
+  [ "$attempt" -lt 30 ] || die 'Root supervisor did not start; inspect supervisor.log.'
+  sleep 1
+done

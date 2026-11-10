@@ -1,0 +1,61 @@
+#!/bin/sh
+#MISE description="Validate the fixed age-only service secret policy without decrypting secrets"
+#MISE extends="uncached"
+#USAGE arg "<file>" help="Reviewed fnox TOML configuration"
+set -eu
+file=${usage_file:-${1:-}}
+[ -n "$file" ] && [ "$#" -le 1 ] || exit 2
+base=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd -P)
+# shellcheck source=.mise/tasks/_common
+. "$base/tasks/_common"
+work=$(mktemp -d "${TMPDIR:-/tmp}/fnox-policy.XXXXXX")
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+taplo get -f "$file" -o json >"$work/config.json"
+{
+  printf '{"config":'
+  cat "$work/config.json"
+  printf '}\n'
+} >"$work/wrapped.json"
+value() { json_value "$work/wrapped.json" "config.$1" "${2:-string}"; }
+keys() {
+  path=$1
+  shift
+  json_value "$work/wrapped.json" "$path" dictionary >"$work/keys"
+  actual=$(LC_ALL=C sort "$work/keys")
+  expected=$(printf '%s\n' "$@" | LC_ALL=C sort)
+  [ "$actual" = "$expected" ] || die "Unsupported fnox keys at $path"
+}
+keys config providers profiles
+keys config.providers age
+keys config.providers.age type key_file recipients
+[ "$(value providers.age.type)" = age ]
+[ "$(value providers.age.key_file)" = /etc/fnox/operational.key ]
+count=$(value providers.age.recipients array)
+[ "$count" -gt 0 ]
+index=0
+while [ "$index" -lt "$count" ]; do
+  recipient=$(value "providers.age.recipients.$index")
+  case $recipient in age1*) ;; *) die 'Invalid age recipient.' ;; esac
+  case $recipient in *[!a-z0-9]*) die 'Invalid age recipient.' ;; esac
+  index=$((index + 1))
+done
+keys config.profiles forgejo grafana notifications observability
+for profile in forgejo grafana notifications observability; do
+  keys "config.profiles.$profile" secrets
+  case $profile in
+  forgejo) names='FORGEJO__SECURITY__INTERNAL_TOKEN FORGEJO__SECURITY__SECRET_KEY' ;;
+  grafana) names=GF_SECURITY_ADMIN_PASSWORD ;;
+  notifications) names=NTFY_URL ;;
+  observability) names=SCRUB_SALT ;;
+  esac
+  # These are fixed policy names, not configuration-derived shell expressions.
+  # shellcheck disable=SC2086
+  keys "config.profiles.$profile.secrets" $names
+  for name in $names; do
+    key="profiles.$profile.secrets.$name"
+    keys "config.$key" provider value
+    [ "$(value "$key.provider")" = age ]
+    [ -n "$(value "$key.value")" ]
+  done
+done

@@ -1,0 +1,53 @@
+#!/bin/sh
+#MISE description="Internal explicit recovery installation; never overwrites live trees or starts services"
+#MISE hide=true
+#MISE raw_args=true
+set -eu
+[ "$#" = 2 ] || exit 2
+stage=$1 preserved=$2
+base=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd -P)
+# shellcheck source=.mise/tasks/_common
+. "$base/tasks/_common"
+# shellcheck source=.mise/tasks/backup/_common
+. "$base/tasks/backup/_common"
+# shellcheck source=.mise/tasks/recovery/_common
+. "$base/tasks/recovery/_common"
+root_only
+directory /var/db/home-backup 700
+mkdir /var/db/home-backup/shell.lock || die 'A backup or maintenance operation holds the lock.'
+trap 'rmdir /var/db/home-backup/shell.lock' EXIT
+trap 'exit 1' HUP INT TERM
+local_path "$stage"
+trusted "$stage"
+[ "$(stat -f %Lp "$stage")" = 700 ] || die 'Stage must be root-private mode 700.'
+private_file "$stage/snapshot.id"
+snapshot_id "$(cat "$stage/snapshot.id")"
+local_path "$preserved"
+case $preserved in /Users/mac/Developer.before-restore-*) ;;
+*) die 'Preservation container must be /Users/mac/Developer.before-restore-NAME.' ;;
+esac
+case ${preserved#/Users/mac/} in */*) die 'Preservation container must be a direct sibling of Developer.' ;; esac
+offline() {
+  launchctl list >"$stage/launchd-system.txt"
+  # The root installer deliberately owns these inspection files.
+  # shellcheck disable=SC2024
+  sudo -n -u mac -- launchctl list >"$stage/launchd-user.txt"
+  if grep -Ei 'pitchfork|forgejo|grafana|backup-courier' "$stage/launchd-system.txt" "$stage/launchd-user.txt"; then
+    die 'Remove server launchd jobs before recovery installation.'
+  fi
+  ps -axo comm= >"$stage/processes.txt"
+  if awk -F/ '$NF ~ /^(pitchfork|forgejo|grafana)$/ {found=1} END {exit !found}' "$stage/processes.txt"; then
+    die 'A supervisor/application is running; stop it before installation.'
+  fi
+}
+offline
+check_payload "$stage/payload"
+developer=/Users/mac/Developer
+forgejo=/Users/svc_forgejo/forgejo-data
+grafana=/Users/svc_observability/grafana-data
+install_trees
+chown -R -P -h mac:staff "$developer"
+chown -R -P -h svc_forgejo:staff "$forgejo"
+chown -R -P -h svc_observability:staff "$grafana"
+printf '%s\n' "Installed recovered trees; bootstrap and all previous Developer files are in $preserved/Developer." \
+  "The verified stage remains at $stage. No services started. Inspect data, then run sh ~/Developer/configuration/setup.sh."

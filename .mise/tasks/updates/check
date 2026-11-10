@@ -1,6 +1,7 @@
 #!/bin/sh
 #MISE description="Check the reviewed Forgejo/Grafana baseline without modifying packages"
 set -eu
+[ "$#" = 0 ] || exit 2
 
 repo=$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)
 failures=0

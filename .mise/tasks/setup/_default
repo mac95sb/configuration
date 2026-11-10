@@ -1,30 +1,32 @@
 #!/bin/sh
 # shellcheck disable=SC1091,SC2154
-#MISE description="Provision a fresh Mac or recover one from iCloud"
-#USAGE flag "--recover" help="Restore the existing system from its iCloud Restic backup"
+#MISE description="Configure an existing/recovered server, or explicitly create new empty services"
+#MISE interactive=true
+#MISE extends="uncached"
+#USAGE flag "--new" help="Create new empty services; refuses existing credentials or application data"
 set -eu
 . "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
 
-if [ "${usage_recover:-false}" = true ]; then
-  export CONFIGURATION_SETUP_MODE=recover
-  "$mise_bin" -C "$setup_repo" run setup:recover
-  "$mise_bin" -C "$setup_repo" run setup:bootstrap
-else
+export MISE_SETUP_IN_PROGRESS=1
+if [ "${usage_new:-false}" = true ]; then
   export CONFIGURATION_SETUP_MODE=fresh
+  "$mise_bin" -C "$setup_repo" run setup:state-check --new
+else
+  export CONFIGURATION_SETUP_MODE=existing
   "$mise_bin" -C "$setup_repo" run setup:state-check
-  "$mise_bin" -C "$setup_repo" run setup:bootstrap
 fi
+"$mise_bin" -C "$setup_repo" run setup:bootstrap
 
 "$mise_bin" -C "$setup_repo" run setup:preferences
-"$mise_bin" -C "$setup_repo" run setup:accounts
-if [ "${usage_recover:-false}" != true ]; then
-  "$mise_bin" -C "$setup_repo" run setup:identity
-fi
+"$mise_bin" -C "$setup_repo" run accounts:install
+"$mise_bin" -C "$setup_repo" run mail:install
+"$mise_bin" -C "$setup_repo" run setup:identity
 
-"$mise_bin" -C "$setup_repo" run setup:runtime
+"$mise_bin" -C "$setup_repo" run daemon:install
+sudo chmod o+x /Users/mac
 "$mise_bin" -C "$setup_repo" run setup:cloudflared
 "$mise_bin" -C "$setup_repo" run host:server
 "$mise_bin" -C "$setup_repo" run daemon:activate
 "$mise_bin" -C "$setup_repo" run setup:forgejo-admin
 "$mise_bin" -C "$setup_repo" run setup:git
-"$mise_bin" -C "$setup_repo" run recovery:init
+"$mise_bin" -C "$setup_repo" run backup:run init

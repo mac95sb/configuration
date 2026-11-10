@@ -1,8 +1,0 @@
-#!/bin/sh
-#MISE description="Re-enable sleep before using this Mac as a portable computer"
-set -eu
-sudo /usr/bin/pmset -a disablesleep 0
-sudo /usr/bin/pmset -c sleep 10 disksleep 10
-printf '%s\n' 'System sleep re-enabled; automatic restart after power loss remains enabled.'
-/usr/bin/pmset -g custom
-/usr/bin/pmset -g

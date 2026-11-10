@@ -1,5 +1,23 @@
 #!/bin/sh
-#MISE description="Deploy reviewed root-controlled tools, secrets config, backup runtime and boot plist (no restart)"
+#MISE description="Deploy reviewed protected tools, tasks and boot configuration without starting services"
+#MISE extends="uncached"
+#MISE interactive=true
+#USAGE flag "--stage" help="Deploy recovery tools and credentials only; no boot or log configuration"
+#USAGE flag "--config <file>" help="Explicit reviewed fnox ciphertext file; existing deployed config is otherwise preserved"
 set -eu
-repo=$(CDPATH='' cd -- "$(/usr/bin/dirname "$0")/../../.." && pwd -P)
-exec "$HOME/.local/bin/mise" -C "$repo" run security:deploy -- deploy "$@"
+repo=${MISE_CONFIG_ROOT:?}
+config=${usage_config:-}
+stage=${usage_stage:-false}
+work=$(mktemp -d "${TMPDIR:-/tmp}/mac-deployment.XXXXXX")
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+for tool in age alloy blackbox_exporter caddy cloudflared fnox loki node_exporter pitchfork prometheus promtool restic taplo; do
+  path=$(mise which "$tool")
+  printf '%s\t%s\n' "$tool" "$path" >>"$work/tools"
+  if [ "$tool" = age ]; then
+    printf 'age-keygen\t%s/age-keygen\n' "$(dirname "$path")" >>"$work/tools"
+  fi
+done
+# Discovery belongs only to this explicit administrative boundary, never boot.
+sudo /usr/bin/env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME=/var/root \
+  /bin/sh "$repo/.mise/tasks/daemon/deploy" "$repo" "$work/tools" "$stage" "$config"

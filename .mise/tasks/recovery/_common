@@ -1,0 +1,25 @@
+# shellcheck shell=sh disable=SC2154
+# Destination reservation is mkdir (atomic, fails if any writer won the name).
+# Keep the verified stage intact, including after an interrupted installation.
+copy_new() {
+  mkdir -m 700 "$2" || return 1
+  cp -Rp "$1/." "$2/"
+}
+
+install_trees() {
+  absent "$preserved"
+  absent "$forgejo"
+  absent "$grafana"
+  [ -d "$developer" ] && [ ! -L "$developer" ] || die 'Expected the bootstrap Developer directory.'
+  for tree in developer forgejo grafana; do
+    [ -d "$stage/payload/$tree" ] && [ ! -L "$stage/payload/$tree" ] || die "Unsafe staged tree: $tree"
+  done
+  # Reserve the preservation container before moving the bootstrap. Its root-only
+  # parent protects the inner, absent name from the mkdir/mv nesting race.
+  mkdir -m 700 "$preserved" || return 1
+  copy_new "$stage/payload/forgejo" "$forgejo" || return 1
+  copy_new "$stage/payload/grafana" "$grafana" || return 1
+  mv -n "$developer" "$preserved/Developer" || return 1
+  [ ! -e "$developer" ] && [ -d "$preserved/Developer" ] || die 'Bootstrap preservation did not complete.'
+  copy_new "$stage/payload/developer" "$developer"
+}

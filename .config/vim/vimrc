@@ -28,5 +28,5 @@ augroup writing
   autocmd FileType markdown,text setlocal nosmartindent
 augroup END
 
-" Clear search highlighting with <Esc>
+" Clear search highlighting with <Esc>.
 nnoremap <silent> <Esc> :nohlsearch<CR>

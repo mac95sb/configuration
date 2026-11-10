@@ -1,6 +1,9 @@
 #!/bin/sh
 #MISE description="Set configuration and robin origin to Forgejo; preserve previous remotes"
+#MISE extends="uncached"
+# Preserve previous hosting remotes; make Forgejo the default for both checkouts.
 set -eu
+[ "$#" = 0 ] || exit 2
 for name in configuration robin; do
   checkout=/Users/mac/Developer/$name
   url=git@git.maclong.dev:mac/$name.git
@@ -10,10 +13,7 @@ for name in configuration robin; do
   }
   origin=$(git -C "$checkout" config --get remote.origin.url || :)
   if [ -n "$origin" ] && [ "$origin" != "$url" ] && [ "$origin" != "ssh://git@127.0.0.1:2222/mac/$name.git" ]; then
-    case "$origin" in
-    entire://*) previous=entire ;;
-    *) previous='previous-origin' ;;
-    esac
+    previous='previous-origin'
     saved=$(git -C "$checkout" config --get "remote.$previous.url" || :)
     if [ -n "$saved" ] && [ "$saved" != "$origin" ]; then
       printf 'Refusing to replace remote %s in %s. Resolve it manually.\n' "$previous" "$checkout" >&2
@@ -27,6 +27,7 @@ for name in configuration robin; do
   else
     git -C "$checkout" remote add origin "$url"
   fi
+  # Explicit push URLs override fetch URLs and must not retain the former provider.
   git -C "$checkout" config --unset-all remote.origin.pushurl || test "$?" = 5
   git -C "$checkout" config remote.pushDefault origin
   git -C "$checkout" config branch.main.remote origin

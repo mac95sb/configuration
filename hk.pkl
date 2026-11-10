@@ -5,8 +5,12 @@ import "package://github.com/jdx/hk/releases/download/v2.0.0/hk@2.0.0#/Builtins.
 exclude = List(".config/zsh/.p10k.zsh")
 
 local linters = new Mapping<String, Step> {
-  ["shellcheck"] = Builtins.shellcheck
-  ["shfmt"] = (Builtins.shfmt) {
+  ["shellcheck"] {
+    glob = List("*.sh", ".mise/tasks/**")
+    check = "shellcheck -x {{files}}"
+  }
+  ["shfmt"] {
+    glob = List("*.sh", ".mise/tasks/**")
     check = "shfmt -i 2 -d --apply-ignore {{files}}"
     check_diff = "shfmt -i 2 -d --apply-ignore {{files}}"
     fix = "shfmt -i 2 -w --apply-ignore {{files}}"
@@ -42,9 +46,6 @@ local linters = new Mapping<String, Step> {
   ["alloy-validate"] {
     glob = List("services/alloy/config.alloy")
     check = "alloy validate services/alloy/config.alloy"
-  }
-  ["mise-test"] {
-    check = "mise run test"
   }
 }
 

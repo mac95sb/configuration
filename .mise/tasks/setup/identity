@@ -1,7 +1,10 @@
 #!/bin/sh
 # shellcheck disable=SC1091,SC2154
 #MISE description="Install the root-only operational age identity"
+#MISE interactive=true
+#MISE extends="uncached"
 set -eu
+[ "$#" = 0 ] || exit 2
 . "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
 
 say 'Installing the operational age key'

@@ -1,43 +1,23 @@
 #!/bin/sh
-# shellcheck disable=SC1091,SC2154
-#MISE description="Choose setup or maintenance after infrastructure tools change"
+#MISE description="Postinstall: maintain an existing server; never initialize a new or recovering host"
+#MISE interactive=true
+#MISE extends="uncached"
 set -eu
-. "$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)/.mise/tasks/setup/_common"
-
-if [ -n "${MISE_SETUP_IN_PROGRESS:-}" ]; then
-  exit 0
-fi
-case "${MISE_INSTALLED_TOOLS:-[]}" in
-*age* | *alloy* | *blackbox_exporter* | *caddy* | *cloudflared* | *fnox* | *loki* | *node_exporter* | *pitchfork* | *prometheus* | *python* | *restic*) ;;
+[ "$#" = 0 ] || exit 2
+[ -z "${MISE_SETUP_IN_PROGRESS:-}" ] || exit 0
+case ${MISE_INSTALLED_TOOLS:-} in
+*age* | *alloy* | *blackbox_exporter* | *caddy* | *cloudflared* | *fnox* | *loki* | *node_exporter* | *pitchfork* | *prometheus* | *restic* | *taplo*) ;;
 *) exit 0 ;;
 esac
-
-markers=0
-for path in \
-  /etc/fnox/config.toml \
-  /etc/fnox/operational.key \
-  /Library/LaunchDaemons/pitchfork.plist \
-  /Users/svc_forgejo/forgejo-data \
-  /Users/svc_forgejo/forgejo-data/data/forgejo.db \
-  /Users/svc_observability/grafana-data \
-  /Users/svc_observability/grafana-data/grafana.db; do
-  if sudo test -e "$path"; then
-    markers=$((markers + 1))
-  fi
+ready=true
+for path in /etc/fnox/config.toml /etc/fnox/operational.key /etc/fnox/restic-password.age /Library/LaunchDaemons/pitchfork.plist \
+  /Users/svc_forgejo/forgejo-data/data/forgejo.db /Users/svc_observability/grafana-data/grafana.db; do
+  if ! sudo test -f "$path"; then ready=false; fi
 done
-
-if [ "$markers" = 7 ]; then
-  printf '%s\n' 'mise: infrastructure tools changed; deploying and activating the configured server during this install.'
-  if ! sudo /usr/bin/lockf -t 0 /var/db/home-backup/mutation.lock \
-    "$mise_bin" -C "$setup_repo" run setup:update; then
-    printf '%s\n' 'Could not acquire the backup/recovery lock; refusing to interrupt an active operation.' >&2
-    exit 1
-  fi
-elif [ "$markers" = 0 ]; then
-  printf '%s\n' 'mise: infrastructure tools changed on a fresh system; running setup.'
-  /bin/sh "$setup_repo/setup.sh"
+if [ "$ready" = true ]; then
+  # Mise stays unprivileged. Only each fixed administrative operation elevates.
+  mise run daemon:install
+  mise run daemon:activate
 else
-  printf '%s\n' 'mise: partial service setup detected; refusing automatic initialization or activation.' \
-    'Complete setup.sh or setup.sh --recover explicitly.'
-  exit 1
+  printf '%s\n' 'Tools installed; no services changed. Use setup.sh --new for an empty server, or follow README recovery.'
 fi

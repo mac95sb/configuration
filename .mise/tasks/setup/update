@@ -1,8 +1,0 @@
-#!/bin/sh
-#MISE description="Deploy and activate infrastructure updates while holding the backup lock"
-set -eu
-setup_repo=$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)
-mise_bin=$HOME/.local/bin/mise
-
-"$mise_bin" -C "$setup_repo" run security:deploy -- deploy /etc/fnox/config.toml
-"$mise_bin" -C "$setup_repo" run daemon:activate

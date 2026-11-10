@@ -1,0 +1,26 @@
+#!/bin/sh
+#MISE description="Initialize, checkpoint, verify, stage a restore, or prune the Restic+iCloud repository"
+#MISE extends="uncached"
+#MISE interactive=true
+#USAGE arg "<command>" help="Restore writes only a new private staging directory" { choices "init" "checkpoint" "verify" "restore" "prune" }
+#USAGE arg "[snapshot]" help="Full 64-character snapshot ID; required for verify/restore"
+#USAGE flag "--repository <dir>" help="Existing local repository for verify/restore (default: iCloud repository)"
+#USAGE flag "--destination <dir>" help="New absolute staging directory; required for restore"
+#USAGE flag "--apply" help="Actually apply retention and prune (prune only; otherwise dry run)"
+set -eu
+repo=${MISE_CONFIG_ROOT:?}
+# shellcheck source=.mise/tasks/_common
+. "$repo/.mise/tasks/_common"
+# shellcheck source=.mise/tasks/backup/_common
+. "$repo/.mise/tasks/backup/_common"
+validate_backup "${usage_command:?}" "${usage_snapshot:-}" "${usage_repository:-}" \
+  "${usage_destination:-}" "${usage_apply:-false}"
+if [ -n "${BACKUP_FIXTURE_ROOT:-}" ]; then
+  [ "$(id -u)" != 0 ] || die 'Fixture mode is forbidden as root.'
+  exec /bin/sh "$repo/.mise/tasks/backup/operate" \
+    "$command" "$snapshot" "$repository_override" "$destination" "$apply"
+fi
+# Mise parses flags once; pass a fixed tuple across the clean sudo boundary.
+exec sudo /usr/bin/env -i PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin HOME=/var/root \
+  /bin/sh /usr/local/libexec/mac-server/tasks/backup/operate \
+  "$command" "$snapshot" "$repository_override" "$destination" "$apply"

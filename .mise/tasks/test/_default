@@ -1,4 +1,10 @@
 #!/bin/sh
-#MISE description="Run the Restic and direct-mail smoke tests"
-#MISE depends=["test:restic", "test:mail"]
+#MISE description="Run isolated backup/security/metrics tests, then send mail to both configured addresses"
+#MISE extends="uncached"
 set -eu
+[ "$#" = 0 ] || exit 2
+mise run backup:test
+mise run security:test
+mise run setup:test
+mise run metrics:test
+mise run test:mail

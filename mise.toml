@@ -3,12 +3,36 @@ dotfiles.default_mode = "symlink"
 dotfiles.root = "~/Developer/configuration/"
 experimental = true
 auto_update = true
+# The checkout is under macOS home protection that denies lockfile replacement.
+# Tool versions and update review remain declared in this config.
+lockfile = false
 
 [hooks]
 postinstall = "mise run setup:auto"
 
+[task_config]
+excludes = [
+  ".mise/tasks/_common",
+  ".mise/tasks/backup/_common",
+  ".mise/tasks/recovery/_common",
+  ".mise/tasks/setup/_common",
+]
+
+[task_templates.uncached]
+cache = { enabled = false }
+
 [vars]
 mail_test_recipients = "maclong9@icloud.com contact@maclong.dev"
+
+[dotfiles]
+"~/.config/delta/AGENTS.md" = {}
+"~/.config/git/config" = {}
+"~/.config/git/ignore" = {}
+"~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
+"~/.config/vim/vimrc" = {}
+"~/.config/zsh/.p10k.zsh" = {}
+"~/.config/zsh/.zshrc" = {}
+"~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
 
 [bootstrap.repos]
 "~/Developer/configuration" = { url = "git@git.maclong.dev:mac/configuration.git" }
@@ -26,16 +50,6 @@ show_pathbar = true
 [bootstrap.macos.trackpad]
 tap_to_click = true
 three_finger_drag = true
-
-[dotfiles]
-"~/.config/delta/AGENTS.md" = { source = "~/Developer/configuration/config/delta/AGENTS.md" }
-"~/.config/git/config" = {}
-"~/.config/git/ignore" = {}
-"~/.config/mise/config.toml" = { source = "~/Developer/configuration/mise.toml" }
-"~/.config/vim/vimrc" = {}
-"~/.config/zsh/.p10k.zsh" = {}
-"~/.config/zsh/.zshrc" = {}
-"~/.zshenv" = { source = "~/Developer/configuration/.config/zsh/.zshenv" }
 
 [bootstrap.packages]
 # Homebrew apps and services

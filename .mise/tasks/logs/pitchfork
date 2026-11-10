@@ -1,0 +1,31 @@
+#!/bin/sh
+#MISE description="Capture fixed global Pitchfork logs into the rotated protected sink"
+#MISE extends="uncached"
+set -eu
+[ "$#" = 0 ] || exit 2
+base=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd -P)
+# shellcheck source=.mise/tasks/_common
+. "$base/tasks/_common"
+root_only
+trusted /var/log/services
+trusted /usr/local/bin/pitchfork
+export PITCHFORK_USER=root PITCHFORK_SUPERVISOR_AUTO_START=false XDG_CONFIG_HOME=/etc HOME=/var/root
+cd /var/empty
+work=$(mktemp -d /private/tmp/pitchfork-logs.XXXXXX)
+producer=
+trap '[ -z "$producer" ] || kill "$producer" 2>/dev/null || :; rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+mkfifo "$work/stream"
+/usr/local/bin/pitchfork logs --json --follow --no-pager -n 0 \
+  global/caddy global/cloudflared global/node_exporter global/soc_metrics global/blackbox \
+  global/prometheus global/loki global/alloy global/grafana global/forgejo global/log_shipper_postfix global/backup \
+  >"$work/stream" &
+producer=$!
+while IFS= read -r line; do
+  target=/var/log/services/pitchfork.log
+  trusted "$target"
+  [ -f "$target" ] && [ "$(stat -f '%l %Lp' "$target")" = '1 640' ] || die 'Unsafe Pitchfork log sink.'
+  printf '%s\n' "$line" >>"$target"
+done <"$work/stream"
+wait "$producer"
+exit 1

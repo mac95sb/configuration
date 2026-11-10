@@ -2,6 +2,7 @@
 #MISE description="Send a direct-delivery mail smoke test"
 #MISE env={MAIL_TEST_RECIPIENTS = "{{ vars.mail_test_recipients }}"}
 set -eu
+[ "$#" = 0 ] || exit 2
 
 # This list is maintained as whitespace-separated addresses in mise.toml.
 # shellcheck disable=SC2086

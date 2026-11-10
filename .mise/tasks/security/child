@@ -1,0 +1,27 @@
+#!/bin/sh
+#MISE description="Internal fixed service UID drop; no secrets in command arguments"
+#MISE hide=true
+#MISE raw_args=true
+set -eu
+[ "$#" = 1 ] && [ "$(id -u)" = 0 ] || exit 2
+unset FNOX_AGE_KEY FNOX_AGE_KEY_FILE FNOX_CONFIG_DIR
+case $1 in
+forgejo)
+  exec /usr/bin/sudo -n -H --preserve-env=FORGEJO__SECURITY__SECRET_KEY,FORGEJO__SECURITY__INTERNAL_TOKEN \
+    -u svc_forgejo -- /bin/sh /usr/local/libexec/mac-server/tasks/forgejo/start
+  ;;
+alloy)
+  exec /usr/bin/sudo -n -H --preserve-env=SCRUB_SALT -u svc_observability -- \
+    /usr/local/bin/alloy run /Users/mac/Developer/configuration/services/alloy/config.alloy \
+    --storage.path=/Users/svc_observability/alloy-data --server.http.listen-addr=127.0.0.1:12345
+  ;;
+grafana)
+  exec /usr/bin/sudo -n -H --preserve-env=GF_SECURITY_ADMIN_PASSWORD,NTFY_URL -u svc_observability -- \
+    /usr/local/bin/grafana server --config=/Users/mac/Developer/configuration/services/grafana/config.ini \
+    --homepath=/opt/homebrew/opt/grafana/share/grafana --packaging=brew \
+    cfg:default.paths.logs=/Users/svc_observability/grafana-logs \
+    cfg:default.paths.data=/Users/svc_observability/grafana-data \
+    cfg:default.paths.plugins=/Users/svc_observability/grafana-data/plugins
+  ;;
+*) exit 2 ;;
+esac

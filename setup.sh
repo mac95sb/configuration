@@ -1,12 +1,14 @@
 #!/bin/sh
 set -eu
 umask 077
+# Neither tool installation nor nested bootstrap may start services during recovery/setup.
+export MISE_SETUP_IN_PROGRESS=1
 
 case $#:${1:-} in
 0:) setup_args= ;;
-1:--recover) setup_args=--recover ;;
+1:--new) setup_args=--new ;;
 *)
-  printf 'Usage: %s [--recover]\n' "$0" >&2
+  printf 'Usage: %s [--new]\n' "$0" >&2
   exit 2
   ;;
 esac
@@ -37,7 +39,7 @@ if [ ! -x "$mise" ]; then
 fi
 
 "$mise" -C "$repo" trust
-MISE_SETUP_IN_PROGRESS=1 "$mise" -C "$repo" install
+MISE_SETUP_IN_PROGRESS=1 "$mise" --no-hooks -C "$repo" install
 if [ -n "$setup_args" ]; then
   "$mise" -C "$repo" run setup "$setup_args"
 else

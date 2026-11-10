@@ -1,0 +1,257 @@
+# shellcheck shell=sh disable=SC2154
+# Backup-only orchestration. Variables are set by operate or its temporary fixture.
+validate_backup() {
+  [ "$#" -le 5 ] || die 'Unexpected internal backup arguments.'
+  command=${1:-}
+  snapshot=${2:-}
+  repository_override=${3:-}
+  destination=${4:-}
+  apply=${5:-false}
+  case $command in init | checkpoint | verify | restore | prune) ;;
+  *) die 'Expected init, checkpoint, verify, restore or prune.' ;;
+  esac
+  case $apply in true | false) ;; *) die 'Invalid apply flag.' ;; esac
+  [ -z "$repository_override" ] || local_path "$repository_override"
+  [ -z "$destination" ] || local_path "$destination"
+  case $command in
+  verify | restore) snapshot_id "$snapshot" ;;
+  *)
+    [ -z "$snapshot$repository_override$destination" ] || die 'Snapshot/repository overrides are recovery-only.'
+    ;;
+  esac
+  [ "$command" = prune ] || [ "$apply" = false ] || die '--apply is prune-only.'
+  if [ "$command" = restore ]; then
+    [ -n "$destination" ] || die 'Restore requires a new --destination directory.'
+  else
+    [ -z "$destination" ] || die '--destination is restore-only.'
+  fi
+}
+
+restic_cmd() {
+  as_mac restic --repo "$repository" --password-file "$transfer/password" --cache-dir "$transfer/cache" "$@"
+}
+
+open_password() {
+  [ -f "$etc/restic-password.age" ] && [ ! -L "$etc/restic-password.age" ] ||
+    die 'Recover the original restic-password.age or run explicit init on an empty repository.'
+  age -d -i "$etc/operational.key" -o "$work/password" "$etc/restic-password.age"
+  install -m 400 "$work/password" "$transfer/password"
+  if [ "$fixture" = false ]; then chown mac:staff "$transfer/password"; fi
+}
+
+empty_repository() {
+  if as_mac test -L "$repository"; then
+    return 1
+  elif as_mac test -d "$repository"; then
+    listing=$(as_mac find "$repository" -mindepth 1 -maxdepth 1 -print) || return 1
+    [ -z "$listing" ]
+  else
+    as_mac test ! -e "$repository" &&
+      as_mac test -r "$(dirname "$repository")" &&
+      as_mac test -x "$(dirname "$repository")"
+  fi
+}
+
+init_repository() {
+  as_mac mkdir -p "$icloud"
+  if [ ! -e "$etc/restic-password.age" ] && [ ! -L "$etc/restic-password.age" ]; then
+    empty_repository || die 'Repository is not empty: recover the original encrypted password. Nothing replaced.'
+    openssl rand -base64 48 >"$work/new-password"
+    taplo get -f "$etc/config.toml" providers.age.recipients >"$work/recipients"
+    [ -s "$work/recipients" ] || die 'No age recovery recipients configured.'
+    age -R "$work/recipients" -o "$work/password.age" "$work/new-password"
+    age -d -i "$etc/operational.key" -o "$work/validated-password" "$work/password.age"
+    cmp "$work/new-password" "$work/validated-password"
+    ln "$work/password.age" "$etc/restic-password.age"
+    open_password
+    restic_cmd init --repository-version 2
+  else
+    empty_repository && die 'Password exists but repository is missing/empty: recover it, do not reinitialize.'
+    open_password
+    restic_cmd cat config >/dev/null
+  fi
+}
+
+service_state() {
+  "$pitchfork" status "global/$1" --json >"$work/status.json" || return 1
+  id=$(json_value "$work/status.json" id string) || return 1
+  namespace=$(json_value "$work/status.json" namespace string) || return 1
+  name=$(json_value "$work/status.json" name string) || return 1
+  [ "$id" = "global/$1" ] && [ "$namespace" = global ] && [ "$name" = "$1" ] || return 1
+  status=$(json_value "$work/status.json" status string) || return 1
+  status=$(printf '%s' "$status" | tr '[:upper:]' '[:lower:]')
+  case $status in running | stopped | available) printf '%s\n' "$status" ;; *) return 1 ;; esac
+}
+
+resume_services() {
+  resume_failed=false
+  for name in $resume; do
+    "$pitchfork" start "global/$name" || resume_failed=true
+    status=$(service_state "$name") || {
+      resume_failed=true
+      continue
+    }
+    [ "$status" = running ] || resume_failed=true
+  done
+  resume=
+  [ "$resume_failed" = false ]
+}
+
+backup_cleanup() {
+  result=$?
+  trap '' HUP INT TERM
+  resume_services || result=1
+  rm -rf "$work" "$transfer"
+  rmdir "$state/shell.lock" || result=1
+  exit "$result"
+}
+
+git_at() {
+  git --no-pager -c core.hooksPath=/var/empty -c core.fsmonitor=false \
+    -c protocol.allow=never -c core.sshCommand=/usr/bin/false -c core.alternateRefsCommand=/usr/bin/false \
+    -c "safe.directory=$1" -C "$@"
+}
+
+database_paths() {
+  for dir in "$1/forgejo" "$1/forgejo/data" "$1/forgejo/data/repositories" "$1/grafana"; do
+    [ -d "$dir" ] && [ ! -L "$dir" ] || die "Missing or linked application directory: $dir"
+  done
+  for db in "$1/forgejo/data/forgejo.db" "$1/grafana/grafana.db"; do
+    [ -f "$db" ] && [ ! -L "$db" ] || die "Missing or linked database: $db"
+    for sidecar in "$db-wal" "$db-shm" "$db-journal"; do
+      [ ! -L "$sidecar" ] || die "Linked SQLite sidecar: $sidecar"
+      [ ! -e "$sidecar" ] || [ -f "$sidecar" ] || die "Non-regular SQLite sidecar: $sidecar"
+    done
+  done
+}
+
+check_payload() {
+  payload=$1
+  database_paths "$payload"
+  for db in "$payload/forgejo/data/forgejo.db" "$payload/grafana/grafana.db"; do
+    [ "$(sqlite3 "$db" 'PRAGMA integrity_check;')" = ok ] || die "Database integrity failure: $db"
+  done
+  for name in configuration robin; do
+    git_at "$payload/developer/$name" fsck --full
+    git_at "$payload/developer/$name" bundle verify "$payload/bundles/$name.bundle"
+  done
+}
+
+exact_snapshot() {
+  restic_cmd snapshots --json "$snapshot" >"$work/snapshots.json"
+  {
+    printf '{"snapshots":'
+    cat "$work/snapshots.json"
+    printf '}\n'
+  } >"$work/wrapped.json"
+  [ "$(json_value "$work/wrapped.json" snapshots array)" = 1 ] || die 'Snapshot did not resolve uniquely.'
+  [ "$(json_value "$work/wrapped.json" snapshots.0.id string)" = "$snapshot" ] || die 'Snapshot did not resolve exactly.'
+}
+
+verify_snapshot() {
+  exact_snapshot
+  restic_cmd restore "$snapshot" --target "$1" --verify
+  check_payload "$1/payload"
+}
+
+as_mac() {
+  if [ "$fixture" = true ]; then "$@"; else
+    sudo -n -H -u mac -- /usr/bin/env -i PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin HOME=/Users/mac "$@"
+  fi
+}
+
+as_metrics() {
+  if [ "$fixture" = true ]; then "$@"; else
+    sudo -n -H -u svc_observability -- /usr/bin/env -i PATH=/usr/bin:/bin HOME=/Users/svc_observability "$@"
+  fi
+}
+
+checkpoint() {
+  restic_cmd cat config >/dev/null
+  for required in "$developer/configuration/.git" "$developer/robin/.git" "$forgejo/data/forgejo.db" "$grafana/grafana.db"; do
+    [ -e "$required" ] && [ ! -L "$required" ] || die "Mandatory source missing or linked: $required"
+  done
+  mkdir "$work/payload" "$work/payload/bundles"
+  # Not an APFS point-in-time snapshot. Avoid editing Developer during capture.
+  rsync -a --exclude node_modules --exclude .build --exclude __pycache__ \
+    --exclude .cache --exclude Caches "$developer/" "$work/payload/developer/"
+  for name in configuration robin; do
+    checkout=$work/payload/developer/$name
+    [ -d "$checkout/.git" ] && [ ! -L "$checkout/.git" ] || die 'Recovery checkouts require an internal .git directory.'
+    [ ! -e "$checkout/.git/objects/info/alternates" ] && [ ! -L "$checkout/.git/objects/info/alternates" ] ||
+      die 'Git alternates require a separate recovery plan.'
+    [ "$(git_at "$checkout" rev-parse --is-shallow-repository)" = false ] || die 'Shallow checkout cannot produce a complete recovery bundle.'
+    git_at "$checkout" bundle create "$work/payload/bundles/$name.bundle" --all HEAD
+  done
+  forgejo_state=$(service_state forgejo)
+  grafana_state=$(service_state grafana)
+  for name in forgejo grafana; do
+    case $name in forgejo) status=$forgejo_state ;; grafana) status=$grafana_state ;; esac
+    if [ "$status" = running ]; then
+      resume="$resume $name"
+      "$pitchfork" stop "global/$name"
+    fi
+    status=$(service_state "$name") || die "Cannot confirm stopped service: $name"
+    case $status in stopped | available) ;; *) die "Service failed to stop: $name" ;; esac
+  done
+  cp -Rp "$forgejo" "$work/payload/forgejo"
+  cp -Rp "$grafana" "$work/payload/grafana"
+  resume_services || die 'Service restart failed; inspect service state before retrying.'
+  database_paths "$work/payload"
+  # Fold copied WAL into standalone files; never modify live databases.
+  for db in "$work/payload/forgejo/data/forgejo.db" "$work/payload/grafana/grafana.db"; do
+    compact=$(mktemp "$work/sqlite.XXXXXX")
+    sqlite3 "$db" ".backup '$compact'"
+    mv "$compact" "$db"
+    rm -f "$db-wal" "$db-shm"
+  done
+  check_payload "$work/payload"
+  mv "$work/payload" "$transfer/payload"
+  if [ "$fixture" = false ]; then chown -R -P -h mac:staff "$transfer/payload"; fi
+  (
+    cd "$transfer" || exit
+    restic_cmd backup --json --host home-mac --tag home-sh-v1 payload >"$work/backup.json"
+  )
+  summaries=0
+  while IFS= read -r event; do
+    printf '%s\n' "$event" >"$work/event.json"
+    type=$(json_value "$work/event.json" message_type string)
+    if [ "$type" = summary ]; then
+      snapshot=$(json_value "$work/event.json" snapshot_id string)
+      summaries=$((summaries + 1))
+    fi
+  done <"$work/backup.json"
+  [ "$summaries" = 1 ] || die 'Restic did not return exactly one backup summary.'
+  snapshot_id "$snapshot"
+  verify_snapshot "$transfer/verified"
+  artifact=$transfer/artifacts
+  mkdir "$artifact"
+  cp "$transfer/payload/bundles/configuration.bundle" "$artifact/configuration.bundle"
+  age -R "$work/recipients" -o "$artifact/config.toml.age" "$etc/config.toml"
+  cp "$etc/restic-password.age" "$artifact/restic-password.age"
+  (
+    cd "$artifact" || exit
+    shasum -a 256 configuration.bundle config.toml.age restic-password.age >SHA256SUMS
+  )
+  if [ "$fixture" = false ]; then chown -R -P -h mac:staff "$artifact"; fi
+  as_mac mkdir "$icloud/$snapshot"
+  for file in configuration.bundle config.toml.age restic-password.age SHA256SUMS; do
+    as_mac cp -n "$artifact/$file" "$icloud/$snapshot/$file"
+    as_mac cmp "$artifact/$file" "$icloud/$snapshot/$file"
+  done
+  # Root must not open writable paths in the collector-owned directory.
+  # The script expands these variables only after dropping privileges.
+  # shellcheck disable=SC2016
+  printf '# TYPE backup_last_success_seconds gauge\nbackup_last_success_seconds %s\n' "$(date +%s)" |
+    as_metrics /bin/sh -eu -c '
+      tmp=$(mktemp "$1/.backup.XXXXXX")
+      trap '\''rm -f "$tmp"'\'' EXIT
+      cat >"$tmp"
+      chmod 640 "$tmp"
+      mv -f "$tmp" "$1/backup_last_success_seconds.prom"
+    ' sh "$metrics"
+  printf '\nRetain this record INDEPENDENTLY with your offline age identity:\nSNAPSHOT %s\n' "$snapshot"
+  cat "$artifact/SHA256SUMS"
+  printf 'SHA256SUMS %s\n' "$(shasum -a 256 "$artifact/SHA256SUMS" | awk '{print $1}')"
+  printf '%s\n' 'Local iCloud readback passed. Apple upload and erased-host recovery are NOT established.'
+}

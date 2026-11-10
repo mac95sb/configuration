@@ -1,0 +1,26 @@
+#!/bin/sh
+#MISE description="Resolve one fixed service secret profile as root, then drop privileges"
+#MISE extends="uncached"
+#USAGE arg "<service>" help="Fixed service to launch" { choices "forgejo" "alloy" "grafana" }
+set -eu
+service=${usage_service:-${1:-}}
+case $service in
+forgejo) profile=forgejo ;;
+alloy) profile=observability ;;
+grafana) profile=grafana,notifications ;;
+*) exit 2 ;;
+esac
+[ "$#" -le 1 ] || exit 2
+base=$(CDPATH='' cd -- "$(dirname "$0")/../.." && pwd -P)
+# shellcheck source=.mise/tasks/_common
+. "$base/tasks/_common"
+root_only
+for file in "$base/tasks/security/service" "$base/tasks/security/child" /usr/local/bin/fnox /usr/local/bin/age; do trusted "$file"; done
+private_file /etc/fnox/operational.key
+private_file /etc/fnox/config.toml
+cd /var/empty
+exec /usr/bin/env -i PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin HOME=/var/root \
+  FNOX_AGE_KEY_FILE=/etc/fnox/operational.key FNOX_CONFIG_DIR=/etc/fnox \
+  /usr/local/bin/fnox exec --no-defaults --non-interactive --no-daemon \
+  --config /etc/fnox/config.toml --profile "$profile" -- \
+  /bin/sh "$base/tasks/security/child" "$service"

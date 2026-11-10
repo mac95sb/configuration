@@ -1,0 +1,21 @@
+#!/bin/sh
+#MISE description="Reject executable providers, hooks and control-variable injection without decrypting secrets"
+#MISE extends="uncached"
+set -eu
+[ "$#" = 0 ] || exit 2
+repo=${MISE_CONFIG_ROOT:-$(CDPATH='' cd -- "$(dirname "$0")/../../.." && pwd -P)}
+work=$(mktemp -d "${TMPDIR:-/tmp}/security-fixture.XXXXXX")
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+/bin/sh "$repo/.mise/tasks/security/validate" "$repo/fnox.toml"
+for injection in 'PATH = { provider = "age", value = "fixture" }' 'hooks = "touch /must-not-run"' 'FNOX_AGE_KEY = { provider = "age", value = "fixture" }'; do
+  cp "$repo/fnox.toml" "$work/config.toml"
+  printf '%s\n' "$injection" >>"$work/config.toml"
+  if /bin/sh "$repo/.mise/tasks/security/validate" "$work/config.toml"; then
+    echo 'Unsafe fnox configuration accepted.' >&2
+    exit 1
+  fi
+done
+sed 's/type = "age"/type = "command"/' "$repo/fnox.toml" >"$work/config.toml"
+if /bin/sh "$repo/.mise/tasks/security/validate" "$work/config.toml"; then exit 1; fi
+printf '%s\n' 'Restricted fnox policy failure cases passed.'

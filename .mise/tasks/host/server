@@ -1,6 +1,9 @@
 #!/bin/sh
 #MISE description="Disable sleep for hosting and enable restart after power loss (mains power)"
+#MISE interactive=true
+#MISE extends="uncached"
 set -eu
+[ "$#" = 0 ] || exit 2
 printf '%s\n' 'Server mode disables system sleep, including the global lid-sleep override.' \
   'Use mains power and ventilation. Do not put the running Mac in a closed bag.' \
   'The lid override is macOS-version-dependent: test physical lid close after deployment.'

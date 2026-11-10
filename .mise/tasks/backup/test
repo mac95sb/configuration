@@ -1,0 +1,179 @@
+#!/bin/sh
+#MISE description="Test real Restic backup/recovery, credential safety and failure handling with temporary data"
+#MISE extends="uncached"
+set -eu
+[ "$#" = 0 ] || exit 2
+[ "$(id -u)" != 0 ] || {
+  echo 'Run fixtures unprivileged.' >&2
+  exit 1
+}
+repo=${MISE_CONFIG_ROOT:?}
+# shellcheck source=.mise/tasks/_common
+. "$repo/.mise/tasks/_common"
+# shellcheck source=.mise/tasks/backup/_common
+. "$repo/.mise/tasks/backup/_common"
+# shellcheck source=.mise/tasks/recovery/_common
+. "$repo/.mise/tasks/recovery/_common"
+work=$(mktemp -d "${TMPDIR:-/tmp}/backup-fixture.XXXXXX")
+trap 'chmod -R u+rwX "$work"; rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+export BACKUP_FIXTURE_ROOT="$work"
+export GIT_CONFIG_NOSYSTEM=1 GIT_CONFIG_GLOBAL=/dev/null
+engine() { mise run backup:run "$@"; }
+fail() {
+  if ("$@") >"$work/expected-failure.log" 2>&1; then die "Expected failure: $*"; fi
+}
+id64=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+# These go through Mise's actual argument interface, before any fixture data exists.
+fail engine verify latest
+fail engine verify "$id64" --repository sftp:host:repo
+fail engine verify "$id64" --repository "$work/../escape"
+fail engine verify "$id64" --destination "$work/new"
+fail engine verify "$id64" --repository
+fail engine restore "$id64"
+fail engine checkpoint --apply
+fail engine init --repository "$work/repo"
+fail engine verify "$id64" --unknown
+ln -s "$work/missing" "$work/link"
+fail absent "$work/link"
+fail trusted "$work/link"
+fail private_file /etc/passwd
+trusted /bin/sh
+for tool in restic age age-keygen taplo sqlite3 git rsync; do command -v "$tool" >/dev/null; done
+mkdir -p "$work/etc" "$work/Developer" "$work/forgejo/data/repositories" "$work/grafana"
+age-keygen -o "$work/etc/operational.key"
+recipient=$(age-keygen -y "$work/etc/operational.key")
+printf '[providers.age]\ntype = "age"\nrecipients = ["%s"]\n' "$recipient" >"$work/etc/config.toml"
+for name in configuration robin; do
+  git init -q -b main "$work/Developer/$name"
+  echo fixture >"$work/Developer/$name/tracked"
+  git -C "$work/Developer/$name" add tracked
+  git -C "$work/Developer/$name" -c user.name=Fixture -c user.email=fixture@example.invalid \
+    -c commit.gpgsign=false -c core.hooksPath=/var/empty commit -qm fixture
+done
+echo 'private uncommitted work' >"$work/Developer/configuration/private"
+mkdir "$work/Developer/configuration/node_modules"
+echo excluded >"$work/Developer/configuration/node_modules/cache"
+ln -s /outside/not-followed "$work/Developer/configuration/external"
+sqlite3 "$work/forgejo/data/forgejo.db" 'CREATE TABLE fixture(value); INSERT INTO fixture VALUES(42);'
+sqlite3 "$work/grafana/grafana.db" 'CREATE TABLE fixture(value); INSERT INTO fixture VALUES(43);'
+cat >"$work/pitchfork" <<'EOF'
+#!/bin/sh
+set -eu
+name=${2#global/}
+case $name in forgejo | grafana) ;; *) exit 2 ;; esac
+case $1 in
+status)
+  state=$(cat "$BACKUP_FIXTURE_ROOT/$name.state")
+  if [ -f "$BACKUP_FIXTURE_ROOT/fail-status-after-stop" ] && [ "$state" = stopped ] && [ "$name" = forgejo ]; then exit 9; fi
+  printf '{"id":"global/%s","namespace":"global","name":"%s","status":"%s"}\n' "$name" "$name" "$state"
+  ;;
+stop) echo stopped >"$BACKUP_FIXTURE_ROOT/$name.state" ;;
+start) echo running >"$BACKUP_FIXTURE_ROOT/$name.state" ;;
+*) exit 2 ;;
+esac
+EOF
+chmod 700 "$work/pitchfork"
+echo running >"$work/forgejo.state"
+echo stopped >"$work/grafana.state"
+# Refuse a newly generated password that the supplied identity cannot decrypt.
+age-keygen -o "$work/wrong.key"
+wrong_recipient=$(age-keygen -y "$work/wrong.key")
+cp "$work/etc/config.toml" "$work/right-config.toml"
+printf '[providers.age]\ntype = "age"\nrecipients = ["%s"]\n' "$wrong_recipient" >"$work/etc/config.toml"
+fail engine init
+[ ! -e "$work/etc/restic-password.age" ]
+cp "$work/right-config.toml" "$work/etc/config.toml"
+engine init
+cp "$work/etc/restic-password.age" "$work/original-password.age"
+engine init
+cmp "$work/original-password.age" "$work/etc/restic-password.age"
+mkdir "$work/state/shell.lock"
+fail engine verify "$id64"
+rmdir "$work/state/shell.lock"
+mv "$work/etc/operational.key" "$work/right.key"
+cp "$work/wrong.key" "$work/etc/operational.key"
+fail engine init
+cmp "$work/original-password.age" "$work/etc/restic-password.age"
+mv -f "$work/right.key" "$work/etc/operational.key"
+# A failed service copy must resume Forgejo without starting previously stopped Grafana.
+echo unreadable >"$work/forgejo/unreadable"
+chmod 000 "$work/forgejo/unreadable"
+fail engine checkpoint
+[ "$(cat "$work/forgejo.state")" = running ] && [ "$(cat "$work/grafana.state")" = stopped ]
+rm -f "$work/forgejo/unreadable"
+[ ! -e "$work/metrics/backup_last_success_seconds.prom" ]
+touch "$work/fail-status-after-stop"
+fail engine checkpoint
+rm -f "$work/fail-status-after-stop"
+[ "$(cat "$work/forgejo.state")" = running ]
+[ "$(cat "$work/grafana.state")" = stopped ]
+[ ! -e "$work/metrics/backup_last_success_seconds.prom" ]
+echo protected >"$work/protected"
+ln -s "$work/protected" "$work/forgejo/data/forgejo.db-wal"
+fail engine checkpoint
+[ "$(cat "$work/protected")" = protected ]
+rm "$work/forgejo/data/forgejo.db-wal"
+engine checkpoint >"$work/checkpoint.log"
+age -d -i "$work/etc/operational.key" -o "$work/clear" "$work/etc/restic-password.age"
+restic -r "$work/icloud/repository" -p "$work/clear" snapshots --json >"$work/list.json"
+{
+  printf '{"snapshots":'
+  cat "$work/list.json"
+  printf '}\n'
+} >"$work/wrapped.json"
+[ "$(json_value "$work/wrapped.json" snapshots array)" = 1 ]
+snapshot=$(json_value "$work/wrapped.json" snapshots.0.id string)
+snapshot_id "$snapshot"
+# A conflicting local iCloud object must fail without advancing the success metric.
+cp "$work/metrics/backup_last_success_seconds.prom" "$work/metric-before"
+cp "$work/icloud/repository/config" "$work/icloud-config"
+chmod u+w "$work/icloud/repository/config"
+echo conflict >"$work/icloud/repository/config"
+fail engine checkpoint
+cmp "$work/metric-before" "$work/metrics/backup_last_success_seconds.prom"
+cp "$work/icloud-config" "$work/icloud/repository/config"
+chmod 444 "$work/icloud/repository/config"
+engine verify "$snapshot" --repository "$work/icloud/repository"
+engine restore "$snapshot" --repository "$work/icloud/repository" --destination "$work/restored"
+cmp "$work/Developer/configuration/private" "$work/restored/payload/developer/configuration/private"
+[ "$(readlink "$work/restored/payload/developer/configuration/external")" = /outside/not-followed ]
+[ ! -e "$work/restored/payload/developer/configuration/node_modules" ]
+fail engine restore "$snapshot" --destination "$work/restored"
+fail engine verify "$id64"
+mv "$work/etc/restic-password.age" "$work/saved.age"
+fail engine init
+[ ! -e "$work/etc/restic-password.age" ]
+mv "$work/saved.age" "$work/etc/restic-password.age"
+engine prune
+mv "$work/icloud/repository" "$work/original-repository"
+fail engine init
+mv "$work/original-repository" "$work/icloud/repository"
+engine prune --apply
+cmp "$work/original-password.age" "$work/etc/restic-password.age"
+git clone -q "$work/icloud/$snapshot/configuration.bundle" "$work/bundle-clone"
+expected_head=$(git bundle list-heads "$work/icloud/$snapshot/configuration.bundle" HEAD | awk '{print $1}')
+[ "$(git -C "$work/bundle-clone" rev-parse HEAD)" = "$expected_head" ]
+# Install only into temporary targets; preserve a bootstrap and unrelated Developer files.
+stage=$work/restored developer=$work/bootstrap forgejo=$work/installed-forgejo grafana=$work/installed-grafana preserved=$work/preserved
+mkdir -p "$developer/configuration" "$forgejo"
+echo bootstrap >"$developer/configuration/bootstrap"
+echo unrelated >"$developer/other"
+fail install_trees
+[ -f "$developer/configuration/bootstrap" ] && [ -f "$stage/payload/developer/configuration/private" ]
+rmdir "$forgejo"
+install_trees
+[ -f "$preserved/Developer/configuration/bootstrap" ] && [ -f "$preserved/Developer/other" ]
+[ -f "$developer/configuration/private" ] && [ -f "$forgejo/data/forgejo.db" ] && [ -f "$grafana/grafana.db" ]
+[ -f "$stage/payload/developer/configuration/private" ]
+fail install_trees
+mkdir "$work/collision"
+echo unchanged >"$work/collision/sentinel"
+fail copy_new "$stage/payload/developer" "$work/collision"
+[ "$(cat "$work/collision/sentinel")" = unchanged ]
+[ ! -e "$work/collision/configuration" ]
+# A checkout backed by an external .git file must not certify as self-contained.
+mv "$work/Developer/configuration/.git" "$work/external-git"
+printf 'gitdir: %s\n' "$work/external-git" >"$work/Developer/configuration/.git"
+fail engine checkpoint
+printf '%s\n' 'Temporary Restic backup/recovery and failure cases passed. No real iCloud or host restore was performed.'

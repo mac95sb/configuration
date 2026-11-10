@@ -1,0 +1,42 @@
+#!/bin/sh
+#MISE description="Test postinstall and fresh/existing setup guards without sudo or service changes"
+#MISE extends="uncached"
+set -eu
+[ "$#" = 0 ] || exit 2
+repo=${MISE_CONFIG_ROOT:?}
+work=$(mktemp -d "${TMPDIR:-/tmp}/setup-fixture.XXXXXX")
+trap 'rm -rf "$work"' EXIT
+trap 'exit 1' HUP INT TERM
+mkdir "$work/bin"
+cat >"$work/bin/sudo" <<'EOF'
+#!/bin/sh
+[ "$1" = test ] || exit 97
+[ "$FIXTURE_READY" = true ]
+EOF
+cat >"$work/bin/mise" <<'EOF'
+#!/bin/sh
+printf '%s\n' "$*" >>"$FIXTURE_LOG"
+EOF
+chmod 700 "$work/bin/sudo" "$work/bin/mise"
+export PATH="$work/bin:$PATH" FIXTURE_LOG="$work/calls"
+export MISE_INSTALLED_TOOLS=restic FIXTURE_READY=true
+MISE_SETUP_IN_PROGRESS=1 /bin/sh "$repo/.mise/tasks/setup/auto"
+[ ! -e "$FIXTURE_LOG" ]
+FIXTURE_READY=false /bin/sh "$repo/.mise/tasks/setup/auto"
+[ ! -e "$FIXTURE_LOG" ]
+/bin/sh "$repo/.mise/tasks/setup/auto"
+printf 'run daemon:install\nrun daemon:activate\n' >"$work/expected"
+cmp "$work/expected" "$FIXTURE_LOG"
+# State checks use a disposable HOME and the same no-op privilege shim.
+mkdir -p "$work/home/Developer/configuration/.git" "$work/home/Developer/robin/.git"
+HOME=$work/home usage_new=false /bin/sh "$repo/.mise/tasks/setup/state-check"
+if HOME=$work/home usage_new=true /bin/sh "$repo/.mise/tasks/setup/state-check"; then
+  echo 'Fresh setup accepted existing service state.' >&2
+  exit 1
+fi
+HOME=$work/home FIXTURE_READY=false usage_new=true /bin/sh "$repo/.mise/tasks/setup/state-check"
+if HOME=$work/home FIXTURE_READY=false usage_new=false /bin/sh "$repo/.mise/tasks/setup/state-check"; then
+  echo 'Existing setup accepted missing recovery data.' >&2
+  exit 1
+fi
+printf '%s\n' 'Postinstall preserves user/root separation and never provisions fresh/recovering hosts.'

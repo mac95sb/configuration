@@ -1,0 +1,113 @@
+#!/bin/sh
+#MISE description="Internal explicit administrative deployment (called by daemon:install)"
+#MISE hide=true
+#MISE raw_args=true
+set -eu
+[ "$#" = 4 ] || exit 2
+repo=$1 tools=$2 stage=$3 config=$4
+# shellcheck source=.mise/tasks/_common
+. "$repo/.mise/tasks/_common"
+root_only
+umask 077
+directory /var/db/home-backup 700
+mkdir /var/db/home-backup/shell.lock || die 'A backup or maintenance operation holds the lock.'
+trap 'rmdir /var/db/home-backup/shell.lock' EXIT
+trap 'exit 1' HUP INT TERM
+for path in /usr/local /usr/local/bin /usr/local/libexec /usr/local/libexec/mac-server; do
+  directory "$path"
+done
+base=/usr/local/libexec/mac-server
+directory "$base/tasks"
+while IFS="$(printf '\t')" read -r name path; do
+  case $name in age | age-keygen | alloy | blackbox_exporter | caddy | cloudflared | fnox | loki | node_exporter | pitchfork | prometheus | promtool | restic | taplo) ;;
+  *) die "Unexpected tool: $name" ;;
+  esac
+  atomic_install "$path" "/usr/local/bin/$name"
+done <"$tools"
+export PATH=/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin
+directory /etc/fnox 700
+private_file /etc/fnox/operational.key
+if [ -z "$config" ]; then
+  if [ -f /etc/fnox/config.toml ]; then config=/etc/fnox/config.toml; else config=$repo/fnox.toml; fi
+fi
+/bin/sh "$repo/.mise/tasks/security/validate" "$config" || die 'Unsupported fnox configuration.'
+operational_recipient=$(/usr/local/bin/age-keygen -y /etc/fnox/operational.key)
+recipients=$(taplo get -f "$config" providers.age.recipients)
+printf '%s\n' "$recipients" | grep -Fxq "$operational_recipient" ||
+  die 'The existing operational identity cannot decrypt this fnox config; refusing deployment.'
+atomic_install "$config" /etc/fnox/config.toml 600
+atomic_install "$repo/.mise/tasks/_common" "$base/tasks/_common" 644
+for domain in backup security forgejo metrics logs recovery daemon; do
+  directory "$base/tasks/$domain"
+done
+for domain in backup recovery; do
+  atomic_install "$repo/.mise/tasks/$domain/_common" "$base/tasks/$domain/_common" 644
+done
+for task in backup/operate security/service security/child forgejo/start metrics/soc logs/pitchfork logs/postfix recovery/install-runtime daemon/activate-runtime; do
+  atomic_install "$repo/.mise/tasks/$task" "$base/tasks/$task"
+done
+for name in forgejo grafana; do
+  printf '#!/bin/sh\nexec /opt/homebrew/bin/%s "$@"\n' "$name" >"$base/.brew-wrapper"
+  atomic_install "$base/.brew-wrapper" "/usr/local/bin/$name"
+done
+rm -f "$base/.brew-wrapper"
+if [ "$stage" = true ]; then
+  printf '%s\n' 'Staged protected runtime only; no services or boot jobs were started.'
+  exit 0
+fi
+directory /etc/pitchfork
+taplo check "$repo/pitchfork.toml"
+atomic_install "$repo/pitchfork.toml" /etc/pitchfork/config.toml 644
+directory /var/log/services
+chgrp observability /var/log/services
+chmod 750 /var/log/services
+for log in pitchfork supervisor postfix; do
+  target=/var/log/services/$log.log
+  [ ! -L "$target" ] || die "Linked log: $target"
+  if [ -e "$target" ]; then
+    [ -f "$target" ] && [ "$(stat -f %l "$target")" = 1 ] || die "Unsafe log: $target"
+  else
+    : >"$target"
+  fi
+  owner=root
+  [ "$log" != postfix ] || owner=mac
+  chown "$owner:observability" "$target"
+  chmod 640 "$target"
+done
+directory /etc/newsyslog.d
+atomic_install "$repo/services/security/newsyslog.conf" /etc/newsyslog.d/services.conf 644
+trusted /var/log
+if [ -e /var/log/caddy ] || [ -L /var/log/caddy ]; then
+  [ -d /var/log/caddy ] && [ ! -L /var/log/caddy ] || die 'Unsafe Caddy log directory.'
+  owner=$(stat -f %u /var/log/caddy)
+  [ "$owner" = 0 ] || [ "$owner" = "$(id -u svc_caddy)" ] || die 'Unexpected Caddy log owner.'
+else
+  mkdir /var/log/caddy
+fi
+chown svc_caddy:observability /var/log/caddy
+chmod 750 /var/log/caddy
+cat >"$base/.boot.plist" <<'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>Label</key><string>pitchfork</string>
+<key>ProgramArguments</key><array><string>/usr/local/bin/pitchfork</string><string>supervisor</string><string>run</string><string>--boot</string></array>
+<key>UserName</key><string>root</string>
+<key>WorkingDirectory</key><string>/var/empty</string>
+<key>RunAtLoad</key><true/><key>KeepAlive</key><true/>
+<key>EnvironmentVariables</key><dict>
+<key>PATH</key><string>/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+<key>HOME</key><string>/var/root</string>
+<key>PITCHFORK_USER</key><string>root</string>
+<key>PITCHFORK_SUPERVISOR_AUTO_START</key><string>false</string>
+<key>XDG_CONFIG_HOME</key><string>/etc</string>
+</dict>
+<key>StandardOutPath</key><string>/var/log/services/supervisor.log</string>
+<key>StandardErrorPath</key><string>/var/log/services/supervisor.log</string>
+</dict></plist>
+EOF
+plutil -lint "$base/.boot.plist"
+trusted /Library/LaunchDaemons
+atomic_install "$base/.boot.plist" /Library/LaunchDaemons/pitchfork.plist 644
+rm -f "$base/.boot.plist"
+printf '%s\n' 'Deployment complete. No services restarted; run daemon:activate during maintenance.'

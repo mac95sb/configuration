@@ -1,4 +1,0 @@
-#!/bin/sh
-#MISE description="Create an exact verified restic checkpoint and local iCloud handoff"
-set -eu
-exec sudo /usr/local/libexec/mac-server/backup/launch.sh checkpoint "$@"

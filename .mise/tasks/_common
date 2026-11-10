@@ -1,0 +1,82 @@
+# shellcheck shell=sh
+# Shared safety checks for privileged file tasks. Sourced, never a runnable task.
+die() {
+  printf '%s\n' "$*" >&2
+  exit 1
+}
+
+trusted() {
+  case $1 in
+  /etc/*) set -- "/private$1" ;;
+  /var/*) set -- "/private$1" ;;
+  esac
+  checked=$1
+  while :; do
+    [ ! -L "$checked" ] && [ -e "$checked" ] || die "Missing or linked protected path: $checked"
+    metadata=$(/usr/bin/stat -f '%u %Lp' "$checked") || exit
+    [ "${metadata%% *}" = 0 ] || die "Protected path is not root-owned: $checked"
+    permissions=${metadata#* }
+    [ "$((0$permissions & 022))" = 0 ] || die "Writable protected path: $checked"
+    acl=$(/bin/ls -lde "$checked") || exit
+    case ${acl%% *} in *+*) die "ACL on protected path: $checked" ;; esac
+    [ "$checked" != / ] || break
+    checked=$(/usr/bin/dirname "$checked")
+  done
+}
+
+private_file() {
+  trusted "$1"
+  [ -f "$1" ] || die "Not a regular private file: $1"
+  permissions=$(/usr/bin/stat -f '%Lp' "$1")
+  [ "$((0$permissions & 077))" = 0 ] || die "Private file is accessible to other accounts: $1"
+}
+
+root_only() {
+  [ "$(/usr/bin/id -u)" = 0 ] || die 'Root required; use the corresponding Mise task.'
+}
+
+directory() {
+  if [ ! -e "$1" ] && [ ! -L "$1" ]; then
+    trusted "$(/usr/bin/dirname "$1")"
+    /bin/mkdir "$1"
+    /bin/chmod "${2:-755}" "$1"
+  fi
+  trusted "$1"
+  [ -d "$1" ] || die "Not a directory: $1"
+  if [ "${2:-755}" = 700 ]; then
+    [ "$(/usr/bin/stat -f %Lp "$1")" = 700 ] || die "Private directory requires mode 700: $1"
+  else
+    permissions=$(/usr/bin/stat -f %Lp "$1")
+    [ "$((0$permissions & 0755))" = "$((0755))" ] || die "Protected directory lacks required access: $1"
+  fi
+}
+
+atomic_install() {
+  trusted "$(/usr/bin/dirname "$2")"
+  [ ! -d "$2" ] || die "Refusing directory destination: $2"
+  install_tmp=$(/usr/bin/mktemp "$(/usr/bin/dirname "$2")/.install.XXXXXX")
+  /usr/bin/install -o root -g wheel -m "${3:-755}" "$1" "$install_tmp" || {
+    /bin/rm -f "$install_tmp"
+    return 1
+  }
+  /bin/mv -f "$install_tmp" "$2"
+}
+
+snapshot_id() {
+  [ "${#1}" = 64 ] || die 'Use the full 64-character lowercase snapshot ID, not latest or a prefix.'
+  case $1 in *[!0-9a-f]*) die 'Invalid snapshot ID.' ;; esac
+}
+
+local_path() {
+  case $1 in /*) ;; *) die 'A local absolute path is required.' ;; esac
+  case "$1/" in *"/../"* | *"/./"* | *"
+"*) die 'Unsafe local path.' ;; esac
+}
+
+absent() {
+  [ ! -e "$1" ] && [ ! -L "$1" ] || die "Refusing to overwrite existing path: $1"
+}
+
+json_value() {
+  /usr/bin/plutil -extract "$2" raw -expect "$3" -o - "$1"
+}
