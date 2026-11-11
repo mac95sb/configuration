@@ -1,6 +1,6 @@
 #!/bin/sh
 # shellcheck disable=SC1091,SC2154
-#MISE description="Bootstrap Mise tools, packages, dotfiles, and reviewed app pins"
+#MISE description="Bootstrap Mise tools, packages, dotfiles, and verify reviewed app versions"
 #MISE interactive=true
 #MISE extends="uncached"
 set -eu

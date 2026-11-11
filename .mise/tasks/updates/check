@@ -1,5 +1,6 @@
 #!/bin/sh
 #MISE description="Check the reviewed Forgejo/Grafana baseline without modifying packages"
+#MISE extends="uncached"
 set -eu
 [ "$#" = 0 ] || exit 2
 

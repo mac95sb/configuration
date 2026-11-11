@@ -1,7 +1,21 @@
 #!/bin/sh
-#MISE description="Check and pin the installed database-owning Homebrew formulae"
+#MISE description="Check reviewed app versions and pin formulae when Homebrew is available"
+#MISE extends="uncached"
 set -eu
 [ "$#" = 0 ] || exit 2
 repo=$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd)
 "$repo/.mise/tasks/updates/check"
-brew pin forgejo grafana
+
+brew=
+if command -v brew >/dev/null 2>&1; then
+  brew=$(command -v brew)
+elif [ -x /opt/homebrew/bin/brew ]; then
+  brew=/opt/homebrew/bin/brew
+elif [ -x /usr/local/bin/brew ]; then
+  brew=/usr/local/bin/brew
+fi
+if [ -z "$brew" ]; then
+  printf '%s\n' 'Homebrew CLI is unavailable; reviewed versions match, but formula pins were skipped.' >&2
+  exit 0
+fi
+"$brew" pin forgejo grafana
