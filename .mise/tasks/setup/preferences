@@ -19,9 +19,8 @@ if ! sudo test -f "$sudo_file"; then
   sudo sed -i '' 's/^#auth/auth/' "$sudo_file"
 fi
 
-defaults write com.apple.dock persistent-apps -array
 dock_apps='
-/System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/
+/Applications/Safari.app/
 /System/Applications/Messages.app/
 /System/Applications/Mail.app/
 /System/Applications/Calendar.app/
@@ -32,8 +31,13 @@ dock_apps='
 '
 set --
 for app_path in $dock_apps; do
+  [ -d "$app_path" ] || {
+    printf 'Dock app does not exist: %s\n' "$app_path" >&2
+    exit 1
+  }
   set -- "$@" \
     "{ \"tile-data\" = { \"file-data\" = { \"_CFURLString\" = \"file://$app_path\"; \"_CFURLStringType\" = 15; }; }; \"tile-type\" = \"file-tile\"; }"
 done
+defaults write com.apple.dock persistent-apps -array
 defaults write com.apple.dock persistent-apps -array-add "$@"
 killall Dock || :

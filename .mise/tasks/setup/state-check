@@ -1,21 +1,33 @@
 #!/bin/sh
-#MISE description="Check existing recovery state, or prove a fresh setup has no service state"
+#MISE description="Check existing recovery state, or prove a fresh setup has no service data"
 #MISE interactive=true
 #MISE extends="uncached"
-#USAGE flag "--new" help="Require absence of all service state; otherwise require recovered/existing credentials and databases"
+#USAGE flag "--new" help="Require no service data or Restic repository; allow only the exact reviewed config from a prior interrupted setup"
 set -eu
+repo=$(CDPATH='' cd "$(dirname "$0")/../../.." && pwd -P)
 if [ "${usage_new:-false}" = true ]; then
-  # A matching operational identity is reusable; deployment later verifies that
-  # its public recipient is present before installing the new reviewed config.
-  for path in /etc/fnox/config.toml /etc/fnox/restic-password.age \
-    /Library/LaunchDaemons/pitchfork.plist /Users/svc_forgejo/forgejo-data /Users/svc_observability/grafana-data; do
+  config=/etc/fnox/config.toml
+  if sudo test -L "$config"; then
+    printf 'Fresh setup refuses linked config: %s\n' "$config" >&2
+    exit 1
+  elif sudo test -e "$config"; then
+    if ! sudo cmp -s "$repo/fnox.toml" "$config"; then
+      printf '%s\n' 'Fresh setup found a different fnox config; preserve it and inspect/recover before continuing.' >&2
+      exit 1
+    fi
+    printf '%s\n' 'Resuming with the reviewed fnox config left by the interrupted setup.'
+  fi
+  for path in /etc/fnox/restic-password.age \
+    /Library/LaunchDaemons/pitchfork.plist \
+    /Users/svc_forgejo/forgejo-data \
+    /Users/svc_observability/grafana-data; do
     if sudo test -e "$path" || sudo test -L "$path"; then
       printf 'Fresh setup refuses existing state: %s. Recover or inspect it; do not delete it merely to retry.\n' "$path" >&2
       exit 1
     fi
   done
-  if [ -e "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Backups/configuration/restic-sh-v1/repository/config" ] ||
-    [ -L "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Backups/configuration/restic-sh-v1/repository/config" ]; then
+  repository="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Backups/configuration/restic-sh-v1/repository/config"
+  if [ -e "$repository" ] || [ -L "$repository" ]; then
     echo 'A Restic repository already exists in iCloud. Restore it; do not initialize this host as new.' >&2
     exit 1
   fi
